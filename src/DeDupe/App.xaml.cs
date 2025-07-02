@@ -1,34 +1,68 @@
-﻿using Microsoft.UI.Xaml;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+﻿using DeDupe.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.UI.Xaml;
+using System;
 
 namespace DeDupe
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : Application
     {
-        private Window? _window;
+        public new static App Current => (App)Application.Current;
+        public static Window? Window { get; private set; }
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IHost _host;
+
         public App()
         {
             InitializeComponent();
+
+            _host = Host.CreateDefaultBuilder()
+                .ConfigureServices(ConfigureServices)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+#if DEBUG
+                    logging.AddDebug();
+                    logging.SetMinimumLevel(LogLevel.Debug);
+#else
+                    logging.SetMinimumLevel(LogLevel.Warning);
+#endif
+                })
+                .Build();
+
+            _serviceProvider = _host.Services;
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         {
-            _window = new MainWindow();
-            _window.Activate();
+            // ViewModels
+            services.AddSingleton<MainWindowViewModel>();
+
+            // Logging
+            services.AddLogging();
+        }
+
+
+        public T GetService<T>() where T : class
+        {
+            return _serviceProvider.GetRequiredService<T>();
+        }
+
+        protected override async void OnLaunched(LaunchActivatedEventArgs args)
+        {
+            await _host.StartAsync();
+
+            Window = new MainWindow();
+            Window.Activate();
+        }
+
+        public async void OnAppClosing()
+        {
+            await _host.StopAsync();
+            _host.Dispose();
         }
     }
 }
