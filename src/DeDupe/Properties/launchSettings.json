@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DeDupe (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "DeDupe (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
