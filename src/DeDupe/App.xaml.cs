@@ -1,4 +1,6 @@
-﻿using DeDupe.ViewModels;
+﻿using DeDupe.Services;
+using DeDupe.ViewModels;
+using DeDupe.ViewModels.Pages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -38,13 +40,21 @@ namespace DeDupe
 
         private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         {
-            // ViewModels
+            // MainWindowViewModel
             services.AddSingleton<MainWindowViewModel>();
+
+            // NavigationService
+            services.AddSingleton<INavigationService, NavigationService>();
+
+            // Page ViewModels
+            services.AddSingleton<FileInputViewModel>();
+            services.AddSingleton<ApproachViewModel>();
+            services.AddSingleton<PreProcessingViewModel>();
+            services.AddSingleton<AnalysisViewModel>();
 
             // Logging
             services.AddLogging();
         }
-
 
         public T GetService<T>() where T : class
         {
