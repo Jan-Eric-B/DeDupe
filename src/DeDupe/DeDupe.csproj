@@ -72,6 +72,8 @@
     <None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
+    <None Remove="Views\Pages\ApproachPage.xaml" />
+    <None Remove="Views\Pages\FileInputPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -88,17 +90,35 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Converters\" />
     <Folder Include="Models\" />
-    <Folder Include="Services\" />
-    <Folder Include="ViewModels\Pages\" />
-    <Folder Include="Views\Pages\" />
+    <Folder Include="Enums\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Pages\PreProcessingPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Pages\AnalysisPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Pages\ApproachPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Pages\FileInputPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <!--
