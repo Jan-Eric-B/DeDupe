@@ -4,6 +4,7 @@
     {
         public ApproachViewModel() : base(1)
         {
+            Title = "Approach Selection";
         }
     }
 }

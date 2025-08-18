@@ -4,6 +4,7 @@
     {
         public AnalysisViewModel() : base(3)
         {
+            Title = "Feature Extraction and Similarity Analysis";
         }
     }
 }

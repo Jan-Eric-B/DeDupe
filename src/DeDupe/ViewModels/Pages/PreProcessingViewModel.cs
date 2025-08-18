@@ -4,6 +4,7 @@
     {
         public PreProcessingViewModel() : base(2)
         {
+            Title = "Pre-Processing";
         }
     }
 }
