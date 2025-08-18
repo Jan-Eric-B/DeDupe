@@ -25,7 +25,7 @@ namespace DeDupe
             NavigateToPage(ViewModel.SelectedStepIndex);
         }
 
-        private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(MainWindowViewModel.SelectedStepIndex))
             {

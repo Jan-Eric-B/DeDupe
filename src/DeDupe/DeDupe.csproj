@@ -96,8 +96,6 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Converters\" />
-    <Folder Include="Models\" />
     <Folder Include="Enums\" />
   </ItemGroup>
   <ItemGroup>
