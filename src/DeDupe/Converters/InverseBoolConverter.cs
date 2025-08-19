@@ -1,7 +1,7 @@
 ﻿using Microsoft.UI.Xaml.Data;
 using System;
 
-namespace DeDupe.Convertes
+namespace DeDupe.Converters
 {
     /// <summary>
     /// Inverse bool

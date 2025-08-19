@@ -3,7 +3,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System;
 
-namespace DeDupe.Convertes
+namespace DeDupe.Converters
 {
     /// <summary>
     /// Converter used for 'disabled' look for textblocks
