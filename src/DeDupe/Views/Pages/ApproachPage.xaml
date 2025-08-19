@@ -8,7 +8,6 @@
     xmlns:pages="using:DeDupe.ViewModels.Pages"
     d:DataContext="{d:DesignInstance Type=pages:ApproachViewModel}"
     mc:Ignorable="d">
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -20,6 +19,204 @@
         <TextBlock Grid.Row="0"
                Text="{x:Bind ViewModel.Title, Mode=OneWay}"
                Style="{StaticResource TitleTextBlockStyle}" />
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" Margin="0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="4*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Side - Approach -->
+            <!-- TODO: Enable other options -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Auto">
+                <StackPanel Spacing="2">
+                    <RadioButton x:Name="DeepLearningRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="Deep Learning"
+                                 IsChecked="{x:Bind ViewModel.IsDeepLearningSelected, Mode=TwoWay}" />
+
+                    <RadioButton x:Name="PerceptualHashingRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="Perceptual Hashing WIP"
+                                 IsEnabled="False"
+                                 IsChecked="{x:Bind ViewModel.IsPerceptualHashingSelected, Mode=TwoWay}" />
+
+                    <RadioButton x:Name="ColorHistogramRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="Color Histogram Hashing WIP"
+                                 IsEnabled="False"
+                                 IsChecked="{x:Bind ViewModel.IsColorHistogramSelected, Mode=TwoWay}" />
+
+                    <RadioButton x:Name="SiftSurfRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="SIFT SURF Features WIP"
+                                 IsEnabled="False"
+                                 IsChecked="{x:Bind ViewModel.IsSiftSurfSelected, Mode=TwoWay}" />
+
+                    <RadioButton x:Name="TemplateMatchingRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="Template Matching WIP"
+                                 IsEnabled="False"
+                                 IsChecked="{x:Bind ViewModel.IsTemplateMatchingSelected, Mode=TwoWay}" />
+
+                    <RadioButton x:Name="SemanticSimilarityRadio"
+                                 GroupName="ApproachGroup"
+                                 Content="Semantic Similarity WIP"
+                                 IsEnabled="False"
+                                 IsChecked="{x:Bind ViewModel.IsSemanticSimilaritySelected, Mode=TwoWay}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Right Side - Options -->
+            <Border Grid.Column="1"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="20">
+                <!-- Deep Learning -->
+                <Grid Visibility="{x:Bind ViewModel.IsDeepLearningSelected, Mode=OneWay}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Title -->
+                    <TextBlock Grid.Row="0"
+                       Text="Deep Learning Configuration"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       Margin="0,0,0,15" />
+
+                    <ScrollViewer Grid.Row="1"
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Auto"
+              ZoomMode="Disabled">
+                        <Grid ColumnSpacing="30">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Model File Selection -->
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <TextBlock Text="Model File" FontWeight="SemiBold" />
+
+                                <TextBlock Text="Supported format: .onnx"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    TextWrapping="Wrap" />
+
+                                <!-- Drag and Drop Container for Model File -->
+                                <Grid x:Name="ModelFileDropGrid"
+                                    ColumnSpacing="5"
+                                    AllowDrop="True"
+                                    DragOver="ModelFileDropGrid_DragOver"
+                                    Drop="ModelFileDropGrid_Drop">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBox x:Name="ModelFileTextBox"
+                                        Grid.Column="0"
+                                        Text="{x:Bind ViewModel.ModelFilePath, Mode=TwoWay}"
+                                        ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=TwoWay}"
+                                        PlaceholderText="Select a model file or drag and drop here..."
+                                        IsReadOnly="True"
+                                        AllowDrop="True" />
+                                    <Button Grid.Column="1"
+                                        Content="..."
+                                        Command="{x:Bind ViewModel.SelectModelFileCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        AllowDrop="True" />
+                                </Grid>
+
+                                <!-- Links to models -->
+                                <TextBlock Text="Download pre-trained models" FontWeight="SemiBold" Margin="0,10,0,0" />
+                                <TextBlock Text=" (Recommend: resnet50-v2-7.onnx)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="20">
+                                    <HyperlinkButton Content="GitHub - onnx - Models/ResNet" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" HorizontalAlignment="Left" />
+                                    <HyperlinkButton Content="HiggungFace - webml/models-moved" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main" HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Normalization Settings -->
+                            <StackPanel Grid.Column="1" Spacing="8">
+                                <TextBlock Text="Normalization Settings" FontWeight="SemiBold" />
+
+                                <!-- Mean Values -->
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="Mean (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <NumberBox Grid.Column="0"
+                                            Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}"
+                                            PlaceholderText="0.485"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+
+                                        <NumberBox Grid.Column="1"
+                                            Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}"
+                                            PlaceholderText="0.456"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+
+                                        <NumberBox Grid.Column="2"
+                                            Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}"
+                                            PlaceholderText="0.406"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+                                    </Grid>
+                                </StackPanel>
+                                <!-- Std Values -->
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="Standard Deviation (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <NumberBox Grid.Column="0"
+                                            Value="{x:Bind ViewModel.StdR, Mode=TwoWay}"
+                                            PlaceholderText="0.229"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+
+                                        <NumberBox Grid.Column="1"
+                                            Value="{x:Bind ViewModel.StdG, Mode=TwoWay}"
+                                            PlaceholderText="0.224"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+
+                                        <NumberBox Grid.Column="2"
+                                            Value="{x:Bind ViewModel.StdB, Mode=TwoWay}"
+                                            PlaceholderText="0.225"
+                                            SmallChange="0.001"
+                                            LargeChange="0.01"
+                                            SpinButtonPlacementMode="Compact" />
+                                    </Grid>
+                                </StackPanel>
+                                <Button Content="Default (ImageNet)" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- Navigation Buttons -->
         <Grid Grid.Row="2">

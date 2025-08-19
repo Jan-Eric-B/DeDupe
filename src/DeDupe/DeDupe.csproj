@@ -96,9 +96,6 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Enums\" />
-  </ItemGroup>
-  <ItemGroup>
     <Page Update="Views\Pages\PreProcessingPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
