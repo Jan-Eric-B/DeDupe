@@ -9,7 +9,7 @@
     d:DataContext="{d:DesignInstance Type=pages:PreProcessingViewModel}"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -18,8 +18,251 @@
 
         <!-- Title -->
         <TextBlock Grid.Row="0"
-               Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-               Style="{StaticResource TitleTextBlockStyle}" />
+            Text="{x:Bind ViewModel.Title, Mode=OneWay}"
+            Style="{StaticResource TitleTextBlockStyle}" />
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1"  Margin="0,20"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Auto">
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Resize Card -->
+                <Border
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="24"
+                    VerticalAlignment="Stretch">
+
+                    <Grid RowSpacing="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <TextBlock Grid.Row="0"
+                            Text="Resize Settings"
+                            FontWeight="SemiBold"
+                            FontSize="16" />
+
+                        <!-- Enable Resize -->
+                        <CheckBox Grid.Row="1" x:Name="ResizeCheckBox" VerticalAlignment="top" Content="Resize Image" IsChecked="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}" />
+
+                        <!-- Size and Method Settings -->
+                        <Grid Grid.Row="2" ColumnSpacing="20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Size Setting -->
+                            <StackPanel Grid.Column="0" Spacing="8">
+                                <TextBlock Text="Size"
+                                    FontWeight="Medium"
+                                    FontSize="14" />
+                                <TextBlock Text="width x height (px)"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <NumberBox x:Name="ResizeSizeNumberBox"
+                                    Value="{x:Bind ViewModel.ResizeSize, Mode=TwoWay}"
+                                    Minimum="32"
+                                    Maximum="2048"
+                                    SpinButtonPlacementMode="Compact"
+                                    IsEnabled="{x:Bind ViewModel.IsResizeSettingsEnabled, Mode=OneWay}"
+                                    HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <!-- Resize Method -->
+                            <StackPanel Grid.Column="1" Spacing="8">
+                                <TextBlock Text="Resize Method"
+                                    FontWeight="Medium"
+                                    FontSize="14" />
+                                <TextBlock Text="Method and padding color"
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Resize Method Dropdown -->
+                                    <ComboBox Grid.Column="0"
+                                        x:Name="ResizeMethodComboBox"
+                                        ItemsSource="{x:Bind ViewModel.ResizeMethods}"
+                                        SelectedItem="{x:Bind ViewModel.ResizeMethod, Mode=TwoWay}"
+                                        IsEnabled="{x:Bind ViewModel.IsResizeSettingsEnabled, Mode=OneWay}"
+                                        HorizontalAlignment="Stretch" />
+
+                                    <!-- Padding Color Picker -->
+                                    <Border Grid.Column="1"
+                                        Background="{x:Bind ViewModel.PaddingColor, Mode=OneWay}"
+                                        Visibility="{x:Bind ViewModel.IsPaddingColorVisible, Mode=OneWay}"
+                                        Width="60"
+                                        Height="32"
+                                        CornerRadius="4"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1">
+                                        <Button Background="Transparent"
+                                            BorderThickness="0"
+                                            Click="PaddingColorButton_Click"
+                                            IsEnabled="{x:Bind ViewModel.IsResizeSettingsEnabled, Mode=OneWay}"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"
+                                            ToolTipService.ToolTip="Select padding color" />
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Interpolation Methods -->
+                        <StackPanel Grid.Row="3" Spacing="12">
+                            <TextBlock Text="Interpolation Methods"
+                                FontWeight="Medium"
+                                FontSize="14" />
+
+                            <Grid ColumnSpacing="20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Downsampling -->
+                                <StackPanel Grid.Column="0" Spacing="8">
+                                    <TextBlock Text="Downsampling"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <ComboBox x:Name="DownsamplingComboBox"
+                                        ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
+                                        SelectedItem="{x:Bind ViewModel.DownsamplingMethod, Mode=TwoWay}"
+                                        IsEnabled="{x:Bind ViewModel.IsInterpolationMethodsEnabled, Mode=OneWay}"
+                                        HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <!-- Upsampling -->
+                                <StackPanel Grid.Column="1" Spacing="8">
+                                    <TextBlock Text="Upsampling"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <ComboBox x:Name="UpsamplingComboBox"
+                                        ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
+                                        SelectedItem="{x:Bind ViewModel.UpsamplingMethod, Mode=TwoWay}"
+                                        IsEnabled="{x:Bind ViewModel.IsInterpolationMethodsEnabled, Mode=OneWay}"
+                                        HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Border Detection Card -->
+                <Border Grid.Column="1"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="24"
+                    VerticalAlignment="Stretch">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Border Detection" FontWeight="SemiBold" FontSize="16" />
+
+                        <!-- Enable Border Detection -->
+                        <CheckBox x:Name="BorderDetectionCheckBox"
+                            Content="Border/Letterbox Detection and Removal"
+                            IsChecked="{x:Bind ViewModel.EnableBorderDetection, Mode=TwoWay}" />
+
+                        <!-- Tolerance Setting -->
+                        <StackPanel Spacing="8" Visibility="{x:Bind ViewModel.EnableBorderDetection, Mode=OneWay}">
+                            <TextBlock Text="Color Tolerance" FontWeight="Medium" FontSize="14" />
+                            <TextBlock Text="How much color variation to allow (0-255)"
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="80" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Slider -->
+                                <Slider Grid.Column="0"
+                                    Minimum="0"
+                                    Maximum="255"
+                                    Value="{x:Bind ViewModel.BorderDetectionTolerance, Mode=TwoWay}"
+                                    IsEnabled="{x:Bind ViewModel.EnableBorderDetection, Mode=OneWay}"
+                                    StepFrequency="1"
+                                    TickFrequency="10"
+                                    TickPlacement="Outside" />
+
+                                <!-- Number Box -->
+                                <NumberBox Grid.Column="1"
+                                    Value="{x:Bind ViewModel.BorderDetectionTolerance, Mode=TwoWay}"
+                                    IsEnabled="{x:Bind ViewModel.EnableBorderDetection, Mode=OneWay}"
+                                    Minimum="0"
+                                    Maximum="255"
+                                    SpinButtonPlacementMode="Compact"
+                                    SmallChange="1"
+                                    LargeChange="10" />
+                            </Grid>
+
+                            <!-- Helper Text -->
+                            <TextBlock FontSize="11"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                TextWrapping="Wrap">
+                        <Run Text="Lower values: Only detect very uniform borders" />
+                        <LineBreak />
+                        <Run Text="Higher values: Detect borders with more color variation" />
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Output Settings Card -->
+                <Border Grid.Column="2"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="24"
+                    VerticalAlignment="Stretch">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Output Settings" FontWeight="SemiBold" FontSize="16" />
+
+                        <!-- File Format -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="File Format"
+                               FontWeight="Medium"
+                               FontSize="14" />
+                            <ComboBox x:Name="OutputFormatComboBox"
+                                ItemsSource="{x:Bind ViewModel.OutputFormats}"
+                                SelectedItem="{x:Bind ViewModel.OutputFormat, Mode=TwoWay}"
+                                HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <!-- Bit Depth -->
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Bit Depth"
+                               FontWeight="Medium"
+                               FontSize="14" />
+                            <ComboBox x:Name="BitDepthComboBox"
+                                ItemsSource="{x:Bind ViewModel.BitDepths}"
+                                SelectedItem="{x:Bind ViewModel.BitDepth, Mode=TwoWay}"
+                                HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </ScrollViewer>
 
         <!-- Navigation Buttons -->
         <Grid Grid.Row="2">
@@ -29,21 +272,41 @@
             </Grid.ColumnDefinitions>
 
             <Button Content="Previous"
-              Grid.Column="0"
-              HorizontalAlignment="Left"
-              Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
+                Grid.Column="0"
+                HorizontalAlignment="Left"
+                Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
             <StackPanel Orientation="Horizontal"
-                  Grid.Column="1"
-                  Spacing="10"
-                  HorizontalAlignment="Right">
-                <Button Content="Complete"
-                Command="{x:Bind ViewModel.CompleteCommand}" />
+                Grid.Column="1"
+                Spacing="10"
+                HorizontalAlignment="Right">
+                <!-- Progress and Status -->
+                <TextBlock x:Name="StatusLabel"
+                    VerticalAlignment="Center" HorizontalAlignment="Right"
+                    Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
 
+                <ProgressRing x:Name="ProgressRing" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+
+                <!-- Process Button -->
+                <Button x:Name="ProcessButton"
+                    Content="Pre-Process Images"
+                    Command="{x:Bind ViewModel.ProcessImagesCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanStartProcessing, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    MinWidth="150" />
+
+                <!-- Open Output Folder Button -->
+                <Button x:Name="OpenTempFolderButton"
+                    Content="Open Temp Folder"
+                    Command="{x:Bind ViewModel.OpenTempFolderCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanOpenTempFolder, Mode=OneWay}"
+                    MinWidth="150" />
                 <Button Content="Next"
-                Command="{x:Bind ViewModel.NavigateToNextCommand}"
-                IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-                Style="{StaticResource AccentButtonStyle}" />
+                    Command="{x:Bind ViewModel.NavigateToNextCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>
         </Grid>
     </Grid>

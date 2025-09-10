@@ -1,4 +1,5 @@
 ﻿using DeDupe.Services;
+using DeDupe.Services.PreProcessing;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,7 @@ namespace DeDupe
 
         private readonly IServiceProvider _serviceProvider;
         private readonly IHost _host;
+        private ILogger<App>? _logger;
 
         public App()
         {
@@ -36,6 +38,14 @@ namespace DeDupe
                 .Build();
 
             _serviceProvider = _host.Services;
+
+            // Add exception handling
+            this.UnhandledException += App_UnhandledException;
+
+#if DEBUG
+            // Add binding failure debugging
+            this.DebugSettings.BindingFailed += DebugSettings_BindingFailed;
+#endif
         }
 
         private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
@@ -43,8 +53,17 @@ namespace DeDupe
             // MainWindowViewModel
             services.AddSingleton<MainWindowViewModel>();
 
-            // NavigationService
+            // App State
+            services.AddSingleton<IAppStateService, AppStateService>();
+
+            // Navigation
             services.AddSingleton<INavigationService, NavigationService>();
+
+            // Image Processing
+            services.AddTransient<IBorderDetectionService, BorderDetectionService>();
+            services.AddTransient<IImageFormatService, ImageFormatService>();
+            services.AddTransient<IImageResizeService, ImageResizeService>();
+            services.AddTransient<ImageProcessingService>();
 
             // Page ViewModels
             services.AddSingleton<FileInputViewModel>();
@@ -65,6 +84,8 @@ namespace DeDupe
         {
             await _host.StartAsync();
 
+            _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
+
             Window = new MainWindow();
             Window.Activate();
         }
@@ -74,5 +95,37 @@ namespace DeDupe
             await _host.StopAsync();
             _host.Dispose();
         }
+
+        #region Exception Handling
+
+        private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            Exception? exception = e.Exception;
+            string? message = $"Unhandled Exception: {exception.Message}";
+            string? stackTrace = $"Stack Trace: {exception.StackTrace}";
+
+            _logger?.LogError(exception, "Unhandled application exception occurred");
+
+            // Debug output
+            System.Diagnostics.Debug.WriteLine(message);
+            System.Diagnostics.Debug.WriteLine(stackTrace);
+
+            // Prevent debugger break
+            e.Handled = true;
+        }
+
+#if DEBUG
+
+        private void DebugSettings_BindingFailed(object sender, BindingFailedEventArgs e)
+        {
+            string? message = $"Binding Failed: {e.Message}";
+            System.Diagnostics.Debug.WriteLine(message);
+
+            _logger?.LogWarning("Data binding failed: {BindingMessage}", e.Message);
+        }
+
+#endif
+
+        #endregion Exception Handling
     }
 }
