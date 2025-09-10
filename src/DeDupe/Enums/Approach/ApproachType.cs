@@ -1,4 +1,4 @@
-﻿namespace DeDupe.Enums
+﻿namespace DeDupe.Enums.Approach
 {
     public enum ApproachType
     {
