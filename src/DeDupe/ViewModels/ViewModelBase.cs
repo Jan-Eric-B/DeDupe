@@ -4,8 +4,23 @@ namespace DeDupe.ViewModels
 {
     public partial class ViewModelBase : ObservableObject
     {
-        // TODO Integrate
+        #region Fields
+
+        private string _title = string.Empty;
+
         private bool _isBusy;
+
+        private string _status = string.Empty;
+
+        #endregion Fields
+
+        #region Properties
+
+        public string Title
+        {
+            get => _title;
+            set => SetProperty(ref _title, value);
+        }
 
         public bool IsBusy
         {
@@ -13,12 +28,12 @@ namespace DeDupe.ViewModels
             set => SetProperty(ref _isBusy, value);
         }
 
-        private string _title = string.Empty;
-
-        public string Title
+        public string Status
         {
-            get => _title;
-            set => SetProperty(ref _title, value);
+            get => _status;
+            set => SetProperty(ref _status, value);
         }
+
+        #endregion Properties
     }
 }

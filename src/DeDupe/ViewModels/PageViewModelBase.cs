@@ -4,7 +4,7 @@ using System;
 
 namespace DeDupe.ViewModels
 {
-    public partial class PageViewModelBase : ViewModelBase
+    public partial class PageViewModelBase : ViewModelBase, IDisposable
     {
         private readonly INavigationService _navigationService;
         private bool _disposed = false;
@@ -91,9 +91,7 @@ namespace DeDupe.ViewModels
                 if (disposing)
                 {
                     // TODO Fill this
-                    // Dispose managed resources here
                 }
-
                 _disposed = true;
             }
         }

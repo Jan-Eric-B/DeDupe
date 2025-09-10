@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Models;
+using DeDupe.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,7 +18,19 @@ namespace DeDupe.ViewModels.Pages
 {
     public partial class FileInputViewModel : PageViewModelBase
     {
+        #region Fields
+
+        private readonly IAppStateService _appStateService;
+
         private bool _includeVideoFiles;
+
+        private ObservableCollection<MediaPathItem> _mediaPathItems = [];
+
+        private readonly Dictionary<string, HashSet<string>> _filePathSources = new(StringComparer.OrdinalIgnoreCase);
+
+        #endregion Fields
+
+        #region Properties
 
         public bool IncludeVideoFiles
         {
@@ -33,8 +46,6 @@ namespace DeDupe.ViewModels.Pages
         }
 
         // Visible collection
-        private ObservableCollection<MediaPathItem> _mediaPathItems = [];
-
         public ObservableCollection<MediaPathItem> MediaPathItems
         {
             get => _mediaPathItems;
@@ -47,38 +58,74 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        // Internal collection
-        private readonly Dictionary<string, HashSet<string>> _filePathSources = new(StringComparer.OrdinalIgnoreCase);
-
-        private int _totalFileCount;
-
-        public int TotalFileCount
-        {
-            get => _totalFileCount;
-            set
-            {
-                SetProperty(ref _totalFileCount, value);
-                OnPropertyChanged(nameof(FileCountText));
-            }
-        }
-
-        private string _fileCountText = "No files selected";
-
-        public string FileCountText
-        {
-            get => _fileCountText;
-            set => SetProperty(ref _fileCountText, value);
-        }
+        public int TotalFileCount => _appStateService.FileCount;
 
         public Microsoft.UI.Xaml.Visibility IsMediaListEmpty => MediaPathItems.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
-        public FileInputViewModel() : base(0)
+        #endregion Properties
+
+        #region Constructor
+
+        public FileInputViewModel(IAppStateService appStateService) : base(0)
         {
+            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+
             Title = "File Input";
+            Status = "No files selected";
             MediaPathItems.CollectionChanged += MediaPathItems_CollectionChanged;
-            TotalFileCount = 0;
             IsBusy = false;
+
+            _appStateService.FilePathsChanged += OnFilePathsChanged;
         }
+
+        #endregion Constructor
+
+        #region Event Handlers
+
+        private void OnFilePathsChanged(object? sender, EventArgs e)
+        {
+            // Update UI
+            OnPropertyChanged(nameof(TotalFileCount));
+            UpdateStatus();
+            UpdateCompletionStatus();
+        }
+
+        private void MediaPathItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(IsMediaListEmpty));
+
+            // Subscribe
+            if (e.NewItems != null)
+            {
+                foreach (MediaPathItem item in e.NewItems)
+                {
+                    item.PropertyChanged += MediaPathItem_PropertyChanged;
+                }
+            }
+
+            // Unsubscribe
+            if (e.OldItems != null)
+            {
+                foreach (MediaPathItem item in e.OldItems)
+                {
+                    item.PropertyChanged -= MediaPathItem_PropertyChanged;
+                }
+            }
+
+            UpdateCompletionStatus();
+        }
+
+        private async void MediaPathItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MediaPathItem.IncludeSubdirectories) && sender is MediaPathItem item && item.IsFolder)
+            {
+                await ProcessFolderAsync(item);
+            }
+        }
+
+        #endregion Event Handlers
+
+        #region Commands
 
         [RelayCommand]
         private async Task SelectFolder()
@@ -142,8 +189,7 @@ namespace DeDupe.ViewModels.Pages
             if (files != null && files.Count > 0)
             {
                 IsBusy = true;
-                UpdateFileCountText();
-
+                UpdateStatus();
                 foreach (StorageFile file in files)
                 {
                     // Check if file is already in list and its extension is supported
@@ -166,7 +212,7 @@ namespace DeDupe.ViewModels.Pages
                 }
 
                 IsBusy = false;
-                UpdateFileCountText();
+                UpdateStatus();
             }
         }
 
@@ -176,63 +222,34 @@ namespace DeDupe.ViewModels.Pages
             if (item != null)
             {
                 MediaPathItems.Remove(item);
-                RemoveFilesFromSource(item.Path);
+                RemoveSource(item.Path);
             }
         }
 
-        private void UpdateFileCountText()
+        #endregion Commands
+
+        #region Methods
+
+        private void UpdateStatus()
         {
             if (IsBusy)
             {
-                FileCountText = "Processing files...";
+                Status = "Processing files...";
             }
             else if (TotalFileCount == 0)
             {
-                FileCountText = "No files selected";
+                Status = "No files selected";
             }
             else
             {
-                FileCountText = $"{TotalFileCount} file{(TotalFileCount == 1 ? "" : "s")} selected";
+                Status = $"{TotalFileCount} file{(TotalFileCount == 1 ? "" : "s")} selected";
             }
-        }
-
-        private void MediaPathItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            OnPropertyChanged(nameof(IsMediaListEmpty));
-
-            // Subscribe
-            if (e.NewItems != null)
-            {
-                foreach (MediaPathItem item in e.NewItems)
-                {
-                    item.PropertyChanged += MediaPathItem_PropertyChanged;
-                }
-            }
-
-            // Unsubscribe
-            if (e.OldItems != null)
-            {
-                foreach (MediaPathItem item in e.OldItems)
-                {
-                    item.PropertyChanged -= MediaPathItem_PropertyChanged;
-                }
-            }
-
-            UpdateCompletionStatus();
         }
 
         private void UpdateCompletionStatus()
         {
             IsComplete = MediaPathItems.Count > 0;
             OnPropertyChanged(nameof(IsMediaListEmpty));
-        }
-
-        private async void MediaPathItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(MediaPathItem.IncludeSubdirectories) && sender is MediaPathItem item && item.IsFolder)
-            {
-                await ProcessFolderAsync(item);
-            }
         }
 
         public void AddFilePath(string filePath, string sourcePath)
@@ -248,8 +265,7 @@ namespace DeDupe.ViewModels.Pages
 
             sources.Add(sourcePath);
 
-            TotalFileCount = _filePathSources.Count;
-            UpdateFileCountText();
+            UpdateSharedStateFilePaths();
         }
 
         public static bool IsImageFile(string extension)
@@ -260,59 +276,57 @@ namespace DeDupe.ViewModels.Pages
         // Process all files in folder
         public async Task ProcessFolderAsync(MediaPathItem folderItem)
         {
-            if (folderItem.IsFolder)
-            {
-                IsBusy = true;
-                UpdateFileCountText();
-
-                try
-                {
-                    // Remove already existing files
-                    RemoveFilesFromSource(folderItem.Path);
-
-                    // Add matching files
-                    StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderItem.Path);
-                    if (folder != null)
-                    {
-                        // Get supported files
-                        QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, MediaFileExtensions.SupportedImageExtensions);
-
-                        if (folderItem.IncludeSubdirectories)
-                        {
-                            queryOptions.FolderDepth = FolderDepth.Deep;
-                        }
-                        else
-                        {
-                            queryOptions.FolderDepth = FolderDepth.Shallow;
-                        }
-
-                        StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
-                        IReadOnlyList<StorageFile> files = await query.GetFilesAsync();
-
-                        foreach (StorageFile file in files)
-                        {
-                            AddFilePath(file.Path, folderItem.Path);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
-                }
-                finally
-                {
-                    IsBusy = false;
-                    UpdateFileCountText();
-                }
-            }
-            else
+            if (!folderItem.IsFolder)
             {
                 return;
+            }
+
+            IsBusy = true;
+            UpdateStatus();
+
+            try
+            {
+                // Remove existing files from folder
+                RemoveSource(folderItem.Path);
+
+                // Add matching files from folder
+                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderItem.Path);
+                if (folder != null)
+                {
+                    // Get supported files in this folder
+                    QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, MediaFileExtensions.SupportedImageExtensions);
+
+                    if (folderItem.IncludeSubdirectories)
+                    {
+                        queryOptions.FolderDepth = FolderDepth.Deep;
+                    }
+                    else
+                    {
+                        queryOptions.FolderDepth = FolderDepth.Shallow;
+                    }
+
+                    StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
+                    IReadOnlyList<StorageFile> files = await query.GetFilesAsync();
+
+                    foreach (StorageFile file in files)
+                    {
+                        AddFilePath(file.Path, folderItem.Path);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+                UpdateStatus();
             }
         }
 
         // Removes source and any files from only that source
-        private void RemoveFilesFromSource(string sourcePath)
+        private void RemoveSource(string sourcePath)
         {
             // Get all files from that source
             foreach (KeyValuePair<string, HashSet<string>> filePathEntry in _filePathSources.ToList())
@@ -325,8 +339,38 @@ namespace DeDupe.ViewModels.Pages
                 }
             }
 
-            TotalFileCount = _filePathSources.Count;
-            UpdateFileCountText();
+            // Update shared state
+            UpdateSharedStateFilePaths();
         }
+
+        // Update shared state service with current file paths
+        private void UpdateSharedStateFilePaths()
+        {
+            List<string>? filePaths = [.. _filePathSources.Keys];
+            _appStateService.SetFilePaths(filePaths);
+        }
+
+        #endregion Methods
+
+        #region Cleanup
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                // Unsubscribe from events
+                _appStateService.FilePathsChanged -= OnFilePathsChanged;
+                MediaPathItems.CollectionChanged -= MediaPathItems_CollectionChanged;
+
+                // Unsubscribe from PropertyChanged for each item in MediaPathItems
+                foreach (MediaPathItem item in MediaPathItems)
+                {
+                    item.PropertyChanged -= MediaPathItem_PropertyChanged;
+                }
+            }
+            base.Dispose(disposing);
+        }
+
+        #endregion Cleanup
     }
 }
