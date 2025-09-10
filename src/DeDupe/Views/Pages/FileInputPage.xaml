@@ -14,7 +14,7 @@
         <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
         <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
     </Page.Resources>
-    <Grid>
+    <Grid RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -148,7 +148,7 @@
                 <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Left" Spacing="10">
                     <Button x:Name="SelectFolderButton" Content="Select Folder" Command="{x:Bind ViewModel.SelectFolderCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
                     <Button x:Name="SelectFilesButton" Content="Select Files" Command="{x:Bind ViewModel.SelectFilesCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
-                    <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.FileCountText, Mode=OneWay}" />
+                    <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
                 </StackPanel>
             </Grid>
         </Grid>

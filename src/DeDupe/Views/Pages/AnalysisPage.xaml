@@ -9,7 +9,7 @@
     d:DataContext="{d:DesignInstance Type=pages:AnalysisViewModel}"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
