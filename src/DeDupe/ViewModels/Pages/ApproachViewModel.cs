@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums.Approach;
+using DeDupe.Services;
 using Microsoft.UI.Xaml;
 using System;
 using System.IO;
@@ -14,16 +15,7 @@ namespace DeDupe.ViewModels.Pages
     {
         #region Fields
 
-        private ApproachType _selectedApproach = ApproachType.DeepLearning;
-
-        private string _modelFilePath = string.Empty;
-
-        private double _meanR = 0.485;
-        private double _meanG = 0.456;
-        private double _meanB = 0.406;
-        private double _stdR = 0.229;
-        private double _stdG = 0.224;
-        private double _stdB = 0.225;
+        private readonly IAppStateService _appStateService;
 
         #endregion Fields
 
@@ -31,11 +23,13 @@ namespace DeDupe.ViewModels.Pages
 
         public ApproachType SelectedApproach
         {
-            get => _selectedApproach;
+            get => _appStateService.SelectedApproach;
             set
             {
-                if (SetProperty(ref _selectedApproach, value))
+                if (_appStateService.SelectedApproach != value)
                 {
+                    _appStateService.SelectedApproach = value;
+
                     // Notify all radio buttons
                     OnPropertyChanged(nameof(IsDeepLearningSelected));
                     OnPropertyChanged(nameof(IsPerceptualHashingSelected));
@@ -44,17 +38,21 @@ namespace DeDupe.ViewModels.Pages
                     OnPropertyChanged(nameof(IsTemplateMatchingSelected));
                     OnPropertyChanged(nameof(IsSemanticSimilaritySelected));
                     OnPropertyChanged(nameof(IsOtherApproachSelected));
+
+                    UpdateCompletionStatus();
                 }
             }
         }
 
         public string ModelFilePath
         {
-            get => _modelFilePath;
+            get => _appStateService.ModelFilePath;
             set
             {
-                if (SetProperty(ref _modelFilePath, value))
+                if (_appStateService.ModelFilePath != value)
                 {
+                    _appStateService.ModelFilePath = value;
+                    OnPropertyChanged();
                     UpdateCompletionStatus();
                 }
             }
@@ -100,38 +98,80 @@ namespace DeDupe.ViewModels.Pages
 
         public double MeanR
         {
-            get => _meanR;
-            set => SetProperty(ref _meanR, value);
+            get => _appStateService.MeanR;
+            set
+            {
+                if (_appStateService.MeanR != value)
+                {
+                    _appStateService.MeanR = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public double MeanG
         {
-            get => _meanG;
-            set => SetProperty(ref _meanG, value);
+            get => _appStateService.MeanG;
+            set
+            {
+                if (_appStateService.MeanG != value)
+                {
+                    _appStateService.MeanG = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public double MeanB
         {
-            get => _meanB;
-            set => SetProperty(ref _meanB, value);
+            get => _appStateService.MeanB;
+            set
+            {
+                if (_appStateService.MeanB != value)
+                {
+                    _appStateService.MeanB = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public double StdR
         {
-            get => _stdR;
-            set => SetProperty(ref _stdR, value);
+            get => _appStateService.StdR;
+            set
+            {
+                if (_appStateService.StdR != value)
+                {
+                    _appStateService.StdR = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public double StdG
         {
-            get => _stdG;
-            set => SetProperty(ref _stdG, value);
+            get => _appStateService.StdG;
+            set
+            {
+                if (_appStateService.StdG != value)
+                {
+                    _appStateService.StdG = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         public double StdB
         {
-            get => _stdB;
-            set => SetProperty(ref _stdB, value);
+            get => _appStateService.StdB;
+            set
+            {
+                if (_appStateService.StdB != value)
+                {
+                    _appStateService.StdB = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         #endregion Properties
@@ -163,21 +203,30 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand]
         private void ResetNormalization()
         {
-            MeanR = 0.485;
-            MeanG = 0.456;
-            MeanB = 0.406;
-            StdR = 0.229;
-            StdG = 0.224;
-            StdB = 0.225;
+            _appStateService.ResetNormalizationToDefaults();
+
+            // Notify UI of changes
+            OnPropertyChanged(nameof(MeanR));
+            OnPropertyChanged(nameof(MeanG));
+            OnPropertyChanged(nameof(MeanB));
+            OnPropertyChanged(nameof(StdR));
+            OnPropertyChanged(nameof(StdG));
+            OnPropertyChanged(nameof(StdB));
         }
 
         #endregion Commands
 
         #region Constructor
 
-        public ApproachViewModel() : base(1)
+        public ApproachViewModel(IAppStateService appStateService) : base(1)
         {
+            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+
             Title = "Approach Selection";
+
+            // Subscribe to app state changes
+            _appStateService.ApproachSettingsChanged += OnApproachSettingsChanged;
+
             UpdateCompletionStatus();
         }
 
@@ -191,7 +240,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (IsDeepLearningSelected)
                 {
-                    return !string.IsNullOrEmpty(ModelFilePath) && File.Exists(ModelFilePath);
+                    return !string.IsNullOrEmpty(_appStateService.ModelFilePath) && File.Exists(_appStateService.ModelFilePath);
                 }
                 else
                 {
@@ -204,6 +253,37 @@ namespace DeDupe.ViewModels.Pages
         private void UpdateCompletionStatus()
         {
             IsComplete = CanNavigateToNext;
+        }
+
+        private void OnApproachSettingsChanged(object? sender, EventArgs e)
+        {
+            // Update UI when app state changes
+            OnPropertyChanged(nameof(SelectedApproach));
+            OnPropertyChanged(nameof(ModelFilePath));
+            OnPropertyChanged(nameof(IsDeepLearningSelected));
+            OnPropertyChanged(nameof(IsPerceptualHashingSelected));
+            OnPropertyChanged(nameof(IsColorHistogramSelected));
+            OnPropertyChanged(nameof(IsSiftSurfSelected));
+            OnPropertyChanged(nameof(IsTemplateMatchingSelected));
+            OnPropertyChanged(nameof(IsSemanticSimilaritySelected));
+            OnPropertyChanged(nameof(IsOtherApproachSelected));
+            OnPropertyChanged(nameof(MeanR));
+            OnPropertyChanged(nameof(MeanG));
+            OnPropertyChanged(nameof(MeanB));
+            OnPropertyChanged(nameof(StdR));
+            OnPropertyChanged(nameof(StdG));
+            OnPropertyChanged(nameof(StdB));
+
+            UpdateCompletionStatus();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _appStateService.ApproachSettingsChanged -= OnApproachSettingsChanged;
+            }
+            base.Dispose(disposing);
         }
 
         #endregion Methods

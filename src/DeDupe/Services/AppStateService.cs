@@ -1,4 +1,5 @@
 ﻿using DeDupe.Models;
+using DeDupe.Enums.Approach;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,6 +21,15 @@ namespace DeDupe.Services
         private readonly List<ProcessedMedia> _processedImages = [];
 
         private string _tempFolderPath = ApplicationData.Current.TemporaryFolder.Path + Path.DirectorySeparatorChar + "ProcessedImages";
+
+        private ApproachType _selectedApproach = ApproachType.DeepLearning;
+        private string _modelFilePath = string.Empty;
+        private double _meanR = 0.485;
+        private double _meanG = 0.456;
+        private double _meanB = 0.406;
+        private double _stdR = 0.229;
+        private double _stdG = 0.224;
+        private double _stdB = 0.225;
 
         #endregion Fields
 
@@ -46,6 +56,118 @@ namespace DeDupe.Services
         public IReadOnlyCollection<ProcessedMedia> ProcessedImages => _processedImages.AsReadOnly();
 
         public int ProcessedImageCount => _processedImages.Count;
+
+        public ApproachType SelectedApproach
+        {
+            get => _selectedApproach;
+            set
+            {
+                if (_selectedApproach != value)
+                {
+                    _selectedApproach = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public string ModelFilePath
+        {
+            get => _modelFilePath;
+            set
+            {
+                if (_modelFilePath != value)
+                {
+                    _modelFilePath = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double MeanR
+        {
+            get => _meanR;
+            set
+            {
+                if (_meanR != value)
+                {
+                    _meanR = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double MeanG
+        {
+            get => _meanG;
+            set
+            {
+                if (_meanG != value)
+                {
+                    _meanG = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double MeanB
+        {
+            get => _meanB;
+            set
+            {
+                if (_meanB != value)
+                {
+                    _meanB = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdR
+        {
+            get => _stdR;
+            set
+            {
+                if (_stdR != value)
+                {
+                    _stdR = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdG
+        {
+            get => _stdG;
+            set
+            {
+                if (_stdG != value)
+                {
+                    _stdG = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdB
+        {
+            get => _stdB;
+            set
+            {
+                if (_stdB != value)
+                {
+                    _stdB = value;
+                    OnPropertyChanged();
+                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
 
         #endregion Properties
 
@@ -90,6 +212,16 @@ namespace DeDupe.Services
             ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        public void ResetNormalizationToDefaults()
+        {
+            MeanR = 0.485;
+            MeanG = 0.456;
+            MeanB = 0.406;
+            StdR = 0.229;
+            StdG = 0.224;
+            StdB = 0.225;
+        }
+
         #endregion Methods
 
         #region Events
@@ -99,6 +231,8 @@ namespace DeDupe.Services
         public event EventHandler? ProcessedImagesChanged;
 
         public event EventHandler? TempFolderPathChanged;
+
+        public event EventHandler? ApproachSettingsChanged;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

@@ -1,4 +1,5 @@
 ﻿using DeDupe.Models;
+using DeDupe.Enums.Approach;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -29,6 +30,55 @@ namespace DeDupe.Services
         int FileCount { get; }
 
         #endregion FileInput Data
+
+        #region Approach Data
+
+        /// <summary>
+        /// Selected approach type
+        /// </summary>
+        ApproachType SelectedApproach { get; set; }
+
+        /// <summary>
+        /// Model file path for deep learning approach
+        /// </summary>
+        string ModelFilePath { get; set; }
+
+        /// <summary>
+        /// Mean R value for normalization
+        /// </summary>
+        double MeanR { get; set; }
+
+        /// <summary>
+        /// Mean G value for normalization
+        /// </summary>
+        double MeanG { get; set; }
+
+        /// <summary>
+        /// Mean B value for normalization
+        /// </summary>
+        double MeanB { get; set; }
+
+        /// <summary>
+        /// Standard deviation R value for normalization
+        /// </summary>
+        double StdR { get; set; }
+
+        /// <summary>
+        /// Standard deviation G value for normalization
+        /// </summary>
+        double StdG { get; set; }
+
+        /// <summary>
+        /// Standard deviation B value for normalization
+        /// </summary>
+        double StdB { get; set; }
+
+        /// <summary>
+        /// Reset normalization values to ImageNet defaults
+        /// </summary>
+        void ResetNormalizationToDefaults();
+
+        #endregion Approach Data
 
         #region PreProcessing Data
 
@@ -79,6 +129,11 @@ namespace DeDupe.Services
         /// Temp folder changes
         /// </summary>
         event EventHandler? TempFolderPathChanged;
+
+        /// <summary>
+        /// Approach settings changed
+        /// </summary>
+        event EventHandler? ApproachSettingsChanged;
 
         #endregion Events
     }
