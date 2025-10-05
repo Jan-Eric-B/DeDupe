@@ -18,8 +18,61 @@
 
         <!-- Title -->
         <TextBlock Grid.Row="0"
-               Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-               Style="{StaticResource TitleTextBlockStyle}" />
+            Text="{x:Bind ViewModel.Title, Mode=OneWay}"
+            Style="{StaticResource TitleTextBlockStyle}" />
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1"  Margin="0,20" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <Border Grid.Column="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                VerticalAlignment="Stretch">
+                <StackPanel Spacing="15">
+                    <!-- Similarity Threshold Setting -->
+
+                    <TextBlock Text="Similarity Threshold" FontWeight="SemiBold" FontSize="16" />
+
+                    <TextBlock Text="How similar images must be to group together (0.0 - 1.0)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="80" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Slider -->
+                        <Slider Grid.Column="0"
+                            Minimum="0.5"
+                            Maximum="1.0"
+                            Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}"
+                            StepFrequency="0.01"
+                            TickFrequency="0.1"
+                            TickPlacement="Outside" />
+
+                        <!-- Number Box -->
+                        <NumberBox Grid.Column="1"
+                            Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}"
+                            Minimum="0.5"
+                            Maximum="1.0"
+                            SpinButtonPlacementMode="Compact"
+                            SmallChange="0.01"
+                            LargeChange="0.05" />
+                    </Grid>
+
+                    <!-- Helper Text -->
+                    <TextBlock FontSize="11"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextWrapping="Wrap">
+                        <Run Text="Higher values: More strict grouping (fewer, more similar groups)" />
+                        <LineBreak />
+                        <Run Text="Lower values: More lenient grouping (more groups, less similar)" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
 
         <!-- Navigation Buttons -->
         <Grid Grid.Row="2">
@@ -37,8 +90,28 @@
                   Grid.Column="1"
                   Spacing="10"
                   HorizontalAlignment="Right">
-                <Button Content="Complete"
-                Command="{x:Bind ViewModel.CompleteCommand}" />
+
+                <!-- Progress and Status -->
+                <TextBlock x:Name="StatusLabel"
+                    VerticalAlignment="Center" HorizontalAlignment="Right"
+                    Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <ProgressRing x:Name="ProgressRing" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+
+                <Button Content="Extract Features"
+                  Command="{x:Bind ViewModel.ExtractFeaturesCommand}"
+                  IsEnabled="True"
+                  Style="{StaticResource AccentButtonStyle}"
+                  FontSize="13"
+                  MinWidth="150" />
+
+                <Button Content="Analyze Similarity"
+                  Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
+                  IsEnabled="{x:Bind ViewModel.CanStartSimilarityAnalysis, Mode=OneWay}"
+                  Style="{StaticResource AccentButtonStyle}"
+                  FontSize="13"
+                  MinWidth="150" />
 
                 <Button Content="Next"
                 Command="{x:Bind ViewModel.NavigateToNextCommand}"

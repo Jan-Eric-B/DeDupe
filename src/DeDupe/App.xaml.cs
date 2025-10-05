@@ -1,4 +1,5 @@
 ﻿using DeDupe.Services;
+using DeDupe.Services.Analysis;
 using DeDupe.Services.PreProcessing;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;
@@ -70,6 +71,8 @@ namespace DeDupe
             services.AddSingleton<ApproachViewModel>();
             services.AddSingleton<PreProcessingViewModel>();
             services.AddSingleton<AnalysisViewModel>();
+
+            services.AddSingleton<FeatureExtractionService>();
 
             // Logging
             services.AddLogging();
