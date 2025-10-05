@@ -38,8 +38,8 @@ namespace DeDupe
             Type pageType = pageIndex switch
             {
                 0 => typeof(FileInputPage),
-                1 => typeof(ApproachPage),
-                2 => typeof(PreProcessingPage),
+                1 => typeof(PreProcessingPage),
+                2 => typeof(ApproachPage),
                 3 => typeof(AnalysisPage),
                 _ => typeof(FileInputPage)
             };

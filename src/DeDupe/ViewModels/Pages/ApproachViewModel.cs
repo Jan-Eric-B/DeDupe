@@ -224,7 +224,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ApproachViewModel(IAppStateService appStateService) : base(1)
+        public ApproachViewModel(IAppStateService appStateService) : base(2)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
 

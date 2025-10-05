@@ -171,7 +171,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public PreProcessingViewModel(IAppStateService appStateService, IBorderDetectionService borderDetectionService, IImageFormatService imageFormatService, IImageResizeService imageResizeService) : base(2)
+        public PreProcessingViewModel(IAppStateService appStateService, IBorderDetectionService borderDetectionService, IImageFormatService imageFormatService, IImageResizeService imageResizeService) : base(1)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _imageProcessingService = new ImageProcessingService(
