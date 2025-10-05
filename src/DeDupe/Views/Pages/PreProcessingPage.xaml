@@ -17,18 +17,16 @@
         </Grid.RowDefinitions>
 
         <!-- Title -->
-        <TextBlock Grid.Row="0"
-            Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-            Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock Grid.Row="0" Margin="5,0" Text="{x:Bind ViewModel.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
 
         <!-- Main Content -->
-        <ScrollViewer Grid.Row="1"  Margin="0,20"
+        <ScrollViewer Grid.Row="1"
             HorizontalScrollBarVisibility="Auto"
             VerticalScrollBarVisibility="Auto">
-            <Grid ColumnSpacing="16">
+            <Grid ColumnSpacing="10">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
@@ -38,7 +36,7 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Padding="24"
+                    Padding="20"
                     VerticalAlignment="Stretch">
 
                     <Grid RowSpacing="20">
@@ -46,20 +44,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <!-- Header -->
-                        <TextBlock Grid.Row="0"
-                            Text="Resize Settings"
-                            FontWeight="SemiBold"
-                            FontSize="16" />
-
-                        <!-- Enable Resize -->
-                        <CheckBox Grid.Row="1" x:Name="ResizeCheckBox" VerticalAlignment="top" Content="Resize Image" IsChecked="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}" />
+                        <TextBlock Grid.Row="0" Text="Resize Settings" FontWeight="SemiBold" FontSize="16" />
 
                         <!-- Size and Method Settings -->
-                        <Grid Grid.Row="2" ColumnSpacing="20">
+                        <Grid Grid.Row="1" ColumnSpacing="20">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
@@ -67,9 +58,8 @@
 
                             <!-- Size Setting -->
                             <StackPanel Grid.Column="0" Spacing="8">
-                                <TextBlock Text="Size"
-                                    FontWeight="Medium"
-                                    FontSize="14" />
+                                <CheckBox x:Name="ResizeCheckBox" FontSize="14" FontWeight="Medium" Content="Resize Image" IsChecked="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}" />
+
                                 <TextBlock Text="width x height (px)"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -83,7 +73,7 @@
                             </StackPanel>
 
                             <!-- Resize Method -->
-                            <StackPanel Grid.Column="1" Spacing="8">
+                            <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Bottom">
                                 <TextBlock Text="Resize Method"
                                     FontWeight="Medium"
                                     FontSize="14" />
@@ -127,7 +117,7 @@
                         </Grid>
 
                         <!-- Interpolation Methods -->
-                        <StackPanel Grid.Row="3" Spacing="12">
+                        <StackPanel Grid.Row="2" Spacing="12">
                             <TextBlock Text="Interpolation Methods"
                                 FontWeight="Medium"
                                 FontSize="14" />
@@ -172,7 +162,7 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Padding="24"
+                    Padding="20"
                     VerticalAlignment="Stretch">
                     <StackPanel Spacing="20">
                         <TextBlock Text="Border Detection" FontWeight="SemiBold" FontSize="16" />
@@ -233,7 +223,7 @@
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="8"
-                    Padding="24"
+                    Padding="20"
                     VerticalAlignment="Stretch">
                     <StackPanel Spacing="20">
                         <TextBlock Text="Output Settings" FontWeight="SemiBold" FontSize="16" />
@@ -268,7 +258,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5*" />
             </Grid.ColumnDefinitions>
 
             <Button Content="Previous"
@@ -280,14 +270,15 @@
                 Grid.Column="1"
                 Spacing="10"
                 HorizontalAlignment="Right">
+
                 <!-- Progress and Status -->
+                <ProgressRing x:Name="ProgressRing" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+
                 <TextBlock x:Name="StatusLabel"
                     VerticalAlignment="Center" HorizontalAlignment="Right"
                     Text="{x:Bind ViewModel.Status, Mode=OneWay}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
-
-                <ProgressRing x:Name="ProgressRing" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
 
                 <!-- Process Button -->
                 <Button x:Name="ProcessButton"

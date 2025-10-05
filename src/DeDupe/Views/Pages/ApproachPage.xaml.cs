@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 
@@ -77,6 +79,22 @@ namespace DeDupe.Views.Pages
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Error handling file drop: {ex.Message}");
+                }
+            }
+        }
+
+        private void ModelFileTextBlock_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(ViewModel.ModelFilePath) && File.Exists(ViewModel.ModelFilePath))
+            {
+                try
+                {
+                    // Open folder and select the file
+                    Process.Start("explorer.exe", $"/select,\"{ViewModel.ModelFilePath}\"");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error opening folder: {ex.Message}");
                 }
             }
         }

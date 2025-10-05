@@ -22,29 +22,27 @@
         </Grid.RowDefinitions>
 
         <!-- Title -->
-        <TextBlock Grid.Row="0"
-           Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-           Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock Grid.Row="0" Margin="5,0" Text="{x:Bind ViewModel.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
 
         <!-- Content -->
         <Grid Grid.Row="1" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" />
-                <ColumnDefinition Width="7*" />
+                <!--<ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="7*" />-->
             </Grid.ColumnDefinitions>
 
             <!-- Options -->
-            <StackPanel VerticalAlignment="Bottom" Grid.Column="0" Spacing="10" Margin="0,20,0,42">
+            <StackPanel VerticalAlignment="Bottom" Grid.Column="0" Spacing="10" Margin="0,20,0,42" Visibility="Collapsed">
 
                 <!-- Include Video Files -->
                 <CheckBox IsChecked="{x:Bind ViewModel.IncludeVideoFiles, Mode=TwoWay}" IsEnabled="False">WIP - Include Video / Animated files</CheckBox>
 
                 <Grid
-            Padding="10"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                    Padding="10"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
@@ -93,71 +91,80 @@
             </StackPanel>
 
             <!-- Item List -->
-            <Grid Grid.Column="1" RowSpacing="10">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <ListView x:Name="lvMediaSelectionList"
+                Grid.Column="1"
+                ItemsSource="{x:Bind ViewModel.SourcePathItems, Mode=OneWay}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="8"
+                SelectionMode="None"
+                AllowDrop="True"
+                Padding="0,5"
+                DragOver="lvMediaSelectionList_DragOver"
+                Drop="lvMediaSelectionList_Drop">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:SourcePathItem">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                <ListView x:Name="lvMediaSelectionList"
-            Grid.Row="0"
-            ItemsSource="{x:Bind ViewModel.SourcePathItems, Mode=OneWay}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            CornerRadius="8"
-            SelectionMode="None"
-            AllowDrop="True"
-            DragOver="lvMediaSelectionList_DragOver"
-            Drop="lvMediaSelectionList_Drop">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:SourcePathItem">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                            <!-- Item Icon -->
+                            <FontIcon Grid.Column="0" Margin="0,0,10,0" Glyph="{x:Bind IconGlyph, Mode=OneWay}" VerticalAlignment="Center" />
 
-                                <!-- Item Icon -->
-                                <FontIcon Grid.Column="0" Margin="0,0,10,0" Glyph="{x:Bind IconGlyph, Mode=OneWay}" VerticalAlignment="Center" />
+                            <!-- Item Path -->
+                            <TextBlock Grid.Column="1" Text="{x:Bind Path}" ToolTipService.ToolTip="{x:Bind Path}" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
 
-                                <!-- Item Path -->
-                                <TextBlock Grid.Column="1" Text="{x:Bind Path}" ToolTipService.ToolTip="{x:Bind Path}" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                            <!-- Include Subdirectories Checkbox - Only visible for folders with subdirectories -->
+                            <CheckBox Grid.Column="2" Margin="10,0" IsChecked="{x:Bind IncludeSubdirectories, Mode=TwoWay}" Content="Include Subdirectories" VerticalAlignment="Center" Visibility="{x:Bind ShowSubdirectoriesCheckbox}" />
+                            <!-- Remove Button -->
 
-                                <!-- Include Subdirectories Checkbox - Only visible for folders with subdirectories -->
-                                <CheckBox Grid.Column="2" Margin="10,0" IsChecked="{x:Bind IncludeSubdirectories, Mode=TwoWay}" Content="Include Subdirectories" VerticalAlignment="Center" Visibility="{x:Bind ShowSubdirectoriesCheckbox}" />
-                                <!-- Remove Button -->
+                            <Button Grid.Column="3" Command="{Binding ElementName=lvMediaSelectionList, Path=DataContext.RemoveItemCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" IsEnabled="{Binding ElementName=lvMediaSelectionList, Path=DataContext.IsBusy, Converter={StaticResource InverseBoolConverter}}">
+                                <FontIcon Glyph="&#xE74D;" />
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
 
-                                <Button Grid.Column="3" Command="{Binding ElementName=lvMediaSelectionList, Path=DataContext.RemoveItemCommand}" CommandParameter="{Binding}" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" IsEnabled="{Binding ElementName=lvMediaSelectionList, Path=DataContext.IsBusy, Converter={StaticResource InverseBoolConverter}}">
-                                    <FontIcon Glyph="&#xE74D;" />
-                                </Button>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
+                <!-- Empty state message -->
+                <ListView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsStackPanel />
+                    </ItemsPanelTemplate>
+                </ListView.ItemsPanel>
+            </ListView>
 
-                    <!-- Empty state message -->
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <ItemsStackPanel />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                </ListView>
-
-                <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Left" Spacing="10">
-                    <Button x:Name="SelectFolderButton" Content="Select Folder" Command="{x:Bind ViewModel.SelectFolderCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
-                    <Button x:Name="SelectFilesButton" Content="Select Files" Command="{x:Bind ViewModel.SelectFilesCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
-                    <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
-                </StackPanel>
-            </Grid>
+            <StackPanel
+        Visibility="{x:Bind ViewModel.IsMediaListEmpty, Mode=OneWay}"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center"
+        Spacing="16"
+        IsHitTestVisible="False">
+                <FontIcon
+            Glyph="&#xE8B7;"
+            FontSize="72"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                <TextBlock
+            Text="Drag and drop files or folders here"
+            Style="{StaticResource SubtitleTextBlockStyle}"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            HorizontalAlignment="Center" />
+                <TextBlock
+            Text="or use the buttons below to select files"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            HorizontalAlignment="Center" />
+            </StackPanel>
         </Grid>
 
         <!-- Navigation Buttons -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5*" />
             </Grid.ColumnDefinitions>
 
             <Button Content="Previous"
@@ -165,12 +172,15 @@
         HorizontalAlignment="Left"
         Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
-            <Button Content="Next"
-        Grid.Column="1"
-        HorizontalAlignment="Right"
-        Command="{x:Bind ViewModel.NavigateToNextCommand}"
-        IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-        Style="{StaticResource AccentButtonStyle}" />
+            <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" Spacing="10">
+                <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
+                <Button x:Name="SelectFolderButton" Content="Select Folder" Command="{x:Bind ViewModel.SelectFolderCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
+                <Button x:Name="SelectFilesButton" Content="Select Files" Command="{x:Bind ViewModel.SelectFilesCommand}" IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBoolConverter}}" />
+                <Button Content="Next"
+                    Command="{x:Bind ViewModel.NavigateToNextCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

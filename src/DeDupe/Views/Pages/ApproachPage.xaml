@@ -16,21 +16,18 @@
         </Grid.RowDefinitions>
 
         <!-- Title -->
-        <TextBlock Grid.Row="0"
-               Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-               Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock Grid.Row="0" Margin="5,0" Text="{x:Bind ViewModel.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
 
         <!-- Main Content -->
-        <Grid Grid.Row="1" Margin="0,20">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="4*" />
+                <!--<ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="4*" />-->
             </Grid.ColumnDefinitions>
 
             <!-- Left Side - Approach -->
             <!-- TODO: Enable other options -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Visibility="Collapsed">
                 <StackPanel Spacing="2">
                     <RadioButton x:Name="DeepLearningRadio"
                                  GroupName="ApproachGroup"
@@ -71,23 +68,23 @@
 
             <!-- Right Side - Options -->
             <Border Grid.Column="1"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="1"
-        CornerRadius="8"
-        Padding="20">
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20,0">
                 <!-- Deep Learning -->
                 <Grid Visibility="{x:Bind ViewModel.IsDeepLearningSelected, Mode=OneWay}">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <!--<RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />-->
                     </Grid.RowDefinitions>
 
                     <!-- Title -->
-                    <TextBlock Grid.Row="0"
+                    <!--<TextBlock Grid.Row="0"
                        Text="Deep Learning Configuration"
                        Style="{StaticResource SubtitleTextBlockStyle}"
-                       Margin="0,0,0,15" />
+                       Margin="0,0,0,15" />-->
 
                     <ScrollViewer Grid.Row="1" Margin="0,20,0,0"
                         VerticalScrollBarVisibility="Auto"
@@ -118,14 +115,19 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="auto" />
                                     </Grid.ColumnDefinitions>
-
-                                    <TextBox x:Name="ModelFileTextBox"
-                                        Grid.Column="0"
-                                        Text="{x:Bind ViewModel.ModelFilePath, Mode=TwoWay}"
-                                        ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=TwoWay}"
-                                        PlaceholderText="Select a model file or drag and drop here..."
-                                        IsReadOnly="True"
-                                        AllowDrop="True" />
+                                    <Border Grid.Column="0"
+                                        Background="{ThemeResource TextControlBackground}"
+                                        BorderBrush="{ThemeResource TextControlBorderBrush}"
+                                        BorderThickness="{ThemeResource TextControlBorderThemeThickness}"
+                                        CornerRadius="{ThemeResource ControlCornerRadius}"
+                                        Padding="12,5,12,6"
+                                        MinHeight="32"
+                                        DoubleTapped="ModelFileTextBlock_DoubleTapped">
+                                        <TextBlock ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=OneWay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{ThemeResource TextControlForeground}">
+                                            <Run Text="{x:Bind ViewModel.DirectoryPath, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                            <Run Text="{x:Bind ViewModel.FileName, Mode=OneWay}" FontWeight="SemiBold" />
+                                        </TextBlock>
+                                    </Border>
                                     <Button Grid.Column="1"
                                         Content="..."
                                         Command="{x:Bind ViewModel.SelectModelFileCommand}"
@@ -134,11 +136,25 @@
                                 </Grid>
 
                                 <!-- Links to models -->
-                                <TextBlock Text="Download pre-trained models" FontWeight="SemiBold" Margin="0,10,0,0" />
-                                <TextBlock Text=" (Recommend: resnet50-v2-7.onnx)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="20">
-                                    <HyperlinkButton Content="GitHub - onnx - Models/ResNet" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" HorizontalAlignment="Left" />
-                                    <HyperlinkButton Content="HiggungFace - webml/models-moved" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main" HorizontalAlignment="Left" />
+                                    <StackPanel>
+                                        <TextBlock Text="Download pre-trained models" FontWeight="SemiBold" Margin="0,10,0,0" />
+                                        <TextBlock Text=" (Recommend: resnet50-v2-7.onnx)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </StackPanel>
+
+                                    <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
+                                            <TextBlock Text="GitHub - onnx - Models/ResNet" />
+                                        </StackPanel>
+                                    </HyperlinkButton>
+
+                                    <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
+                                            <TextBlock Text="HuggingFace - webml/models-moved" />
+                                        </StackPanel>
+                                    </HyperlinkButton>
                                 </StackPanel>
                             </StackPanel>
 
@@ -210,7 +226,7 @@
                                             SpinButtonPlacementMode="Compact" />
                                     </Grid>
                                 </StackPanel>
-                                <Button Content="Default (ImageNet)" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
+                                <Button Content="Default (ImageNet)" HorizontalAlignment="Right" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -222,7 +238,7 @@
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5*" />
             </Grid.ColumnDefinitions>
 
             <Button Content="Previous"

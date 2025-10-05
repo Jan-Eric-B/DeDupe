@@ -53,6 +53,8 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.ModelFilePath = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(DirectoryPath));
+                    OnPropertyChanged(nameof(FileName));
                     UpdateCompletionStatus();
                 }
             }
@@ -174,6 +176,10 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
+        public string DirectoryPath => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetDirectoryName(ModelFilePath) + Path.DirectorySeparatorChar : string.Empty;
+
+        public string FileName => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetFileName(ModelFilePath) : "Select a model file or drag and drop here...";
+
         #endregion Properties
 
         #region Commands
@@ -222,7 +228,7 @@ namespace DeDupe.ViewModels.Pages
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
 
-            Title = "Approach Selection";
+            Title = "Model Configuration";
 
             // Subscribe to app state changes
             _appStateService.ApproachSettingsChanged += OnApproachSettingsChanged;

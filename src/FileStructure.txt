@@ -1,0 +1,103 @@
+Folder PATH listing
+Volume serial number is E243-04B0
+C:\USERS\USER\SOURCE\REPOS\DEDUPE\SRC
+|   DeDupe.sln
+|   
+\---DeDupe
+    |   app.manifest
+    |   App.xaml
+    |   App.xaml.cs
+    |   DeDupe.csproj
+    |   DeDupe.csproj.user
+    |   Package.appxmanifest
+    |   
+    +---Assets
+    |   \---Icon
+    |           BadgeLogo.scale-100.png
+    |           BadgeLogo.scale-125.png
+    |           BadgeLogo.scale-150.png
+    |           BadgeLogo.scale-200.png
+    |           BadgeLogo.scale-400.png
+    |           DeDupe.psd
+    |           DeDupe.svg
+    |           
+    +---Constants
+    |       MediaFileExtensions.cs
+    |       ModelFileExtensions.cs
+    |       ProcessingDefaults.cs
+    |       
+    +---Converters
+    |       BoolToColorConverter.cs
+    |       InverseBoolConverter.cs
+    |       
+    +---Enums
+    |   |   MediaType.cs
+    |   |   StateType.cs
+    |   |   
+    |   +---Approach
+    |   |       ApproachType.cs
+    |   |       
+    |   \---PreProcessing
+    |           BitDepth.cs
+    |           InterpolationMethod.cs
+    |           OutputFormat.cs
+    |           ResizeMethod.cs
+    |           
+    +---Models
+    |   |   ImageSource.cs
+    |   |   IMediaItem.cs
+    |   |   MediaPathItem.cs
+    |   |   MediaSource.cs
+    |   |   ProcessedMediaItem.cs
+    |   |   
+    |   \---Anaylsis
+    |           ExtractedFeatures.cs
+    |           ImageCluster.cs
+    |           SimilarityResult.cs
+    |           
+    +---Properties
+    |       launchSettings.json
+    |       
+    +---Services
+    |   |   AppStateService.cs
+    |   |   IAppStateService.cs
+    |   |   INavigationService.cs
+    |   |   NavigationService.cs
+    |   |   
+    |   +---Analysis
+    |   |       FeatureExtractionService.cs
+    |   |       SimilarityAnalysisService.cs
+    |   |       
+    |   \---PreProcessing
+    |           BorderDetectionService.cs
+    |           IBorderDetectionService.cs
+    |           IImageFormatService.cs
+    |           IImageResizeService.cs
+    |           ImageFormatService.cs
+    |           ImageProcessingService.cs
+    |           ImageResizeService.cs
+    |           
+    +---ViewModels
+    |   |   MainWindowViewModel.cs
+    |   |   PageViewModelBase.cs
+    |   |   ViewModelBase.cs
+    |   |   
+    |   \---Pages
+    |           AnalysisViewModel.cs
+    |           ApproachViewModel.cs
+    |           FileInputViewModel.cs
+    |           PreProcessingViewModel.cs
+    |           
+    \---Views
+        |   MainWindow.xaml
+        |   MainWindow.xaml.cs
+        |   
+        \---Pages
+                AnalysisPage.xaml
+                AnalysisPage.xaml.cs
+                ApproachPage.xaml
+                ApproachPage.xaml.cs
+                FileInputPage.xaml
+                FileInputPage.xaml.cs
+                PreProcessingPage.xaml
+                PreProcessingPage.xaml.cs

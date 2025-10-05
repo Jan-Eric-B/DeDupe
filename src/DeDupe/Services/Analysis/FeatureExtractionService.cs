@@ -4,7 +4,6 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -142,10 +141,10 @@ namespace DeDupe.Services.Analysis
 
             // Async parallel processing
             await Parallel.ForEachAsync(imageList, new ParallelOptions
-                {
-                    MaxDegreeOfParallelism = Environment.ProcessorCount,
-                    CancellationToken = CancellationToken.None
-                },
+            {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+                CancellationToken = CancellationToken.None
+            },
                 async (processedImage, ct) =>
                 {
                     await semaphore.WaitAsync(ct);
