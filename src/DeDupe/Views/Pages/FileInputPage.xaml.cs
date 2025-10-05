@@ -41,12 +41,12 @@ namespace DeDupe.Views.Pages
 
                 if (items.Count > 0)
                 {
-                    List<MediaPathItem> newItems = [];
+                    List<SourcePathItem> newItems = [];
 
                     foreach (IStorageItem item in items)
                     {
                         // Skip item if already in collection
-                        if (ViewModel.MediaPathItems.Any(existingItem => existingItem.Path.Equals(item.Path, StringComparison.OrdinalIgnoreCase)))
+                        if (ViewModel.SourcePathItems.Any(existingItem => existingItem.Path.Equals(item.Path, StringComparison.OrdinalIgnoreCase)))
                         {
                             continue;
                         }
@@ -60,7 +60,7 @@ namespace DeDupe.Views.Pages
                                 IReadOnlyList<StorageFolder>? subfolders = await folder.GetFoldersAsync();
                                 bool hasSubdirectories = subfolders.Count > 0;
 
-                                MediaPathItem? mediaPathItem = new()
+                                SourcePathItem? mediaPathItem = new()
                                 {
                                     Path = folder.Path,
                                     IsFolder = true,
@@ -81,7 +81,7 @@ namespace DeDupe.Views.Pages
                             string extension = file.FileType.ToLowerInvariant();
                             if (IsImageFile(extension))
                             {
-                                MediaPathItem? mediaPathItem = new()
+                                SourcePathItem? mediaPathItem = new()
                                 {
                                     Path = file.Path,
                                     IsFolder = false,
@@ -95,9 +95,9 @@ namespace DeDupe.Views.Pages
                     }
 
                     // Add items to collection
-                    foreach (MediaPathItem newItem in newItems)
+                    foreach (SourcePathItem newItem in newItems)
                     {
-                        ViewModel.MediaPathItems.Add(newItem);
+                        ViewModel.SourcePathItems.Add(newItem);
 
                         if (newItem.IsFolder)
                         {

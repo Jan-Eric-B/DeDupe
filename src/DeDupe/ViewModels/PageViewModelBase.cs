@@ -29,7 +29,6 @@ namespace DeDupe.ViewModels
         public virtual bool CanNavigateToNext => IsComplete;
         public virtual bool CanNavigateToPrevious => StepIndex > 0;
 
-        public RelayCommand<int> NavigateToStepCommand { get; }
         public RelayCommand NavigateToNextCommand { get; }
         public RelayCommand NavigateToPreviousCommand { get; }
 
@@ -38,31 +37,13 @@ namespace DeDupe.ViewModels
             _navigationService = App.Current.GetService<INavigationService>();
             StepIndex = stepIndex;
 
-            NavigateToStepCommand = new RelayCommand<int>(NavigateToStep);
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);
             NavigateToPreviousCommand = new RelayCommand(NavigateToPrevious, () => CanNavigateToPrevious);
 
             _isComplete = false;
         }
 
-        [RelayCommand]
-        private void Complete()
-        {
-            IsComplete = true;
-        }
-
-        [RelayCommand]
-        private void UndoComplete()
-        {
-            IsComplete = false;
-        }
-
         #region Navigation
-
-        protected void NavigateToStep(int stepIndex)
-        {
-            _navigationService.NavigateToStep(stepIndex);
-        }
 
         private void NavigateToNext()
         {

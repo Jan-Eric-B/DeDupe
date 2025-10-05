@@ -6,7 +6,7 @@ namespace DeDupe.Models
     /// <summary>
     /// Holds File and Folder paths in the media selection list
     /// </summary>
-    public partial class MediaPathItem : INotifyPropertyChanged
+    public partial class SourcePathItem : INotifyPropertyChanged
     {
         /// <summary>
         /// Full path of file or folder

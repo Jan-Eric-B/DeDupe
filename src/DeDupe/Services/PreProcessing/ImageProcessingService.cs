@@ -202,7 +202,7 @@ namespace DeDupe.Services.PreProcessing
                     // Step 2 - Border/Letterbox Detection and Removal
                     if (EnableBorderDetection)
                     {
-                        var (borderRemovedPixels, newWidth, newHeight) = _borderDetectionService.RemoveBorders(pixels, width, height, BorderDetectionTolerance);
+                        (byte[] borderRemovedPixels, uint newWidth, uint newHeight) = _borderDetectionService.RemoveBorders(pixels, width, height, BorderDetectionTolerance);
 
                         // If borders removed
                         if (newWidth != width || newHeight != height)

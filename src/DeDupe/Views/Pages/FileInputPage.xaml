@@ -101,7 +101,7 @@
 
                 <ListView x:Name="lvMediaSelectionList"
             Grid.Row="0"
-            ItemsSource="{x:Bind ViewModel.MediaPathItems, Mode=OneWay}"
+            ItemsSource="{x:Bind ViewModel.SourcePathItems, Mode=OneWay}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -111,7 +111,7 @@
             DragOver="lvMediaSelectionList_DragOver"
             Drop="lvMediaSelectionList_Drop">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:MediaPathItem">
+                        <DataTemplate x:DataType="models:SourcePathItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -165,18 +165,12 @@
         HorizontalAlignment="Left"
         Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
-            <StackPanel Orientation="Horizontal"
-            Grid.Column="1"
-            Spacing="10"
-            HorizontalAlignment="Right">
-                <Button Content="Complete"
-        Command="{x:Bind ViewModel.CompleteCommand}" />
-
-                <Button Content="Next"
+            <Button Content="Next"
+        Grid.Column="1"
+        HorizontalAlignment="Right"
         Command="{x:Bind ViewModel.NavigateToNextCommand}"
         IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
         Style="{StaticResource AccentButtonStyle}" />
-            </StackPanel>
         </Grid>
     </Grid>
 </Page>

@@ -230,18 +230,12 @@
               HorizontalAlignment="Left"
               Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
-            <StackPanel Orientation="Horizontal"
-                  Grid.Column="1"
-                  Spacing="10"
-                  HorizontalAlignment="Right">
-                <Button Content="Complete"
-                Command="{x:Bind ViewModel.CompleteCommand}" />
-
-                <Button Content="Next"
+            <Button Content="Next"
+                Grid.Column="1"
+                HorizontalAlignment="Right"
                 Command="{x:Bind ViewModel.NavigateToNextCommand}"
                 IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
                 Style="{StaticResource AccentButtonStyle}" />
-            </StackPanel>
         </Grid>
     </Grid>
 </Page>

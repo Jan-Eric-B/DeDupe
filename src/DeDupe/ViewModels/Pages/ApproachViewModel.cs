@@ -203,7 +203,7 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand]
         private void ResetNormalization()
         {
-            _appStateService.ResetNormalizationToDefaults();
+            _appStateService.ResetNormalization();
 
             // Notify UI of changes
             OnPropertyChanged(nameof(MeanR));

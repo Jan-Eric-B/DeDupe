@@ -162,6 +162,7 @@ namespace DeDupe.ViewModels.Pages
 
         // Available options for dropdowns
         public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
+
         public IEnumerable<ResizeMethod> ResizeMethods => Enum.GetValues<ResizeMethod>();
         public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
         public IEnumerable<BitDepth> BitDepths => Enum.GetValues<BitDepth>();

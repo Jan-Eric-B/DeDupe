@@ -39,7 +39,7 @@ namespace DeDupe.Services.PreProcessing
                     break;
 
                 case ResizeMethod.Crop:
-                    var (scaledWidth, scaledHeight, cropOffsetX, cropOffsetY) = CalculateCropDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
+                    (uint scaledWidth, uint scaledHeight, uint cropOffsetX, uint cropOffsetY) = CalculateCropDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
                     intermediateWidth = scaledWidth;
                     intermediateHeight = scaledHeight;
                     cropX = cropOffsetX;
@@ -48,7 +48,7 @@ namespace DeDupe.Services.PreProcessing
                     break;
 
                 case ResizeMethod.Padding:
-                    var (paddedWidth, paddedHeight, padOffsetX, padOffsetY) = CalculatePaddingDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
+                    (uint paddedWidth, uint paddedHeight, uint padOffsetX, uint padOffsetY) = CalculatePaddingDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
                     intermediateWidth = paddedWidth;
                     intermediateHeight = paddedHeight;
                     offsetX = padOffsetX;
@@ -79,7 +79,7 @@ namespace DeDupe.Services.PreProcessing
             // Step 3 - Apply cropping or padding
             if (needsCropping)
             {
-                return CropPixels(resizedPixels, intermediateWidth, intermediateHeight, targetWidth, targetHeight, cropX, cropY);
+                return CropPixels(resizedPixels, intermediateWidth, targetWidth, targetHeight, cropX, cropY);
             }
             else if (needsPadding)
             {
@@ -262,7 +262,7 @@ namespace DeDupe.Services.PreProcessing
 
         #endregion Resizing Methods
 
-        private static byte[] CropPixels(byte[] source, uint sourceWidth, uint sourceHeight, uint targetWidth, uint targetHeight, uint startX, uint startY)
+        private static byte[] CropPixels(byte[] source, uint sourceWidth, uint targetWidth, uint targetHeight, uint startX, uint startY)
         {
             byte[] target = new byte[targetWidth * targetHeight * 4];
             uint sourceStride = sourceWidth * 4;
