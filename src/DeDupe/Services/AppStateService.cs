@@ -1,5 +1,5 @@
-﻿using DeDupe.Models;
-using DeDupe.Enums.Approach;
+﻿using DeDupe.Enums.Approach;
+using DeDupe.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -212,7 +212,12 @@ namespace DeDupe.Services
             ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public void ResetNormalizationToDefaults()
+        public (double, double, double, double, double, double) GetNormalization()
+        {
+            return (MeanR, MeanG, MeanB, StdR, StdG, StdB);
+        }
+
+        public void ResetNormalization()
         {
             MeanR = 0.485;
             MeanG = 0.456;

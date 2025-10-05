@@ -1,5 +1,5 @@
-﻿using DeDupe.Models;
-using DeDupe.Enums.Approach;
+﻿using DeDupe.Enums.Approach;
+using DeDupe.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -74,9 +74,14 @@ namespace DeDupe.Services
         double StdB { get; set; }
 
         /// <summary>
+        /// Get normalization values as a tuple
+        /// </summary>
+        (double, double, double, double, double, double) GetNormalization();
+
+        /// <summary>
         /// Reset normalization values to ImageNet defaults
         /// </summary>
-        void ResetNormalizationToDefaults();
+        void ResetNormalization();
 
         #endregion Approach Data
 
