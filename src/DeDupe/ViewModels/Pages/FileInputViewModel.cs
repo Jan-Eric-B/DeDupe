@@ -2,6 +2,7 @@
 using DeDupe.Constants;
 using DeDupe.Models;
 using DeDupe.Services;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -60,7 +61,7 @@ namespace DeDupe.ViewModels.Pages
 
         public int TotalFileCount => _appStateService.FileCount;
 
-        public Microsoft.UI.Xaml.Visibility IsMediaListEmpty => SourcePathItems.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+        public Visibility IsMediaListEmpty => SourcePathItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         #endregion Properties
 
@@ -248,7 +249,7 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateCompletionStatus()
         {
-            IsComplete = SourcePathItems.Count > 0;
+            IsComplete = TotalFileCount > 0;
             OnPropertyChanged(nameof(IsMediaListEmpty));
         }
 
