@@ -1,5 +1,6 @@
 ﻿using DeDupe.Enums.Approach;
 using DeDupe.Models;
+using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,8 +18,8 @@ namespace DeDupe.Services
         #region Fields
 
         private readonly List<string> _filePaths = [];
-
         private readonly List<ProcessedMedia> _processedImages = [];
+        private readonly List<ExtractedFeatures> _extractedFeatures = [];
 
         private string _tempFolderPath = ApplicationData.Current.TemporaryFolder.Path + Path.DirectorySeparatorChar + "ProcessedImages";
 
@@ -56,6 +57,10 @@ namespace DeDupe.Services
         public IReadOnlyCollection<ProcessedMedia> ProcessedImages => _processedImages.AsReadOnly();
 
         public int ProcessedImageCount => _processedImages.Count;
+
+        public IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures => _extractedFeatures.AsReadOnly();
+
+        public int ExtractedFeaturesCount => _extractedFeatures.Count;
 
         public ApproachType SelectedApproach
         {
@@ -212,6 +217,24 @@ namespace DeDupe.Services
             ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        public void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features)
+        {
+            _extractedFeatures.Clear();
+            _extractedFeatures.AddRange(features ?? []);
+
+            OnPropertyChanged(nameof(ExtractedFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ClearExtractedFeatures()
+        {
+            _extractedFeatures.Clear();
+            OnPropertyChanged(nameof(ExtractedFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         public (double, double, double, double, double, double) GetNormalization()
         {
             return (MeanR, MeanG, MeanB, StdR, StdG, StdB);
@@ -238,6 +261,8 @@ namespace DeDupe.Services
         public event EventHandler? TempFolderPathChanged;
 
         public event EventHandler? ApproachSettingsChanged;
+
+        public event EventHandler? ExtractedFeaturesChanged;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

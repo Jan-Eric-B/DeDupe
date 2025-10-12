@@ -251,12 +251,32 @@ SpinButtonPlacementMode="Compact" />
               HorizontalAlignment="Left"
               Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
-            <Button Content="Next"
-                Grid.Column="1"
-                HorizontalAlignment="Right"
-                Command="{x:Bind ViewModel.NavigateToNextCommand}"
-                IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-                Style="{StaticResource AccentButtonStyle}" />
+            <StackPanel Orientation="Horizontal"
+                  Grid.Column="1"
+                  Spacing="10"
+                  HorizontalAlignment="Right">
+
+                <!-- Progress and Status -->
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+
+                <TextBlock VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+
+                <Button Content="Extract Features"
+                  Command="{x:Bind ViewModel.ExtractFeaturesCommand}"
+                  IsEnabled="{x:Bind ViewModel.CanStartExtraction, Mode=OneWay}"
+                  Style="{StaticResource AccentButtonStyle}"
+                  FontSize="13"
+                  MinWidth="150" />
+
+                <Button Content="Next"
+                    Command="{x:Bind ViewModel.NavigateToNextCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>
