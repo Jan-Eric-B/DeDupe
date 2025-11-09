@@ -1,4 +1,5 @@
 using DeDupe.ViewModels;
+using DeDupe.ViewModels.Pages;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -6,9 +7,13 @@ namespace DeDupe.Views.Pages
 {
     public sealed partial class ManagementPage : Page
     {
+        public ManagementViewModel ViewModel { get; }
+
         public ManagementPage()
         {
             InitializeComponent();
+            ViewModel = App.Current.GetService<ManagementViewModel>();
+            DataContext = ViewModel;
         }
 
         private void BackToConfiguration_Click(object sender, RoutedEventArgs e)

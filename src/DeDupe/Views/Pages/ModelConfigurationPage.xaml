@@ -220,9 +220,9 @@
                   FontSize="13"
                   MinWidth="150" />
 
-                <Button Content="Enter Management"
-                    Command="{x:Bind ViewModel.EnterManagementCommand}"
-                    IsEnabled="{x:Bind ViewModel.CanEnterManagement, Mode=OneWay}"
+                <Button Content="Manage Image Groups"
+                    Command="{x:Bind ViewModel.NavigateToManagementPageCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanCloseConfiguration, Mode=OneWay}"
                     Style="{StaticResource AccentButtonStyle}"
                     MinWidth="180" />
             </StackPanel>

@@ -71,8 +71,8 @@ namespace DeDupe.ViewModels.Pages
                 if (SetProperty(ref _hasExtractedFeatures, value))
                 {
                     OnPropertyChanged(nameof(Status));
-                    OnPropertyChanged(nameof(CanEnterManagement));
-                    EnterManagementCommand.NotifyCanExecuteChanged();
+                    OnPropertyChanged(nameof(CanCloseConfiguration));
+                    NavigateToManagementPageCommand.NotifyCanExecuteChanged();
                     UpdateCompletionStatus();
                 }
             }
@@ -95,7 +95,7 @@ namespace DeDupe.ViewModels.Pages
             File.Exists(ModelFilePath) &&
             HasProcessedImages();
 
-        public bool CanEnterManagement => HasExtractedFeatures;
+        public bool CanCloseConfiguration => HasExtractedFeatures;
 
         public List<ExtractedFeatures> ExtractedFeatures => _extractedFeatures;
 
@@ -236,7 +236,7 @@ namespace DeDupe.ViewModels.Pages
                     // Store features in AppStateService for use in management page
                     _appStateService.SetExtractedFeatures(_extractedFeatures);
 
-                    Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors. Ready to enter management mode.";
+                    Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors.";
 
                     // Log feature info
                     var firstFeature = _extractedFeatures.First();
@@ -296,11 +296,10 @@ namespace DeDupe.ViewModels.Pages
             OnPropertyChanged(nameof(StdB));
         }
 
-        [RelayCommand(CanExecute = nameof(CanEnterManagement))]
-        private void EnterManagement()
+        [RelayCommand(CanExecute = nameof(CanCloseConfiguration))]
+        private void NavigateToManagementPage()
         {
-            // Navigate to management mode
-            var mainViewModel = App.Current.GetService<MainWindowViewModel>();
+            MainWindowViewModel mainViewModel = App.Current.GetService<MainWindowViewModel>();
             mainViewModel?.StartManagementModeCommand.Execute(null);
         }
 
@@ -329,7 +328,6 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                // Navigation to next is disabled - use Enter Management instead
                 return false;
             }
         }
@@ -363,7 +361,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (!string.IsNullOrEmpty(_appStateService.ModelFilePath) && File.Exists(_appStateService.ModelFilePath))
                 {
-                    Status = "Initializing model...";
+                    Status = "Initializing Model...";
 
                     // Get normalization values
                     (double meanR, double meanG, double meanB, double stdR, double stdG, double stdB) = _appStateService.GetNormalization();
