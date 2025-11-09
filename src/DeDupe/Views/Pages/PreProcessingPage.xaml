@@ -169,7 +169,7 @@
 
                         <!-- Enable Border Detection -->
                         <CheckBox x:Name="BorderDetectionCheckBox"
-                            Content="Border/Letterbox Detection and Removal"
+                            Content="Remove Border/Letterboxes"
                             IsChecked="{x:Bind ViewModel.EnableBorderDetection, Mode=TwoWay}" />
 
                         <!-- Tolerance Setting -->
