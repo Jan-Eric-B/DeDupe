@@ -99,14 +99,14 @@ namespace DeDupe.Controls
             for (int i = 0; i < Steps.Count; i++)
             {
                 StepItem step = Steps[i];
-                int columnIndex = i * 2; // Each step takes 2 columns (step + connector)
+                int columnIndex = i * 2; // Step + Connector
 
                 // Create step button
                 Button stepButton = CreateStepButton(step);
                 Grid.SetColumn(stepButton, columnIndex);
                 StepsGrid.Children.Add(stepButton);
 
-                // Create connector (except after last step)
+                // Create connector
                 if (i < Steps.Count - 1)
                 {
                     Rectangle connector = CreateConnector(step);

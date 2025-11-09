@@ -1,5 +1,4 @@
-﻿using DeDupe.Enums.Approach;
-using DeDupe.Models;
+﻿using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
@@ -32,15 +31,10 @@ namespace DeDupe.Services
 
         #endregion FileInput Data
 
-        #region Approach Data
+        #region Model Configuration Data
 
         /// <summary>
-        /// Selected approach type
-        /// </summary>
-        ApproachType SelectedApproach { get; set; }
-
-        /// <summary>
-        /// Model file path for deep learning approach
+        /// Model file path for deep learning
         /// </summary>
         string ModelFilePath { get; set; }
 
@@ -84,7 +78,7 @@ namespace DeDupe.Services
         /// </summary>
         void ResetNormalization();
 
-        #endregion Approach Data
+        #endregion Model Configuration Data
 
         #region PreProcessing Data
 
@@ -162,9 +156,9 @@ namespace DeDupe.Services
         event EventHandler? TempFolderPathChanged;
 
         /// <summary>
-        /// Approach settings changed
+        /// Model Configuration settings changed
         /// </summary>
-        event EventHandler? ApproachSettingsChanged;
+        event EventHandler? ModelConfigurationSettingsChanged;
 
         /// <summary>
         /// Extracted features changed

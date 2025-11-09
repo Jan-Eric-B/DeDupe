@@ -234,13 +234,13 @@ namespace DeDupe.Services.Analysis
                 double totalSimilarity = 0.0;
                 int pairCount = 0;
 
-                // Calculate average pairwise similarity within the cluster
+                // Calculate average pairwise similarity within cluster
                 for (int i = 0; i < cluster.Images.Count; i++)
                 {
                     for (int j = i + 1; j < cluster.Images.Count; j++)
                     {
-                        // Find indices of these images in original similarity matrix
-                        // TODO simplified approach - full implementation: maintain index mappings
+                        // Find indices of images in original similarity matrix
+                        // TODO - Maintain index mappings
                         double similarity = CalculateCosineSimilarity(cluster.Images[i].FeatureVector, cluster.Images[j].FeatureVector);
 
                         totalSimilarity += similarity;

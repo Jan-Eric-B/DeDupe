@@ -1,9 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using DeDupe.Enums.Approach;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
-using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,7 +13,7 @@ using WinRT.Interop;
 
 namespace DeDupe.ViewModels.Pages
 {
-    public partial class ApproachViewModel : PageViewModelBase
+    public partial class ModelConfigurationViewModel : PageViewModelBase
     {
         #region Fields
 
@@ -30,31 +28,6 @@ namespace DeDupe.ViewModels.Pages
         #endregion Fields
 
         #region Properties
-
-        public ApproachType SelectedApproach
-        {
-            get => _appStateService.SelectedApproach;
-            set
-            {
-                if (_appStateService.SelectedApproach != value)
-                {
-                    _appStateService.SelectedApproach = value;
-
-                    // Notify radio buttons
-                    OnPropertyChanged(nameof(IsDeepLearningSelected));
-                    OnPropertyChanged(nameof(IsPerceptualHashingSelected));
-                    OnPropertyChanged(nameof(IsColorHistogramSelected));
-                    OnPropertyChanged(nameof(IsSiftSurfSelected));
-                    OnPropertyChanged(nameof(IsTemplateMatchingSelected));
-                    OnPropertyChanged(nameof(IsSemanticSimilaritySelected));
-                    OnPropertyChanged(nameof(IsOtherApproachSelected));
-
-                    // Reset extraction state
-                    ResetExtractionState();
-                    UpdateCompletionStatus();
-                }
-            }
-        }
 
         public string ModelFilePath
         {
@@ -98,6 +71,8 @@ namespace DeDupe.ViewModels.Pages
                 if (SetProperty(ref _hasExtractedFeatures, value))
                 {
                     OnPropertyChanged(nameof(Status));
+                    OnPropertyChanged(nameof(CanEnterManagement));
+                    EnterManagementCommand.NotifyCanExecuteChanged();
                     UpdateCompletionStatus();
                 }
             }
@@ -116,51 +91,13 @@ namespace DeDupe.ViewModels.Pages
         }
 
         public bool CanStartExtraction =>
-            !IsExtracting &&
-            IsDeepLearningSelected &&
-            !string.IsNullOrEmpty(ModelFilePath) &&
+            !IsExtracting && !string.IsNullOrEmpty(ModelFilePath) &&
             File.Exists(ModelFilePath) &&
             HasProcessedImages();
 
+        public bool CanEnterManagement => HasExtractedFeatures;
+
         public List<ExtractedFeatures> ExtractedFeatures => _extractedFeatures;
-
-        public bool IsDeepLearningSelected
-        {
-            get => SelectedApproach == ApproachType.DeepLearning;
-            set { if (value) SelectedApproach = ApproachType.DeepLearning; }
-        }
-
-        public bool IsPerceptualHashingSelected
-        {
-            get => SelectedApproach == ApproachType.PerceptualHashing;
-            set { if (value) SelectedApproach = ApproachType.PerceptualHashing; }
-        }
-
-        public bool IsColorHistogramSelected
-        {
-            get => SelectedApproach == ApproachType.ColorHistogram;
-            set { if (value) SelectedApproach = ApproachType.ColorHistogram; }
-        }
-
-        public bool IsSiftSurfSelected
-        {
-            get => SelectedApproach == ApproachType.SiftSurf;
-            set { if (value) SelectedApproach = ApproachType.SiftSurf; }
-        }
-
-        public bool IsTemplateMatchingSelected
-        {
-            get => SelectedApproach == ApproachType.TemplateMatching;
-            set { if (value) SelectedApproach = ApproachType.TemplateMatching; }
-        }
-
-        public bool IsSemanticSimilaritySelected
-        {
-            get => SelectedApproach == ApproachType.SemanticSimilarity;
-            set { if (value) SelectedApproach = ApproachType.SemanticSimilarity; }
-        }
-
-        public Visibility IsOtherApproachSelected => !IsDeepLearningSelected ? Visibility.Visible : Visibility.Collapsed;
 
         public double MeanR
         {
@@ -171,7 +108,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.MeanR = value;
                     OnPropertyChanged();
-                    ResetExtractionState(); // Normalization changed, need to re-extract
+                    ResetExtractionState();
                 }
             }
         }
@@ -296,10 +233,10 @@ namespace DeDupe.ViewModels.Pages
                 {
                     HasExtractedFeatures = true;
 
-                    // Store features in AppStateService for use in next pages
+                    // Store features in AppStateService for use in management page
                     _appStateService.SetExtractedFeatures(_extractedFeatures);
 
-                    Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors. Ready to proceed.";
+                    Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors. Ready to enter management mode.";
 
                     // Log feature info
                     var firstFeature = _extractedFeatures.First();
@@ -359,11 +296,19 @@ namespace DeDupe.ViewModels.Pages
             OnPropertyChanged(nameof(StdB));
         }
 
+        [RelayCommand(CanExecute = nameof(CanEnterManagement))]
+        private void EnterManagement()
+        {
+            // Navigate to management mode
+            var mainViewModel = App.Current.GetService<MainWindowViewModel>();
+            mainViewModel?.StartManagementModeCommand.Execute(null);
+        }
+
         #endregion Commands
 
         #region Constructor
 
-        public ApproachViewModel(IAppStateService appStateService, FeatureExtractionService featureExtractionService) : base(2)
+        public ModelConfigurationViewModel(IAppStateService appStateService, FeatureExtractionService featureExtractionService) : base(2)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
@@ -371,7 +316,7 @@ namespace DeDupe.ViewModels.Pages
             Title = "Model Configuration";
 
             // Subscribe to app state changes
-            _appStateService.ApproachSettingsChanged += OnApproachSettingsChanged;
+            _appStateService.ModelConfigurationSettingsChanged += OnModelConfigurationSettingsChanged;
 
             UpdateCompletionStatus();
         }
@@ -384,19 +329,8 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                if (IsDeepLearningSelected)
-                {
-                    // Require model file AND extracted features
-                    return !string.IsNullOrEmpty(_appStateService.ModelFilePath) &&
-                           File.Exists(_appStateService.ModelFilePath) &&
-                           HasExtractedFeatures;
-                }
-                else
-                {
-                    // TODO Implement other approaches
-                    return IsPerceptualHashingSelected || IsColorHistogramSelected ||
-                           IsSiftSurfSelected || IsTemplateMatchingSelected || IsSemanticSimilaritySelected;
-                }
+                // Navigation to next is disabled - use Enter Management instead
+                return false;
             }
         }
 
@@ -419,7 +353,7 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateCompletionStatus()
         {
-            IsComplete = CanNavigateToNext;
+            IsComplete = HasExtractedFeatures;
             NavigateToNextCommand.NotifyCanExecuteChanged();
         }
 
@@ -454,18 +388,10 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        private void OnApproachSettingsChanged(object? sender, EventArgs e)
+        private void OnModelConfigurationSettingsChanged(object? sender, EventArgs e)
         {
             // Update UI when app state changes
-            OnPropertyChanged(nameof(SelectedApproach));
             OnPropertyChanged(nameof(ModelFilePath));
-            OnPropertyChanged(nameof(IsDeepLearningSelected));
-            OnPropertyChanged(nameof(IsPerceptualHashingSelected));
-            OnPropertyChanged(nameof(IsColorHistogramSelected));
-            OnPropertyChanged(nameof(IsSiftSurfSelected));
-            OnPropertyChanged(nameof(IsTemplateMatchingSelected));
-            OnPropertyChanged(nameof(IsSemanticSimilaritySelected));
-            OnPropertyChanged(nameof(IsOtherApproachSelected));
             OnPropertyChanged(nameof(MeanR));
             OnPropertyChanged(nameof(MeanG));
             OnPropertyChanged(nameof(MeanB));
@@ -480,7 +406,7 @@ namespace DeDupe.ViewModels.Pages
         {
             if (disposing)
             {
-                _appStateService.ApproachSettingsChanged -= OnApproachSettingsChanged;
+                _appStateService.ModelConfigurationSettingsChanged -= OnModelConfigurationSettingsChanged;
             }
             base.Dispose(disposing);
         }

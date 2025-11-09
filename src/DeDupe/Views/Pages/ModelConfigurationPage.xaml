@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="DeDupe.Views.Pages.ApproachPage"
+    x:Class="DeDupe.Views.Pages.ModelConfigurationPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
-    d:DataContext="{d:DesignInstance Type=pages:ApproachViewModel}"
+    d:DataContext="{d:DesignInstance Type=pages:ModelConfigurationViewModel}"
     mc:Ignorable="d">
     <Grid RowSpacing="10">
         <Grid.RowDefinitions>
@@ -25,48 +25,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Left Side - Approach -->
-            <!-- TODO: Enable other options -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Visibility="Collapsed">
-                <StackPanel Spacing="2">
-                    <RadioButton x:Name="DeepLearningRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="Deep Learning"
-                                 IsChecked="{x:Bind ViewModel.IsDeepLearningSelected, Mode=TwoWay}" />
-
-                    <RadioButton x:Name="PerceptualHashingRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="Perceptual Hashing WIP"
-                                 IsEnabled="False"
-                                 IsChecked="{x:Bind ViewModel.IsPerceptualHashingSelected, Mode=TwoWay}" />
-
-                    <RadioButton x:Name="ColorHistogramRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="Color Histogram Hashing WIP"
-                                 IsEnabled="False"
-                                 IsChecked="{x:Bind ViewModel.IsColorHistogramSelected, Mode=TwoWay}" />
-
-                    <RadioButton x:Name="SiftSurfRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="SIFT SURF Features WIP"
-                                 IsEnabled="False"
-                                 IsChecked="{x:Bind ViewModel.IsSiftSurfSelected, Mode=TwoWay}" />
-
-                    <RadioButton x:Name="TemplateMatchingRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="Template Matching WIP"
-                                 IsEnabled="False"
-                                 IsChecked="{x:Bind ViewModel.IsTemplateMatchingSelected, Mode=TwoWay}" />
-
-                    <RadioButton x:Name="SemanticSimilarityRadio"
-                                 GroupName="ApproachGroup"
-                                 Content="Semantic Similarity WIP"
-                                 IsEnabled="False"
-                                 IsChecked="{x:Bind ViewModel.IsSemanticSimilaritySelected, Mode=TwoWay}" />
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- Right Side - Options -->
+            <!-- Options -->
             <Border Grid.Column="0"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -180,25 +139,25 @@
                                 </Grid.ColumnDefinitions>
 
                                 <NumberBox Grid.Column="0"
-Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}"
-PlaceholderText="0.485"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}"
+                                    PlaceholderText="0.485"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
 
                                 <NumberBox Grid.Column="1"
-Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}"
-PlaceholderText="0.456"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}"
+                                    PlaceholderText="0.456"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
 
                                 <NumberBox Grid.Column="2"
-Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}"
-PlaceholderText="0.406"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}"
+                                    PlaceholderText="0.406"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
                             </Grid>
                         </StackPanel>
                         <!-- Std Values -->
@@ -212,25 +171,25 @@ SpinButtonPlacementMode="Compact" />
                                 </Grid.ColumnDefinitions>
 
                                 <NumberBox Grid.Column="0"
-Value="{x:Bind ViewModel.StdR, Mode=TwoWay}"
-PlaceholderText="0.229"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.StdR, Mode=TwoWay}"
+                                    PlaceholderText="0.229"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
 
                                 <NumberBox Grid.Column="1"
-Value="{x:Bind ViewModel.StdG, Mode=TwoWay}"
-PlaceholderText="0.224"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.StdG, Mode=TwoWay}"
+                                    PlaceholderText="0.224"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
 
                                 <NumberBox Grid.Column="2"
-Value="{x:Bind ViewModel.StdB, Mode=TwoWay}"
-PlaceholderText="0.225"
-SmallChange="0.001"
-LargeChange="0.01"
-SpinButtonPlacementMode="Compact" />
+                                    Value="{x:Bind ViewModel.StdB, Mode=TwoWay}"
+                                    PlaceholderText="0.225"
+                                    SmallChange="0.001"
+                                    LargeChange="0.01"
+                                    SpinButtonPlacementMode="Compact" />
                             </Grid>
                         </StackPanel>
                         <Button Content="Default (ImageNet)" HorizontalAlignment="Right" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
@@ -272,10 +231,11 @@ SpinButtonPlacementMode="Compact" />
                   FontSize="13"
                   MinWidth="150" />
 
-                <Button Content="Next"
-                    Command="{x:Bind ViewModel.NavigateToNextCommand}"
-                    IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-                    Style="{StaticResource AccentButtonStyle}" />
+                <Button Content="Enter Management"
+                    Command="{x:Bind ViewModel.EnterManagementCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanEnterManagement, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    MinWidth="180" />
             </StackPanel>
         </Grid>
     </Grid>

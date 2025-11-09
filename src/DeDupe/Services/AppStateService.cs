@@ -1,5 +1,4 @@
-﻿using DeDupe.Enums.Approach;
-using DeDupe.Models;
+﻿using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
@@ -23,7 +22,6 @@ namespace DeDupe.Services
 
         private string _tempFolderPath = ApplicationData.Current.TemporaryFolder.Path + Path.DirectorySeparatorChar + "ProcessedImages";
 
-        private ApproachType _selectedApproach = ApproachType.DeepLearning;
         private string _modelFilePath = string.Empty;
         private double _meanR = 0.485;
         private double _meanG = 0.456;
@@ -62,20 +60,6 @@ namespace DeDupe.Services
 
         public int ExtractedFeaturesCount => _extractedFeatures.Count;
 
-        public ApproachType SelectedApproach
-        {
-            get => _selectedApproach;
-            set
-            {
-                if (_selectedApproach != value)
-                {
-                    _selectedApproach = value;
-                    OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
         public string ModelFilePath
         {
             get => _modelFilePath;
@@ -85,7 +69,7 @@ namespace DeDupe.Services
                 {
                     _modelFilePath = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -99,7 +83,7 @@ namespace DeDupe.Services
                 {
                     _meanR = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -113,7 +97,7 @@ namespace DeDupe.Services
                 {
                     _meanG = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -127,7 +111,7 @@ namespace DeDupe.Services
                 {
                     _meanB = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -141,7 +125,7 @@ namespace DeDupe.Services
                 {
                     _stdR = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -155,7 +139,7 @@ namespace DeDupe.Services
                 {
                     _stdG = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -169,7 +153,7 @@ namespace DeDupe.Services
                 {
                     _stdB = value;
                     OnPropertyChanged();
-                    ApproachSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
@@ -260,7 +244,7 @@ namespace DeDupe.Services
 
         public event EventHandler? TempFolderPathChanged;
 
-        public event EventHandler? ApproachSettingsChanged;
+        public event EventHandler? ModelConfigurationSettingsChanged;
 
         public event EventHandler? ExtractedFeaturesChanged;
 

@@ -60,8 +60,7 @@ namespace DeDupe
             {
                 0 => typeof(FileInputPage),
                 1 => typeof(PreProcessingPage),
-                2 => typeof(ApproachPage),
-                3 => typeof(AnalysisPage),
+                2 => typeof(ModelConfigurationPage),
                 _ => typeof(FileInputPage)
             };
 

@@ -48,8 +48,7 @@ namespace DeDupe.ViewModels
             [
                 new() { StepNumber = 1, Title = "Files", Description = "Select Sources", IsEnabled = true, IsCurrent = true },
                 new() { StepNumber = 2, Title = "Pre-Processing", Description = "Configure Images", IsEnabled = false },
-                new() { StepNumber = 3, Title = "Model", Description = "Configure Model", IsEnabled = false },
-                new() { StepNumber = 4, Title = "Analysis", Description = "Analyse Similarities", IsEnabled = false }
+                new() { StepNumber = 3, Title = "Model", Description = "Configure Model", IsEnabled = false }
             ];
 
             SubscribeToPageCompletion();
@@ -58,7 +57,7 @@ namespace DeDupe.ViewModels
         [RelayCommand]
         private void NavigateToTab(int stepIndex)
         {
-            if (stepIndex >= 0 && stepIndex <= 4)
+            if (stepIndex >= 0 && stepIndex <= 2)
             {
                 SelectedStepIndex = stepIndex;
             }
@@ -101,34 +100,33 @@ namespace DeDupe.ViewModels
         private void SubscribeToPageCompletion()
         {
             // Subscribe to IsComplete changes
-            FileInputViewModel? fileInputVM = _serviceProvider.GetService<FileInputViewModel>();
-            PreProcessingViewModel? preProcessingVM = _serviceProvider.GetService<PreProcessingViewModel>();
-            ApproachViewModel? approachVM = _serviceProvider.GetService<ApproachViewModel>();
+            FileInputViewModel? fileInputViewModel = _serviceProvider.GetService<FileInputViewModel>();
+            PreProcessingViewModel? preProcessingViewModel = _serviceProvider.GetService<PreProcessingViewModel>();
+            ModelConfigurationViewModel? modelConfigurationViewModel = _serviceProvider.GetService<ModelConfigurationViewModel>();
 
-            fileInputVM.PropertyChanged += (s, e) =>
+            fileInputViewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(PageViewModelBase.IsComplete))
                 {
-                    Steps[0].IsCompleted = fileInputVM.IsComplete;
-                    Steps[1].IsEnabled = fileInputVM.IsComplete;
+                    Steps[0].IsCompleted = fileInputViewModel.IsComplete;
+                    Steps[1].IsEnabled = fileInputViewModel.IsComplete;
                 }
             };
 
-            preProcessingVM.PropertyChanged += (s, e) =>
+            preProcessingViewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(PageViewModelBase.IsComplete))
                 {
-                    Steps[1].IsCompleted = preProcessingVM.IsComplete;
-                    Steps[2].IsEnabled = preProcessingVM.IsComplete;
+                    Steps[1].IsCompleted = preProcessingViewModel.IsComplete;
+                    Steps[2].IsEnabled = preProcessingViewModel.IsComplete;
                 }
             };
 
-            approachVM.PropertyChanged += (s, e) =>
+            modelConfigurationViewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(PageViewModelBase.IsComplete))
                 {
-                    Steps[2].IsCompleted = approachVM.IsComplete;
-                    Steps[3].IsEnabled = approachVM.IsComplete;
+                    Steps[2].IsCompleted = modelConfigurationViewModel.IsComplete;
                 }
             };
         }

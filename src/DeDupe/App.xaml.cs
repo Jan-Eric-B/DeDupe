@@ -68,9 +68,9 @@ namespace DeDupe
 
             // Page ViewModels
             services.AddSingleton<FileInputViewModel>();
-            services.AddSingleton<ApproachViewModel>();
+            services.AddSingleton<ModelConfigurationViewModel>();
             services.AddSingleton<PreProcessingViewModel>();
-            services.AddSingleton<AnalysisViewModel>();
+            services.AddSingleton<ManagementViewModel>();
 
             services.AddSingleton<FeatureExtractionService>();
 

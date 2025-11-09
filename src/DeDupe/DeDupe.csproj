@@ -73,7 +73,6 @@
     <None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
 	<None Remove="Controls\StepperControl.xaml" />
-    <None Remove="Views\Pages\ApproachPage.xaml" />
     <None Remove="Views\Pages\FileInputPage.xaml" />
     <None Remove="Views\Pages\ManagementPage.xaml" />
   </ItemGroup>
@@ -111,12 +110,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\Pages\AnalysisPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Page Update="Views\Pages\ApproachPage.xaml">
+    <Page Update="Views\Pages\ModelConfigurationPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

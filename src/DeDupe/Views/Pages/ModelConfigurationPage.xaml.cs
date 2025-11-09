@@ -11,14 +11,14 @@ using Windows.Storage;
 
 namespace DeDupe.Views.Pages
 {
-    public sealed partial class ApproachPage : Page
+    public sealed partial class ModelConfigurationPage : Page
     {
-        public ApproachViewModel ViewModel { get; }
+        public ModelConfigurationViewModel ViewModel { get; }
 
-        public ApproachPage()
+        public ModelConfigurationPage()
         {
             InitializeComponent();
-            ViewModel = App.Current.GetService<ApproachViewModel>();
+            ViewModel = App.Current.GetService<ModelConfigurationViewModel>();
             DataContext = ViewModel;
         }
 
