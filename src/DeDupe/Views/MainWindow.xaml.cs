@@ -1,3 +1,4 @@
+using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Pages;
 using Microsoft.UI.Composition.SystemBackdrops;
@@ -14,10 +15,17 @@ namespace DeDupe
 
         private int _previousStepIndex = 0;
 
+        private readonly WindowsSizeService _windowsSizeService;
+
         public MainWindow()
         {
             InitializeComponent();
             InitializeTheme();
+
+            // Set minimum window size
+            nint hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            _windowsSizeService = new WindowsSizeService(hwnd, 800, 600);
+            this.Closed += (s, e) => _windowsSizeService?.Dispose();
 
             ViewModel = App.Current.GetService<MainWindowViewModel>();
             grdRoot.DataContext = ViewModel;

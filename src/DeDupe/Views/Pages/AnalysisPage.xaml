@@ -29,9 +29,17 @@
                 Padding="16"
                 VerticalAlignment="Stretch">
                 <StackPanel Spacing="15">
-                    <!-- Similarity Threshold Setting -->
+                    <!-- Extracted Features Status -->
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Extracted Features" FontWeight="SemiBold" FontSize="16" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                            <Run Text="Feature vectors available:" />
+                            <Run Text="{x:Bind ViewModel.ExtractedFeaturesCount, Mode=OneWay}" FontWeight="SemiBold" />
+                        </TextBlock>
+                    </StackPanel>
 
-                    <TextBlock Text="Similarity Threshold" FontWeight="SemiBold" FontSize="16" />
+                    <!-- Similarity Threshold Setting -->
+                    <TextBlock Text="Similarity Threshold" FontWeight="SemiBold" FontSize="16" Margin="0,10,0,0" />
 
                     <TextBlock Text="How similar images must be to group together (0.0 - 1.0)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
@@ -90,20 +98,13 @@
                   HorizontalAlignment="Right">
 
                 <!-- Progress and Status -->
-                <ProgressRing x:Name="ProgressRing" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
 
-                <TextBlock x:Name="StatusLabel"
-                    VerticalAlignment="Center" HorizontalAlignment="Right"
+                <TextBlock VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
                     Text="{x:Bind ViewModel.Status, Mode=OneWay}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     TextWrapping="Wrap" />
-
-                <Button Content="Extract Features"
-                  Command="{x:Bind ViewModel.ExtractFeaturesCommand}"
-                  IsEnabled="True"
-                  Style="{StaticResource AccentButtonStyle}"
-                  FontSize="13"
-                  MinWidth="150" />
 
                 <Button Content="Analyze Similarity"
                   Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
@@ -111,11 +112,6 @@
                   Style="{StaticResource AccentButtonStyle}"
                   FontSize="13"
                   MinWidth="150" />
-
-                <!--<Button Content="Next"
-                Command="{x:Bind ViewModel.NavigateToNextCommand}"
-                IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-                Style="{StaticResource AccentButtonStyle}" />-->
             </StackPanel>
         </Grid>
     </Grid>

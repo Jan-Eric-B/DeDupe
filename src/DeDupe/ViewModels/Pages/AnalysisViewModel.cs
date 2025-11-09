@@ -3,7 +3,6 @@ using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,19 +14,9 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly IAppStateService _appStateService;
 
-        private readonly FeatureExtractionService _featureExtractionService;
-
-        private List<ExtractedFeatures> _extractedFeatures = [];
-
         private SimilarityResult? _similarityResult;
 
-        private bool _isExtracting;
-
         private double _similarityThreshold = 0.85;
-
-        private int _extractedFeaturesCount;
-
-        private bool _hasExtractedFeatures;
 
         private bool _isAnalyzingSimilarity;
 
@@ -37,47 +26,9 @@ namespace DeDupe.ViewModels.Pages
 
         #region Properties
 
-        public bool IsExtracting
-        {
-            get => _isExtracting;
-            set
-            {
-                if (SetProperty(ref _isExtracting, value))
-                {
-                    OnPropertyChanged(nameof(CanStartExtraction));
-                    OnPropertyChanged(nameof(CanStartSimilarityAnalysis));
-                    ExtractFeaturesCommand.NotifyCanExecuteChanged();
-                    AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
-                }
-            }
-        }
+        public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
 
-        public int ExtractedFeaturesCount
-        {
-            get => _extractedFeaturesCount;
-            set
-            {
-                if (SetProperty(ref _extractedFeaturesCount, value))
-                {
-                    OnPropertyChanged(nameof(Status));
-                }
-            }
-        }
-
-        public bool HasExtractedFeatures
-        {
-            get => _hasExtractedFeatures;
-            set
-            {
-                if (SetProperty(ref _hasExtractedFeatures, value))
-                {
-                    OnPropertyChanged(nameof(Status));
-                    OnPropertyChanged(nameof(CanStartSimilarityAnalysis));
-                    AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
-                    UpdateCompletionStatus();
-                }
-            }
-        }
+        public bool HasExtractedFeatures => _appStateService.ExtractedFeaturesCount > 0;
 
         public bool IsAnalyzingSimilarity
         {
@@ -111,112 +62,50 @@ namespace DeDupe.ViewModels.Pages
             set => SetProperty(ref _similarityThreshold, value);
         }
 
-        public bool CanStartExtraction => !IsExtracting && !IsAnalyzingSimilarity && HasProcessedImages();
-
-        public bool CanStartSimilarityAnalysis => !IsExtracting && !IsAnalyzingSimilarity && HasExtractedFeatures;
+        public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && HasExtractedFeatures;
 
         #endregion Properties
 
         #region Constructor
 
-        public AnalysisViewModel(IAppStateService appStateService, FeatureExtractionService featureExtractionService) : base(3)
+        public AnalysisViewModel(IAppStateService appStateService) : base(3)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
-            _featureExtractionService = featureExtractionService;
 
-            Title = "Feature Extraction and Similarity Analysis";
+            Title = "Similarity Analysis";
+
+            // Subscribe to extracted features changes
+            _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
+
+            // Update UI with current state
+            UpdateExtractedFeaturesStatus();
         }
 
         #endregion Constructor
 
         #region Commands
 
-        [RelayCommand]
-        private async Task ExtractFeaturesAsync()
-        {
-            try
-            {
-                IsExtracting = true;
-                Status = "Starting feature extraction...";
-                ExtractedFeaturesCount = 0;
-
-                // Check if the service is initialized
-                if (!_featureExtractionService.IsInitialized)
-                {
-                    await InitializeFeatureExtractionAsync();
-                    if (!_featureExtractionService.IsInitialized)
-                    {
-                        Status = "Cannot extract features: Model not loaded";
-                        return;
-                    }
-                }
-
-                // Get processed images from preprocessing view model
-                IReadOnlyCollection<Models.ProcessedMedia> processedImages = _appStateService.ProcessedImages;
-
-                if (processedImages.Count == 0)
-                {
-                    Status = "No processed images available for feature extraction";
-                    return;
-                }
-
-                Status = $"Extracting features from {processedImages.Count} images...";
-
-                // Extract features
-                _extractedFeatures = await _featureExtractionService.ExtractFeaturesAsync(processedImages);
-
-                // Update results
-                ExtractedFeaturesCount = _extractedFeatures.Count;
-
-                if (_extractedFeatures.Count > 0)
-                {
-                    HasExtractedFeatures = true;
-                    Status = $"Feature extraction completed! {ExtractedFeaturesCount} feature vectors extracted.";
-
-                    // Reset similarity analysis results since we have new features
-                    _similarityResult = null;
-                    HasSimilarityResults = false;
-                    Status = "Ready to analyze similarity";
-
-                    // Log some information about the extracted features
-                    ExtractedFeatures firstFeature = _extractedFeatures.First();
-                    System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstFeature.FeatureCount}");
-                    System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstFeature.FeatureDimensions)}]");
-                }
-                else
-                {
-                    Status = "Feature extraction failed: No features were extracted.";
-                }
-            }
-            catch (Exception ex)
-            {
-                Status = $"Error during feature extraction: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Feature extraction error: {ex}");
-            }
-            finally
-            {
-                IsExtracting = false;
-            }
-        }
-
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(CanStartSimilarityAnalysis))]
         private async Task AnalyzeSimilarityAsync()
         {
             try
             {
                 IsAnalyzingSimilarity = true;
+                IsBusy = true;
                 Status = "Starting similarity analysis...";
 
-                if (!HasExtractedFeatures || _extractedFeatures.Count == 0)
+                var extractedFeatures = _appStateService.ExtractedFeatures.ToList();
+
+                if (extractedFeatures.Count == 0)
                 {
                     Status = "No extracted features available for similarity analysis";
                     return;
                 }
 
-                Status = $"Analyzing similarity between {_extractedFeatures.Count} images...";
+                Status = $"Analyzing similarity between {extractedFeatures.Count} images...";
 
                 // Perform clustering
-                _similarityResult = await SimilarityAnalysisService.PerformClusteringAsync(_extractedFeatures, SimilarityThreshold);
+                _similarityResult = await SimilarityAnalysisService.PerformClusteringAsync(extractedFeatures, SimilarityThreshold);
 
                 // Update results
                 if (_similarityResult != null)
@@ -248,6 +137,7 @@ namespace DeDupe.ViewModels.Pages
             finally
             {
                 IsAnalyzingSimilarity = false;
+                IsBusy = false;
             }
         }
 
@@ -255,46 +145,40 @@ namespace DeDupe.ViewModels.Pages
 
         #region Methods
 
-        private bool HasProcessedImages()
-        {
-            return _appStateService?.ProcessedImageCount != 0;
-        }
-
         private void UpdateCompletionStatus()
         {
             IsComplete = HasExtractedFeatures && HasSimilarityResults;
         }
 
-        private async Task InitializeFeatureExtractionAsync()
+        private void UpdateExtractedFeaturesStatus()
         {
-            try
+            if (HasExtractedFeatures)
             {
-                // Get model file path and validate
-                if (!string.IsNullOrEmpty(_appStateService.ModelFilePath) && System.IO.File.Exists(_appStateService.ModelFilePath))
-                {
-                    Status = "Initializing model...";
-
-                    // Get normalization vales
-                    (double meanR, double meanG, double meanB, double stdR, double stdG, double stdB) = _appStateService.GetNormalization();
-
-                    // Initialize feature extraction service
-                    await _featureExtractionService.InitializeAsync(_appStateService.ModelFilePath, (float)meanR, (float)meanG, (float)meanB, (float)stdR, (float)stdG, (float)stdB);
-
-                    Status = "Model loaded successfully. Ready to extract features.";
-
-                    // Update command availability
-                    ExtractFeaturesCommand.NotifyCanExecuteChanged();
-                }
-                else
-                {
-                    Status = "No valid model file found.";
-                }
+                Status = $"{ExtractedFeaturesCount} feature vectors loaded. Ready to analyze similarity.";
             }
-            catch (Exception ex)
+            else
             {
-                Status = $"Error initializing model: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Model initialization error: {ex}");
+                Status = "No extracted features available. Please complete feature extraction first.";
             }
+
+            OnPropertyChanged(nameof(HasExtractedFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            OnPropertyChanged(nameof(CanStartSimilarityAnalysis));
+            AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
+        }
+
+        private void OnExtractedFeaturesChanged(object? sender, EventArgs e)
+        {
+            UpdateExtractedFeaturesStatus();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
+            }
+            base.Dispose(disposing);
         }
 
         #endregion Methods

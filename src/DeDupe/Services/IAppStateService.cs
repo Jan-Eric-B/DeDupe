@@ -1,5 +1,6 @@
 ﻿using DeDupe.Enums.Approach;
 using DeDupe.Models;
+using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -118,6 +119,31 @@ namespace DeDupe.Services
 
         #endregion PreProcessing Data
 
+        #region Feature Extraction Data
+
+        /// <summary>
+        /// Extracted features from images
+        /// </summary>
+        IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures { get; }
+
+        /// <summary>
+        /// Set extracted features
+        /// </summary>
+        /// <param name="features">Collection of extracted features</param>
+        void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features);
+
+        /// <summary>
+        /// Clear extracted features
+        /// </summary>
+        void ClearExtractedFeatures();
+
+        /// <summary>
+        /// Count of extracted features
+        /// </summary>
+        int ExtractedFeaturesCount { get; }
+
+        #endregion Feature Extraction Data
+
         #region Events
 
         /// <summary>
@@ -139,6 +165,11 @@ namespace DeDupe.Services
         /// Approach settings changed
         /// </summary>
         event EventHandler? ApproachSettingsChanged;
+
+        /// <summary>
+        /// Extracted features changed
+        /// </summary>
+        event EventHandler? ExtractedFeaturesChanged;
 
         #endregion Events
     }

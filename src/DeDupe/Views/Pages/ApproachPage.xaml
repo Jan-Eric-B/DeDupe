@@ -19,10 +19,10 @@
         <TextBlock Grid.Row="0" Margin="5,0" Text="{x:Bind ViewModel.Title, Mode=OneWay}" Style="{StaticResource TitleTextBlockStyle}" />
 
         <!-- Main Content -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
-                <!--<ColumnDefinition Width="1*" />
-                <ColumnDefinition Width="4*" />-->
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- Left Side - Approach -->
@@ -67,7 +67,7 @@
             </ScrollViewer>
 
             <!-- Right Side - Options -->
-            <Border Grid.Column="1"
+            <Border Grid.Column="0"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
@@ -90,32 +90,26 @@
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
                         ZoomMode="Disabled">
-                        <Grid ColumnSpacing="30">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                        <!-- Model File Selection -->
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Model File" FontWeight="SemiBold" FontSize="16" />
 
-                            <!-- Model File Selection -->
-                            <StackPanel Grid.Column="0" Spacing="10">
-                                <TextBlock Text="Model File" FontWeight="SemiBold" />
-
-                                <TextBlock Text="Supported format: .onnx"
+                            <TextBlock Text="Supported format: .onnx"
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     TextWrapping="Wrap" />
 
-                                <!-- Drag and Drop Container for Model File -->
-                                <Grid x:Name="ModelFileDropGrid"
+                            <!-- Drag and Drop Container for Model File -->
+                            <Grid x:Name="ModelFileDropGrid"
                                     ColumnSpacing="5"
                                     AllowDrop="True"
                                     DragOver="ModelFileDropGrid_DragOver"
                                     Drop="ModelFileDropGrid_Drop">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0"
                                         Background="{ThemeResource TextControlBackground}"
                                         BorderBrush="{ThemeResource TextControlBorderBrush}"
                                         BorderThickness="{ThemeResource TextControlBorderThemeThickness}"
@@ -123,114 +117,125 @@
                                         Padding="12,5,12,6"
                                         MinHeight="32"
                                         DoubleTapped="ModelFileTextBlock_DoubleTapped">
-                                        <TextBlock ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=OneWay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{ThemeResource TextControlForeground}">
+                                    <TextBlock ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=OneWay}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{ThemeResource TextControlForeground}">
                                             <Run Text="{x:Bind ViewModel.DirectoryPath, Mode=OneWay}" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                             <Run Text="{x:Bind ViewModel.FileName, Mode=OneWay}" FontWeight="SemiBold" />
-                                        </TextBlock>
-                                    </Border>
-                                    <Button Grid.Column="1"
+                                    </TextBlock>
+                                </Border>
+                                <Button Grid.Column="1"
                                         Content="..."
                                         Command="{x:Bind ViewModel.SelectModelFileCommand}"
                                         HorizontalAlignment="Stretch"
                                         AllowDrop="True" />
-                                </Grid>
+                            </Grid>
 
-                                <!-- Links to models -->
-                                <StackPanel Orientation="Horizontal" Spacing="20">
-                                    <StackPanel>
-                                        <TextBlock Text="Download pre-trained models" FontWeight="SemiBold" Margin="0,10,0,0" />
-                                        <TextBlock Text=" (Recommend: resnet50-v2-7.onnx)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <!-- Links to models -->
+                            <StackPanel Orientation="Horizontal" Spacing="20">
+                                <StackPanel>
+                                    <TextBlock Text="Download pre-trained models" FontWeight="SemiBold" Margin="0,10,0,0" />
+                                    <TextBlock Text=" (Recommend: resnet50-v2-7.onnx)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                </StackPanel>
+
+                                <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
+                                        <TextBlock Text="GitHub - onnx - Models/ResNet" />
                                     </StackPanel>
+                                </HyperlinkButton>
 
-                                    <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
-                                            <TextBlock Text="GitHub - onnx - Models/ResNet" />
-                                        </StackPanel>
-                                    </HyperlinkButton>
-
-                                    <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
-                                            <TextBlock Text="HuggingFace - webml/models-moved" />
-                                        </StackPanel>
-                                    </HyperlinkButton>
-                                </StackPanel>
+                                <HyperlinkButton VerticalAlignment="Bottom" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE896;" FontSize="14" />
+                                        <TextBlock Text="HuggingFace - webml/models-moved" />
+                                    </StackPanel>
+                                </HyperlinkButton>
                             </StackPanel>
-
-                            <!-- Normalization Settings -->
-                            <StackPanel Grid.Column="1" Spacing="10">
-                                <TextBlock Text="Normalization Settings" FontWeight="SemiBold" />
-
-                                <!-- Mean Values -->
-                                <StackPanel Spacing="5">
-                                    <TextBlock Text="Mean (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <NumberBox Grid.Column="0"
-                                            Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}"
-                                            PlaceholderText="0.485"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-
-                                        <NumberBox Grid.Column="1"
-                                            Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}"
-                                            PlaceholderText="0.456"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-
-                                        <NumberBox Grid.Column="2"
-                                            Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}"
-                                            PlaceholderText="0.406"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-                                    </Grid>
-                                </StackPanel>
-                                <!-- Std Values -->
-                                <StackPanel Spacing="5">
-                                    <TextBlock Text="Standard Deviation (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                    <Grid ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-
-                                        <NumberBox Grid.Column="0"
-                                            Value="{x:Bind ViewModel.StdR, Mode=TwoWay}"
-                                            PlaceholderText="0.229"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-
-                                        <NumberBox Grid.Column="1"
-                                            Value="{x:Bind ViewModel.StdG, Mode=TwoWay}"
-                                            PlaceholderText="0.224"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-
-                                        <NumberBox Grid.Column="2"
-                                            Value="{x:Bind ViewModel.StdB, Mode=TwoWay}"
-                                            PlaceholderText="0.225"
-                                            SmallChange="0.001"
-                                            LargeChange="0.01"
-                                            SpinButtonPlacementMode="Compact" />
-                                    </Grid>
-                                </StackPanel>
-                                <Button Content="Default (ImageNet)" HorizontalAlignment="Right" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
-                            </StackPanel>
-                        </Grid>
+                        </StackPanel>
                     </ScrollViewer>
                 </Grid>
+            </Border>
+
+            <!-- Normalization Settings -->
+            <Border Grid.Column="1"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="20,0">
+                <ScrollViewer Margin="0,20,0,0"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto"
+                        ZoomMode="Disabled">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Normalization Settings" FontWeight="SemiBold" FontSize="16" />
+
+                        <!-- Mean Values -->
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Mean (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <NumberBox Grid.Column="0"
+Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}"
+PlaceholderText="0.485"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+
+                                <NumberBox Grid.Column="1"
+Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}"
+PlaceholderText="0.456"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+
+                                <NumberBox Grid.Column="2"
+Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}"
+PlaceholderText="0.406"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+                            </Grid>
+                        </StackPanel>
+                        <!-- Std Values -->
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="Standard Deviation (R, G, B)" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <Grid ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <NumberBox Grid.Column="0"
+Value="{x:Bind ViewModel.StdR, Mode=TwoWay}"
+PlaceholderText="0.229"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+
+                                <NumberBox Grid.Column="1"
+Value="{x:Bind ViewModel.StdG, Mode=TwoWay}"
+PlaceholderText="0.224"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+
+                                <NumberBox Grid.Column="2"
+Value="{x:Bind ViewModel.StdB, Mode=TwoWay}"
+PlaceholderText="0.225"
+SmallChange="0.001"
+LargeChange="0.01"
+SpinButtonPlacementMode="Compact" />
+                            </Grid>
+                        </StackPanel>
+                        <Button Content="Default (ImageNet)" HorizontalAlignment="Right" Command="{x:Bind ViewModel.ResetNormalizationCommand}" Style="{StaticResource DefaultButtonStyle}" />
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
 
@@ -246,12 +251,32 @@
               HorizontalAlignment="Left"
               Command="{x:Bind ViewModel.NavigateToPreviousCommand}" />
 
-            <Button Content="Next"
-                Grid.Column="1"
-                HorizontalAlignment="Right"
-                Command="{x:Bind ViewModel.NavigateToNextCommand}"
-                IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
-                Style="{StaticResource AccentButtonStyle}" />
+            <StackPanel Orientation="Horizontal"
+                  Grid.Column="1"
+                  Spacing="10"
+                  HorizontalAlignment="Right">
+
+                <!-- Progress and Status -->
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+
+                <TextBlock VerticalAlignment="Center"
+                    HorizontalAlignment="Right"
+                    Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+
+                <Button Content="Extract Features"
+                  Command="{x:Bind ViewModel.ExtractFeaturesCommand}"
+                  IsEnabled="{x:Bind ViewModel.CanStartExtraction, Mode=OneWay}"
+                  Style="{StaticResource AccentButtonStyle}"
+                  FontSize="13"
+                  MinWidth="150" />
+
+                <Button Content="Next"
+                    Command="{x:Bind ViewModel.NavigateToNextCommand}"
+                    IsEnabled="{x:Bind ViewModel.CanNavigateToNext, Mode=OneWay}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

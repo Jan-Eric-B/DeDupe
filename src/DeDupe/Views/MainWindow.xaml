@@ -10,8 +10,8 @@
     <Grid x:Name="grdRoot" Padding="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="1*" />
-            <RowDefinition Height="1.5*" />
+            <RowDefinition Height="400" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Title -->

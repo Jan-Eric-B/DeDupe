@@ -1,9 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums.Approach;
+using DeDupe.Models.Analysis;
 using DeDupe.Services;
+using DeDupe.Services.Analysis;
 using Microsoft.UI.Xaml;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -16,6 +20,12 @@ namespace DeDupe.ViewModels.Pages
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly FeatureExtractionService _featureExtractionService;
+
+        private List<ExtractedFeatures> _extractedFeatures = [];
+        private bool _isExtracting;
+        private bool _hasExtractedFeatures;
+        private int _extractedFeaturesCount;
 
         #endregion Fields
 
@@ -30,7 +40,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.SelectedApproach = value;
 
-                    // Notify all radio buttons
+                    // Notify radio buttons
                     OnPropertyChanged(nameof(IsDeepLearningSelected));
                     OnPropertyChanged(nameof(IsPerceptualHashingSelected));
                     OnPropertyChanged(nameof(IsColorHistogramSelected));
@@ -39,6 +49,8 @@ namespace DeDupe.ViewModels.Pages
                     OnPropertyChanged(nameof(IsSemanticSimilaritySelected));
                     OnPropertyChanged(nameof(IsOtherApproachSelected));
 
+                    // Reset extraction state
+                    ResetExtractionState();
                     UpdateCompletionStatus();
                 }
             }
@@ -55,10 +67,62 @@ namespace DeDupe.ViewModels.Pages
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(DirectoryPath));
                     OnPropertyChanged(nameof(FileName));
+                    OnPropertyChanged(nameof(CanStartExtraction));
+
+                    // Reset extraction state
+                    ResetExtractionState();
+                    UpdateCompletionStatus();
+                    ExtractFeaturesCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool IsExtracting
+        {
+            get => _isExtracting;
+            set
+            {
+                if (SetProperty(ref _isExtracting, value))
+                {
+                    OnPropertyChanged(nameof(CanStartExtraction));
+                    ExtractFeaturesCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool HasExtractedFeatures
+        {
+            get => _hasExtractedFeatures;
+            set
+            {
+                if (SetProperty(ref _hasExtractedFeatures, value))
+                {
+                    OnPropertyChanged(nameof(Status));
                     UpdateCompletionStatus();
                 }
             }
         }
+
+        public int ExtractedFeaturesCount
+        {
+            get => _extractedFeaturesCount;
+            set
+            {
+                if (SetProperty(ref _extractedFeaturesCount, value))
+                {
+                    OnPropertyChanged(nameof(Status));
+                }
+            }
+        }
+
+        public bool CanStartExtraction =>
+            !IsExtracting &&
+            IsDeepLearningSelected &&
+            !string.IsNullOrEmpty(ModelFilePath) &&
+            File.Exists(ModelFilePath) &&
+            HasProcessedImages();
+
+        public List<ExtractedFeatures> ExtractedFeatures => _extractedFeatures;
 
         public bool IsDeepLearningSelected
         {
@@ -107,6 +171,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.MeanR = value;
                     OnPropertyChanged();
+                    ResetExtractionState(); // Normalization changed, need to re-extract
                 }
             }
         }
@@ -120,6 +185,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.MeanG = value;
                     OnPropertyChanged();
+                    ResetExtractionState();
                 }
             }
         }
@@ -133,6 +199,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.MeanB = value;
                     OnPropertyChanged();
+                    ResetExtractionState();
                 }
             }
         }
@@ -146,6 +213,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.StdR = value;
                     OnPropertyChanged();
+                    ResetExtractionState();
                 }
             }
         }
@@ -159,6 +227,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.StdG = value;
                     OnPropertyChanged();
+                    ResetExtractionState();
                 }
             }
         }
@@ -172,6 +241,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     _appStateService.StdB = value;
                     OnPropertyChanged();
+                    ResetExtractionState();
                 }
             }
         }
@@ -183,6 +253,75 @@ namespace DeDupe.ViewModels.Pages
         #endregion Properties
 
         #region Commands
+
+        [RelayCommand(CanExecute = nameof(CanStartExtraction))]
+        private async Task ExtractFeaturesAsync()
+        {
+            try
+            {
+                IsExtracting = true;
+                IsBusy = true;
+                Status = "Starting feature extraction...";
+                ExtractedFeaturesCount = 0;
+
+                // Check if the service is initialized
+                if (!_featureExtractionService.IsInitialized)
+                {
+                    await InitializeFeatureExtractionAsync();
+                    if (!_featureExtractionService.IsInitialized)
+                    {
+                        Status = "Cannot extract features: Model not loaded";
+                        return;
+                    }
+                }
+
+                // Get processed images
+                var processedImages = _appStateService.ProcessedImages;
+
+                if (processedImages.Count == 0)
+                {
+                    Status = "No processed images available for feature extraction";
+                    return;
+                }
+
+                Status = $"Extracting features from {processedImages.Count} images...";
+
+                // Extract features
+                _extractedFeatures = await _featureExtractionService.ExtractFeaturesAsync(processedImages);
+
+                // Update results
+                ExtractedFeaturesCount = _extractedFeatures.Count;
+
+                if (_extractedFeatures.Count > 0)
+                {
+                    HasExtractedFeatures = true;
+
+                    // Store features in AppStateService for use in next pages
+                    _appStateService.SetExtractedFeatures(_extractedFeatures);
+
+                    Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors. Ready to proceed.";
+
+                    // Log feature info
+                    var firstFeature = _extractedFeatures.First();
+                    System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstFeature.FeatureCount}");
+                    System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstFeature.FeatureDimensions)}]");
+                }
+                else
+                {
+                    Status = "Feature extraction failed: No features were extracted.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error during feature extraction: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Feature extraction error: {ex}");
+            }
+            finally
+            {
+                IsExtracting = false;
+                IsBusy = false;
+            }
+        }
 
         [RelayCommand]
         private async Task SelectModelFileAsync()
@@ -224,9 +363,10 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ApproachViewModel(IAppStateService appStateService) : base(2)
+        public ApproachViewModel(IAppStateService appStateService, FeatureExtractionService featureExtractionService) : base(2)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
 
             Title = "Model Configuration";
 
@@ -246,19 +386,72 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (IsDeepLearningSelected)
                 {
-                    return !string.IsNullOrEmpty(_appStateService.ModelFilePath) && File.Exists(_appStateService.ModelFilePath);
+                    // Require model file AND extracted features
+                    return !string.IsNullOrEmpty(_appStateService.ModelFilePath) &&
+                           File.Exists(_appStateService.ModelFilePath) &&
+                           HasExtractedFeatures;
                 }
                 else
                 {
-                    // TODO Implement other
-                    return IsPerceptualHashingSelected || IsColorHistogramSelected || IsSiftSurfSelected || IsTemplateMatchingSelected || IsSemanticSimilaritySelected;
+                    // TODO Implement other approaches
+                    return IsPerceptualHashingSelected || IsColorHistogramSelected ||
+                           IsSiftSurfSelected || IsTemplateMatchingSelected || IsSemanticSimilaritySelected;
                 }
+            }
+        }
+
+        private bool HasProcessedImages()
+        {
+            return _appStateService?.ProcessedImageCount > 0;
+        }
+
+        private void ResetExtractionState()
+        {
+            if (HasExtractedFeatures)
+            {
+                _extractedFeatures.Clear();
+                HasExtractedFeatures = false;
+                ExtractedFeaturesCount = 0;
+                Status = "Configuration changed. Please extract features again.";
+                UpdateCompletionStatus();
             }
         }
 
         private void UpdateCompletionStatus()
         {
             IsComplete = CanNavigateToNext;
+            NavigateToNextCommand.NotifyCanExecuteChanged();
+        }
+
+        private async Task InitializeFeatureExtractionAsync()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_appStateService.ModelFilePath) && File.Exists(_appStateService.ModelFilePath))
+                {
+                    Status = "Initializing model...";
+
+                    // Get normalization values
+                    (double meanR, double meanG, double meanB, double stdR, double stdG, double stdB) = _appStateService.GetNormalization();
+
+                    // Initialize feature extraction service
+                    await _featureExtractionService.InitializeAsync(
+                        _appStateService.ModelFilePath,
+                        (float)meanR, (float)meanG, (float)meanB,
+                        (float)stdR, (float)stdG, (float)stdB);
+
+                    Status = "Model loaded successfully. Ready to extract features.";
+                }
+                else
+                {
+                    Status = "No valid model file found.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error initializing model: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Model initialization error: {ex}");
+            }
         }
 
         private void OnApproachSettingsChanged(object? sender, EventArgs e)
