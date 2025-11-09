@@ -39,6 +39,19 @@ namespace DeDupe
             {
                 NavigateToPage(ViewModel.SelectedStepIndex);
             }
+            else if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode))
+            {
+                if (ViewModel.IsInManagementMode)
+                {
+                    // Navigate to management page when entering management mode
+                    frManagement.Navigate(typeof(ManagementPage));
+                }
+            }
+        }
+
+        private void StepperControl_StepClicked(object sender, int stepNumber)
+        {
+            ViewModel.NavigateToStepCommand.Execute(stepNumber);
         }
 
         private void NavigateToPage(int pageIndex)

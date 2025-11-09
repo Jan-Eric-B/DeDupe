@@ -5,28 +5,41 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:DeDupe.Controls"
     mc:Ignorable="d"
     Title="DeDupe">
     <Grid x:Name="grdRoot" Padding="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="400" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Title -->
-        <StackPanel x:Name="spTitle" Orientation="Horizontal" Grid.Row="0" Padding="0,5" Spacing="5" Background="Transparent">
+        <!-- Title Bar -->
+        <StackPanel x:Name="spTitle" Orientation="Horizontal" Grid.Row="0" Padding="10,8" Spacing="5" Background="Transparent">
             <Image Source="/Assets/Icon/StoreLogo.png" Width="16" Height="16" VerticalAlignment="Center" />
             <TextBlock Text="DeDupe" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
         </StackPanel>
 
-        <!-- Top -->
-        <Grid Grid.Row="1">
-            <Frame x:Name="frMain" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        <!-- Configuration Mode -->
+        <Grid x:Name="ConfigurationMode"
+              Grid.Row="1"
+              Visibility="{x:Bind ViewModel.IsInConfigurationMode, Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Stepper -->
+            <controls:StepperControl Grid.Row="0" Steps="{x:Bind ViewModel.Steps, Mode=OneWay}" StepClicked="StepperControl_StepClicked" />
+
+            <!-- Configuration Frame -->
+            <Frame x:Name="frMain" Grid.Row="1" Padding="10" />
         </Grid>
 
-        <!-- Bottom -->
-        <Grid Grid.Row="2">
+        <!-- Management Mode -->
+        <Grid x:Name="ManagementMode" Grid.Row="1" Visibility="{x:Bind ViewModel.IsInManagementMode, Mode=OneWay}">
+            <!-- Management Frame -->
+            <Frame x:Name="frManagement" Grid.Row="0" />
         </Grid>
     </Grid>
 </Window>

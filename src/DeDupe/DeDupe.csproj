@@ -72,8 +72,10 @@
     <None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
+	<None Remove="Controls\StepperControl.xaml" />
     <None Remove="Views\Pages\ApproachPage.xaml" />
     <None Remove="Views\Pages\FileInputPage.xaml" />
+    <None Remove="Views\Pages\ManagementPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -99,6 +101,11 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
   </ItemGroup>
   <ItemGroup>
+    <Page Update="Views\Pages\ManagementPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="Views\Pages\PreProcessingPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -118,6 +125,11 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
+	<ItemGroup>
+		<Page Update="Controls\StepperControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution

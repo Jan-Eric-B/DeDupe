@@ -112,6 +112,13 @@
                   Style="{StaticResource AccentButtonStyle}"
                   FontSize="13"
                   MinWidth="150" />
+
+                <Button Content="Management"
+                  Command="{x:Bind ViewModel.EnterManagementModeCommand}"
+                  IsEnabled="{x:Bind ViewModel.CanEnterManagementMode, Mode=OneWay}"
+                  Style="{StaticResource AccentButtonStyle}"
+                  FontSize="13"
+                  MinWidth="180" />
             </StackPanel>
         </Grid>
     </Grid>

@@ -51,6 +51,7 @@ namespace DeDupe.ViewModels.Pages
                 if (SetProperty(ref _hasSimilarityResults, value))
                 {
                     OnPropertyChanged(nameof(Status));
+                    OnPropertyChanged(nameof(CanEnterManagementMode));
                     UpdateCompletionStatus();
                 }
             }
@@ -63,6 +64,8 @@ namespace DeDupe.ViewModels.Pages
         }
 
         public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && HasExtractedFeatures;
+
+        public bool CanEnterManagementMode => HasSimilarityResults;
 
         #endregion Properties
 
@@ -139,6 +142,14 @@ namespace DeDupe.ViewModels.Pages
                 IsAnalyzingSimilarity = false;
                 IsBusy = false;
             }
+        }
+
+        [RelayCommand]
+        private static void EnterManagementMode()
+        {
+            // Get the MainWindowViewModel from the service provider and trigger management mode
+            var mainViewModel = App.Current.GetService<MainWindowViewModel>();
+            mainViewModel?.StartManagementModeCommand.Execute(null);
         }
 
         #endregion Commands

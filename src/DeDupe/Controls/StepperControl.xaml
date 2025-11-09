@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="DeDupe.Controls.StepperControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:DeDupe.Models"
+    mc:Ignorable="d">
+
+    <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="10,0" CornerRadius="8">
+        <Grid x:Name="StepsGrid">
+            <Grid.ColumnDefinitions>
+                <!-- Step 1 -->
+                <ColumnDefinition Width="*" />
+                <!-- Connector 1 -->
+                <ColumnDefinition Width="Auto" />
+                <!-- Step 2 -->
+                <ColumnDefinition Width="*" />
+                <!-- Connector 2 -->
+                <ColumnDefinition Width="Auto" />
+                <!-- Step 3 -->
+                <ColumnDefinition Width="*" />
+                <!-- Connector 3 -->
+                <ColumnDefinition Width="Auto" />
+                <!-- Step 4 -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
+    </Border>
+</UserControl>
