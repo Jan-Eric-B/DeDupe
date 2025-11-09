@@ -24,12 +24,6 @@ namespace DeDupe.Views.Pages
 
         private void ModelFileDropGrid_DragOver(object sender, DragEventArgs e)
         {
-            if (!ViewModel.IsDeepLearningSelected)
-            {
-                e.AcceptedOperation = DataPackageOperation.None;
-                return;
-            }
-
             // Dragged items contains files
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
@@ -46,12 +40,6 @@ namespace DeDupe.Views.Pages
 
         private async void ModelFileDropGrid_Drop(object sender, DragEventArgs e)
         {
-            // Only proceed if Deep Learning is selected
-            if (!ViewModel.IsDeepLearningSelected)
-            {
-                return;
-            }
-
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 try
