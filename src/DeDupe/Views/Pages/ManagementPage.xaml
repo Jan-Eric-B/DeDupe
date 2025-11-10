@@ -63,10 +63,14 @@
                 </StackPanel>
 
                 <!-- Back Button -->
-                <Button Grid.Column="1"
-                        Content="Back to Configuration"
-                        HorizontalAlignment="Right"
-                        Click="BackToConfiguration_Click" />
+                <Button Click="BackToConfiguration_Click" Grid.Column="1" HorizontalAlignment="Right">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon Glyph="&#xE713;" FontSize="14" />
+                            <TextBlock Text="Configuration" />
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
             </Grid>
         </Border>
 
