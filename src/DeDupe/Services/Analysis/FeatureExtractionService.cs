@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Analysis
 {
-    public class FeatureExtractionService : IDisposable
+    public partial class FeatureExtractionService : IDisposable
     {
         #region Fields
 
@@ -132,7 +132,6 @@ namespace DeDupe.Services.Analysis
             }
 
             List<ProcessedMedia> imageList = [.. processedImages];
-            int totalCount = imageList.Count;
 
             ConcurrentBag<ExtractedFeatures> results = [];
 

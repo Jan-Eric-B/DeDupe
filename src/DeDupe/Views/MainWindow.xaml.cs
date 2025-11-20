@@ -39,13 +39,10 @@ namespace DeDupe
             {
                 NavigateToPage(ViewModel.SelectedStepIndex);
             }
-            else if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode))
+            else if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode) && ViewModel.IsInManagementMode)
             {
-                if (ViewModel.IsInManagementMode)
-                {
-                    // Navigate to management page when entering management mode
-                    frManagement.Navigate(typeof(ManagementPage));
-                }
+                // Navigate to management page when entering management mode
+                frManagement.Navigate(typeof(ManagementPage));
             }
         }
 

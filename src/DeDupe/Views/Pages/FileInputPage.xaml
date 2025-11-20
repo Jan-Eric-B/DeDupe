@@ -101,8 +101,8 @@
                 SelectionMode="None"
                 AllowDrop="True"
                 Padding="0,5"
-                DragOver="lvMediaSelectionList_DragOver"
-                Drop="lvMediaSelectionList_Drop">
+                DragOver="LvMediaSelectionList_DragOver"
+                Drop="LvMediaSelectionList_Drop">
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="models:SourcePathItem">
                         <Grid>

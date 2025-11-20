@@ -33,11 +33,6 @@ namespace DeDupe.Services.PreProcessing
 
             switch (resizeMethod)
             {
-                case ResizeMethod.Stretch:
-                    intermediateWidth = targetWidth;
-                    intermediateHeight = targetHeight;
-                    break;
-
                 case ResizeMethod.Crop:
                     (uint scaledWidth, uint scaledHeight, uint cropOffsetX, uint cropOffsetY) = CalculateCropDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
                     intermediateWidth = scaledWidth;

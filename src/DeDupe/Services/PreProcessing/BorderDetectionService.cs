@@ -34,7 +34,7 @@ namespace DeDupe.Services.PreProcessing
             }
 
             // Extract cropped region
-            return ExtractImageRegion(pixelData, width, height, left, top, newWidth, newHeight);
+            return ExtractImageRegion(pixelData, width, left, top, newWidth, newHeight);
         }
 
         private static (uint top, uint bottom, uint left, uint right) DetectBorders(
@@ -245,7 +245,6 @@ namespace DeDupe.Services.PreProcessing
         private static (byte[] pixels, uint newWidth, uint newHeight) ExtractImageRegion(
             byte[] sourcePixels,
             uint sourceWidth,
-            uint sourceHeight,
             uint startX,
             uint startY,
             uint newWidth,

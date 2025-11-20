@@ -134,12 +134,7 @@ namespace DeDupe.Controls
                 button.Background = (SolidColorBrush)Application.Current.Resources["LayerFillColorAltBrush"];
                 button.BorderBrush = (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"];
             }
-            else if (step.IsCompleted)
-            {
-                button.Background = (SolidColorBrush)Application.Current.Resources["LayerFillColorAltBrush"];
-                button.BorderBrush = (SolidColorBrush)Application.Current.Resources["CardStrokeColorDefaultBrush"];
-            }
-            else if (step.IsEnabled)
+            else if (step.IsCompleted || step.IsEnabled)
             {
                 button.Background = (SolidColorBrush)Application.Current.Resources["LayerFillColorAltBrush"];
                 button.BorderBrush = (SolidColorBrush)Application.Current.Resources["CardStrokeColorDefaultBrush"];

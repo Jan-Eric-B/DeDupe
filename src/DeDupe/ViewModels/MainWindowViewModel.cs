@@ -11,7 +11,6 @@ namespace DeDupe.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
-        private readonly IAppStateService _appStateService;
         private readonly IServiceProvider _serviceProvider;
 
         private int _selectedStepIndex = 0;
@@ -39,9 +38,8 @@ namespace DeDupe.ViewModels
 
         public bool IsInConfigurationMode => !IsInManagementMode;
 
-        public MainWindowViewModel(IAppStateService appStateService, IServiceProvider serviceProvider)
+        public MainWindowViewModel(IServiceProvider serviceProvider)
         {
-            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
             Steps =

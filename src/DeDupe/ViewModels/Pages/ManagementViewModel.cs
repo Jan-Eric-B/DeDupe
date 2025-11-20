@@ -4,6 +4,7 @@ using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -105,7 +106,7 @@ namespace DeDupe.ViewModels.Pages
                 Status = "Starting similarity analysis...";
                 ResultsMessage = string.Empty;
 
-                var extractedFeatures = _appStateService.ExtractedFeatures.ToList();
+                List<ExtractedFeatures>? extractedFeatures = _appStateService.ExtractedFeatures.ToList();
 
                 if (extractedFeatures.Count == 0)
                 {

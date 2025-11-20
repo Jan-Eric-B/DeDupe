@@ -21,7 +21,7 @@ namespace DeDupe.Views.Pages
             DataContext = ViewModel;
         }
 
-        private void lvMediaSelectionList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private void LvMediaSelectionList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
@@ -32,7 +32,7 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private async void lvMediaSelectionList_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private async void LvMediaSelectionList_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {

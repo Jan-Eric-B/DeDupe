@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
@@ -213,7 +214,7 @@ namespace DeDupe.ViewModels.Pages
                 }
 
                 // Get processed images
-                var processedImages = _appStateService.ProcessedImages;
+                IReadOnlyCollection<ProcessedMedia>? processedImages = _appStateService.ProcessedImages;
 
                 if (processedImages.Count == 0)
                 {
@@ -233,15 +234,17 @@ namespace DeDupe.ViewModels.Pages
                 {
                     HasExtractedFeatures = true;
 
-                    // Store features in AppStateService for use in management page
+                    // Store in AppStateService
                     _appStateService.SetExtractedFeatures(_extractedFeatures);
-
                     Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors.";
 
                     // Log feature info
-                    var firstFeature = _extractedFeatures.First();
-                    System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstFeature.FeatureCount}");
-                    System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstFeature.FeatureDimensions)}]");
+                    if (_extractedFeatures.Count > 0)
+                    {
+                        ExtractedFeatures firstFeature = _extractedFeatures[0];
+                        System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstFeature.FeatureCount}");
+                        System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstFeature.FeatureDimensions)}]");
+                    }
                 }
                 else
                 {

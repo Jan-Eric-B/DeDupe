@@ -126,7 +126,6 @@ namespace DeDupe.Services.Analysis
             }
 
             int mergeOperations = 0;
-            int maxMergeOperations = count - 1;
 
             // Agglomerative clustering - merge closest clusters
             while (true)

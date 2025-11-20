@@ -57,7 +57,7 @@ namespace DeDupe.Services
                 float scalingFactor = dpi / 96f;
 
                 // Read MINMAXINFO structure from unmanaged memory
-                MINMAXINFO minMaxInfo = Marshal.PtrToStructure<MINMAXINFO>(lParam);
+                MinMaxInfo minMaxInfo = Marshal.PtrToStructure<MinMaxInfo>(lParam);
 
                 // Set minimum size with DPI to be consistent across different displays
                 minMaxInfo.ptMinTrackSize.x = (int)(_minWidth * scalingFactor);
@@ -85,20 +85,20 @@ namespace DeDupe.Services
         private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData);
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct POINT
+        private struct Point
         {
             public int x;
             public int y;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct MINMAXINFO
+        private struct MinMaxInfo
         {
-            public POINT ptReserved;        // Reserved
-            public POINT ptMaxSize;         // Maximized window size
-            public POINT ptMaxPosition;     // Position of maximized window
-            public POINT ptMinTrackSize;    // Min size
-            public POINT ptMaxTrackSize;    // Max size
+            public Point ptReserved;        // Reserved
+            public Point ptMaxSize;         // Maximized window size
+            public Point ptMaxPosition;     // Position of maximized window
+            public Point ptMinTrackSize;    // Min size
+            public Point ptMaxTrackSize;    // Max size
         }
 
         /// <summary>
@@ -126,13 +126,23 @@ namespace DeDupe.Services
 
         private bool _disposed;
 
-        public void Dispose()
+        protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
             {
                 RemoveWindowSubclass(_hwnd, _subclassProcDelegate, _subclassId);
                 _disposed = true;
             }
+        }
+
+        ~WindowsSizeService()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
