@@ -3,7 +3,6 @@ using DeDupe.Constants;
 using DeDupe.Enums.PreProcessing;
 using DeDupe.Services;
 using DeDupe.Services.PreProcessing;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +26,7 @@ namespace DeDupe.ViewModels.Pages
 
         private ResizeMethod _resizeMethod = ProcessingDefaults.ResizeMethod;
 
-        private SolidColorBrush _paddingColor = ProcessingDefaults.PaddingColorBrush;
+        private Color _paddingColor = ProcessingDefaults.PaddingColorBrush.Color;
 
         private InterpolationMethod _downsamplingMethod = ProcessingDefaults.DownsamplingMethod;
 
@@ -87,7 +86,7 @@ namespace DeDupe.ViewModels.Pages
         public bool IsPaddingColorVisible => ResizeMethod == ResizeMethod.Padding;
 
         // Padding Color
-        public SolidColorBrush PaddingColor
+        public Color PaddingColor
         {
             get => _paddingColor;
             set => SetProperty(ref _paddingColor, value);
@@ -283,10 +282,7 @@ namespace DeDupe.ViewModels.Pages
             _imageProcessingService.DownsamplingMethod = DownsamplingMethod;
             _imageProcessingService.OutputFormat = OutputFormat;
             _imageProcessingService.BitDepth = BitDepth;
-
-            // Convert padding color
-            Color color = PaddingColor.Color;
-            _imageProcessingService.PaddingColor = [color.R, color.G, color.B, color.A];
+            _imageProcessingService.PaddingColor = [PaddingColor.R, PaddingColor.G, PaddingColor.B, PaddingColor.A];
         }
 
         private void UpdateCompletionStatus()

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Window
     x:Class="DeDupe.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -6,39 +6,63 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:DeDupe.Controls"
-    mc:Ignorable="d"
-    Title="DeDupe">
+    Title="DeDupe"
+    mc:Ignorable="d">
     <Grid x:Name="grdRoot" Padding="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Title Bar -->
-        <StackPanel x:Name="spTitle" Orientation="Horizontal" Grid.Row="0" Padding="10,8" Spacing="5" Background="Transparent">
-            <Image Source="/Assets/Icon/StoreLogo.png" Width="16" Height="16" VerticalAlignment="Center" />
-            <TextBlock Text="DeDupe" VerticalAlignment="Center" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+        <!--  Title Bar  -->
+        <StackPanel
+            x:Name="spTitle"
+            Grid.Row="0"
+            Padding="10,5"
+            Background="Transparent"
+            Orientation="Horizontal"
+            Spacing="5">
+            <Image
+                Width="16"
+                Height="16"
+                VerticalAlignment="Top"
+                Source="/Assets/Icon/StoreLogo.png" />
+            <TextBlock
+                VerticalAlignment="Top"
+                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="DeDupe" />
         </StackPanel>
 
-        <!-- Configuration Mode -->
-        <Grid x:Name="ConfigurationMode"
-              Grid.Row="1"
-              Visibility="{x:Bind ViewModel.IsInConfigurationMode, Mode=OneWay}">
+        <!--  Configuration Mode  -->
+        <Grid
+            x:Name="ConfigurationMode"
+            Grid.Row="1"
+            Visibility="{x:Bind ViewModel.IsInConfigurationMode, Mode=OneWay}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- Stepper -->
-            <controls:StepperControl Grid.Row="0" Steps="{x:Bind ViewModel.Steps, Mode=OneWay}" StepClicked="StepperControl_StepClicked" />
+            <!--  Stepper  -->
+            <controls:StepperControl
+                Grid.Row="0"
+                StepClicked="StepperControl_StepClicked"
+                Steps="{x:Bind ViewModel.Steps, Mode=OneWay}" />
 
-            <!-- Configuration Frame -->
-            <Frame x:Name="frMain" Grid.Row="1" Padding="10" />
+            <!--  Configuration Frame  -->
+            <Frame
+                x:Name="frMain"
+                Grid.Row="1"
+                Padding="10" />
         </Grid>
 
-        <!-- Management Mode -->
-        <Grid x:Name="ManagementMode" Grid.Row="1" Visibility="{x:Bind ViewModel.IsInManagementMode, Mode=OneWay}">
-            <!-- Management Frame -->
+        <!--  Management Mode  -->
+        <Grid
+            x:Name="ManagementMode"
+            Grid.Row="1"
+            Visibility="{x:Bind ViewModel.IsInManagementMode, Mode=OneWay}">
+            <!--  Management Frame  -->
             <Frame x:Name="frManagement" Grid.Row="0" />
         </Grid>
     </Grid>

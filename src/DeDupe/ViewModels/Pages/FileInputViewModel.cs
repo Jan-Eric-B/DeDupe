@@ -72,7 +72,7 @@ namespace DeDupe.ViewModels.Pages
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
 
             Title = "File Input";
-            Status = "No files selected";
+            Status = "No files added";
             SourcePathItems.CollectionChanged += MediaPathItems_CollectionChanged;
             IsBusy = false;
 
@@ -129,7 +129,7 @@ namespace DeDupe.ViewModels.Pages
         #region Commands
 
         [RelayCommand]
-        private async Task SelectFolder()
+        private async Task AddFolder()
         {
             FolderPicker? folderPicker = new()
             {
@@ -168,7 +168,7 @@ namespace DeDupe.ViewModels.Pages
         }
 
         [RelayCommand]
-        private async Task SelectFiles()
+        private async Task AddFiles()
         {
             FileOpenPicker fileOpenPicker = new()
             {
@@ -239,11 +239,11 @@ namespace DeDupe.ViewModels.Pages
             }
             else if (TotalFileCount == 0)
             {
-                Status = "No files selected";
+                Status = "No files added";
             }
             else
             {
-                Status = $"{TotalFileCount} file{(TotalFileCount == 1 ? "" : "s")} selected";
+                Status = $"{TotalFileCount} file{(TotalFileCount == 1 ? "" : "s")} added";
             }
         }
 

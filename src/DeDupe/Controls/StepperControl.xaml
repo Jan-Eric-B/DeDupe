@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <UserControl
     x:Class="DeDupe.Controls.StepperControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -7,18 +7,21 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Border BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Padding="10,0" CornerRadius="8">
+    <Border
+        Padding="10,0"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="8">
         <Grid x:Name="StepsGrid">
             <Grid.ColumnDefinitions>
-                <!-- Step 1 -->
+                <!--  Step 1  -->
                 <ColumnDefinition Width="*" />
-                <!-- Connector 1 -->
+                <!--  Connector 1  -->
                 <ColumnDefinition Width="Auto" />
-                <!-- Step 2 -->
+                <!--  Step 2  -->
                 <ColumnDefinition Width="*" />
-                <!-- Connector 2 -->
+                <!--  Connector 2  -->
                 <ColumnDefinition Width="Auto" />
-                <!-- Step 3 -->
+                <!--  Step 3  -->
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
         </Grid>

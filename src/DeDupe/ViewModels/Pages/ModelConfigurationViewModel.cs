@@ -6,7 +6,6 @@ using DeDupe.Services.Analysis;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -186,7 +185,7 @@ namespace DeDupe.ViewModels.Pages
 
         public string DirectoryPath => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetDirectoryName(ModelFilePath) + Path.DirectorySeparatorChar : string.Empty;
 
-        public string FileName => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetFileName(ModelFilePath) : "Select a model file or drag and drop here...";
+        public string FileName => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetFileName(ModelFilePath) : "Select a model file..";
 
         #endregion Properties
 
