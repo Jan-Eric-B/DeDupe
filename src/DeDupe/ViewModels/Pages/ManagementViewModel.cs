@@ -87,12 +87,30 @@ namespace DeDupe.ViewModels.Pages
         public ImageCluster? SelectedCluster
         {
             get => _selectedCluster;
-            set => SetProperty(ref _selectedCluster, value);
+            set
+            {
+                // Unsubscribe from old cluster
+                if (_selectedCluster != null)
+                {
+                    _selectedCluster.GroupSelectionChanged -= OnGroupSelectionChanged;
+                }
+
+                if (SetProperty(ref _selectedCluster, value))
+                {
+                    // Subscribe to new cluster
+                    if (_selectedCluster != null)
+                    {
+                        _selectedCluster.GroupSelectionChanged += OnGroupSelectionChanged;
+                    }
+
+                    UpdateSelectionCommands();
+                }
+            }
         }
 
-        public bool CanStartSimilarityAnalysis =>
-            !IsAnalyzingSimilarity &&
-            _appStateService.ExtractedFeaturesCount > 0;
+        public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && _appStateService.ExtractedFeaturesCount > 0;
+
+        public bool HasSelectedImages => SelectedCluster?.SelectedCount > 0;
 
         // Statistics Properties
         public int TotalClusters => SimilarityResult?.TotalClusters ?? 0;
@@ -209,11 +227,26 @@ namespace DeDupe.ViewModels.Pages
             AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
         }
 
+        private void OnGroupSelectionChanged(object? sender, EventArgs e)
+        {
+            UpdateSelectionCommands();
+        }
+
+        private void UpdateSelectionCommands()
+        {
+            OnPropertyChanged(nameof(HasSelectedImages));
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
+
+                if (_selectedCluster != null)
+                {
+                    _selectedCluster.GroupSelectionChanged -= OnGroupSelectionChanged;
+                }
             }
             base.Dispose(disposing);
         }

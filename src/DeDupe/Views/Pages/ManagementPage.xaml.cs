@@ -15,6 +15,9 @@ namespace DeDupe.Views.Pages
         private bool _isEditingGroupName;
         private bool _isConfirmingRename;
 
+        private double _rightPanelWidthRatio = 0.4;
+        private bool _isPanelOpen = false;
+
         public ManagementPage()
         {
             InitializeComponent();
@@ -22,6 +25,9 @@ namespace DeDupe.Views.Pages
             DataContext = ViewModel;
 
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+            // Subscribe to size changes
+            SplitViewGrid.SizeChanged += SplitViewGrid_SizeChanged;
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -29,6 +35,14 @@ namespace DeDupe.Views.Pages
             if (e.PropertyName == nameof(ManagementViewModel.SelectedCluster))
             {
                 HandleClusterSelectionChanged();
+            }
+        }
+
+        private void SplitViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_isPanelOpen && e.NewSize.Width > 0)
+            {
+                UpdateRightPanelWidth();
             }
         }
 
@@ -54,29 +68,113 @@ namespace DeDupe.Views.Pages
 
             if (ViewModel.SelectedCluster != null)
             {
-                // Adjust grid columns for split view
-                SplitViewGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Auto);
+                double totalWidth = SplitViewGrid.ActualWidth;
 
-                // Set specific pixel width and min width
-                SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(450, GridUnitType.Pixel);
-                SplitViewGrid.ColumnDefinitions[2].MinWidth = 300;
+                // Fallback - Grid has no size
+                if (totalWidth <= 0)
+                {
+                    totalWidth = 1000;
+                }
 
-                // Show right panel with animation
+                // Width based on stored ratio
+                double rightPanelWidth = totalWidth * _rightPanelWidthRatio;
+
+                // Ensure min width of 300 and max of 70% of total
+                double minWidth = 300;
+                double maxWidth = totalWidth * 0.7;
+
+                // Ensure maxWidth >= minWidth
+                if (maxWidth < minWidth)
+                {
+                    maxWidth = minWidth;
+                }
+
+                rightPanelWidth = System.Math.Clamp(rightPanelWidth, minWidth, maxWidth);
+
+                // Set width if panel was closed
+                if (!_isPanelOpen)
+                {
+                    SplitViewGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Auto);
+                    SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(rightPanelWidth, GridUnitType.Pixel);
+                    SplitViewGrid.ColumnDefinitions[2].MinWidth = minWidth;
+
+                    _isPanelOpen = true;
+                }
+
                 ShowGroupContentPanelStoryboard.Begin();
+                UpdateSelectAllCheckboxState();
             }
             else
             {
-                // Clear minimum width constraint
+                // Save width ratio
+                if (_isPanelOpen && SplitViewGrid.ActualWidth > 0)
+                {
+                    double currentRightWidth = SplitViewGrid.ColumnDefinitions[2].ActualWidth;
+                    if (currentRightWidth > 0)
+                    {
+                        _rightPanelWidthRatio = currentRightWidth / SplitViewGrid.ActualWidth;
+                        _rightPanelWidthRatio = System.Math.Clamp(_rightPanelWidthRatio, 0.2, 0.7);
+                    }
+                }
+
+                // Clear min width constraint
                 SplitViewGrid.ColumnDefinitions[2].MinWidth = 0;
 
                 // Hide right panel
                 SplitViewGrid.ColumnDefinitions[1].Width = new GridLength(0);
                 SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(0);
 
+                _isPanelOpen = false;
+
                 // Hide right panel with animation
                 HideGroupContentPanelStoryboard.Begin();
             }
         }
+
+        private void UpdateRightPanelWidth()
+        {
+            // Keep proportional width on window resize
+            if (!_isPanelOpen || SplitViewGrid.ActualWidth <= 0)
+            {
+                return;
+            }
+
+            double totalWidth = SplitViewGrid.ActualWidth;
+            double rightPanelWidth = totalWidth * _rightPanelWidthRatio;
+
+            // Ensure min and max constraints
+            double minWidth = 300;
+            double maxWidth = totalWidth * 0.7;
+            rightPanelWidth = System.Math.Clamp(rightPanelWidth, minWidth, maxWidth);
+
+            SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(rightPanelWidth, GridUnitType.Pixel);
+        }
+
+        #region Selection Handling
+
+        private void SelectAllCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel.SelectedCluster == null || SelectAllCheckBox.IsChecked == null)
+            {
+                return;
+            }
+
+            // Update all images selection
+            bool newState = SelectAllCheckBox.IsChecked.Value;
+            ViewModel.SelectedCluster.SetGroupSelection(newState);
+        }
+
+        private void UpdateSelectAllCheckboxState()
+        {
+            if (ViewModel.SelectedCluster == null)
+            {
+                return;
+            }
+
+            SelectAllCheckBox.IsChecked = ViewModel.SelectedCluster.IsSelected;
+        }
+
+        #endregion Selection Handling
 
         #region Group Name Editing
 
@@ -140,7 +238,7 @@ namespace DeDupe.Views.Pages
 
             _isEditingGroupName = true;
 
-            // Set current name in TextBox
+            // Set current name
             GroupNameTextBox.Text = ViewModel.SelectedCluster.Name;
 
             // Switch visibility
