@@ -212,7 +212,7 @@ namespace DeDupe.ViewModels.Pages
                 ProcessingProgress = 0;
 
                 // Configure image processing service
-                await ConfigureImageProcessingServiceAsync();
+                ConfigureImageProcessingService();
 
                 // Get all image paths from input
                 IEnumerable<string>? imagePaths = GetAllImagePaths();
@@ -271,7 +271,7 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        private async Task ConfigureImageProcessingServiceAsync()
+        private void ConfigureImageProcessingService()
         {
             _imageProcessingService.EnableBorderDetection = EnableBorderDetection;
             _imageProcessingService.BorderDetectionTolerance = BorderDetectionTolerance;
