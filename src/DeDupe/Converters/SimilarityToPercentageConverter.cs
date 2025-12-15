@@ -12,9 +12,9 @@ namespace DeDupe.Converters
         {
             if (value is double similarity)
             {
-                return $"{similarity * 100:F1}";
+                return $"{similarity * 100:F1}%";
             }
-            return "0.0";
+            return "0.0%";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

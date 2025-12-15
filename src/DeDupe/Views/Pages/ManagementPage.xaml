@@ -146,69 +146,25 @@
                         <StackPanel Orientation="Horizontal" Spacing="5">
                             <FontIcon
                                 FontSize="16"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 Glyph="&#xE8B7;" />
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontSize="12"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                            <TextBlock VerticalAlignment="Center" FontSize="12">
                                 <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.TotalFileCount, Mode=OneWay}" />
                                 <Run Text="files" />
                             </TextBlock>
                         </StackPanel>
 
-                        <!--  Vertical Divider  -->
-                        <Border Width="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
-                        <!--  Similarity Analysis Button  -->
-                        <Button>
-                            <Button.Content>
-                                <TextBlock VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                                    <Run Text="Analyze Similarity" />
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource DoubleFormatConverter}, ConverterParameter=2}" />
-                                    <Run Text="%" />
-                                </TextBlock>
-                            </Button.Content>
-                            <Button.Flyout>
-                                <Flyout>
-                                    <StackPanel Width="280" Spacing="10">
-                                        <TextBlock FontSize="16" FontWeight="SemiBold">
-                                            <Run Text="Similarity Threshold:" />
-                                            <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource DoubleFormatConverter}, ConverterParameter=2}" />
-                                            <Run Text="%" />
-                                        </TextBlock>
-                                        <Slider
-                                            x:Name="SimilaritySlider"
-                                            Maximum="1.0"
-                                            Minimum="0.3"
-                                            StepFrequency="0.01"
-                                            TickFrequency="0.1"
-                                            ToolTipService.ToolTip="How similar images must be to be grouped."
-                                            Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}" />
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="Higher values = more strict matching"
-                                            TextWrapping="Wrap" />
-
-                                        <StackPanel
-                                            HorizontalAlignment="Right"
-                                            Orientation="Horizontal"
-                                            Spacing="10">
-                                            <ProgressRing
-                                                Width="24"
-                                                Height="24"
-                                                IsActive="{x:Bind ViewModel.IsAnalyzingSimilarity, Mode=OneWay}" />
-                                            <Button
-                                                Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
-                                                Content="Analyze"
-                                                IsEnabled="{x:Bind ViewModel.CanStartSimilarityAnalysis, Mode=OneWay}"
-                                                Style="{StaticResource AccentButtonStyle}" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
+                        <!--  Features Count  -->
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <FontIcon
+                                FontSize="16"
+                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                Glyph="&#xE9D9;" />
+                            <TextBlock VerticalAlignment="Center" FontSize="12">
+                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.ExtractedFeaturesCount, Mode=OneWay}" />
+                                <Run Text="features" />
+                            </TextBlock>
+                        </StackPanel>
 
                         <!--  Back to Config Button  -->
                         <Button Click="BackToConfiguration_Click">
@@ -224,252 +180,320 @@
             </Grid>
         </Border>
 
-        <!--  Content  -->
-        <Grid Grid.Row="1" Margin="10">
-            <!--  Empty State - No Results  -->
+        <!--  Main Content Area  -->
+        <Grid
+            x:Name="SplitViewGrid"
+            Grid.Row="1"
+            Margin="10,10,10,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="0" />
+                <ColumnDefinition Width="0" />
+            </Grid.ColumnDefinitions>
+
+            <!--  Left Panel - Cluster Grid  -->
             <Border
-                Padding="40"
+                Grid.Column="0"
+                MinWidth="300"
+                Padding="10,5"
                 BorderThickness="1"
-                CornerRadius="8"
-                Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay}">
-                <StackPanel
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="16">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        FontSize="64"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Glyph="&#xE946;" />
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        FontSize="20"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="No Results" />
-                    <TextBlock
-                        MaxWidth="300"
-                        HorizontalAlignment="Center"
-                        FontSize="14"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="Click 'Analyze' to find and group similar images"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
+                CornerRadius="8">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-            <!--  Found Results  -->
-            <Grid x:Name="SplitViewGrid" Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay, Converter={StaticResource BoolNegationConverter}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="0" />
-                    <ColumnDefinition Width="0" />
-                </Grid.ColumnDefinitions>
+                    <!--  Header  -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                <!--  Left Panel - Cluster Groups List  -->
-                <Border
-                    Grid.Column="0"
-                    MinWidth="300"
-                    Padding="10,5"
-                    BorderThickness="1"
-                    CornerRadius="8">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!--  Results Summary Header  -->
-                        <StackPanel
-                            Grid.Row="0"
-                            Margin="0,0,0,16"
-                            Spacing="5">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock FontSize="20" FontWeight="SemiBold">
+                                <Run Text="Duplicate Groups" />
+                                <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="(" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.DuplicateGroupsCount, Mode=OneWay}" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
+                            </TextBlock>
                             <TextBlock
-                                FontSize="18"
-                                FontWeight="SemiBold"
-                                Text="Duplicate Groups" />
-                            <TextBlock
-                                FontSize="13"
+                                FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind ViewModel.ResultSummary, Mode=OneWay}" />
+                                Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
                         </StackPanel>
 
-                        <!--  Groups Grid  -->
-                        <ScrollViewer Grid.Row="1">
-                            <GridView
-                                IsItemClickEnabled="True"
-                                ItemClick="ClusterGrid_ItemClick"
-                                ItemsSource="{x:Bind ViewModel.ClusterGroups, Mode=OneWay}"
-                                SelectedItem="{x:Bind ViewModel.SelectedCluster, Mode=TwoWay}"
-                                SelectionMode="Single">
-                                <GridView.ItemContainerStyle>
-                                    <Style BasedOn="{StaticResource DefaultGridViewItemStyle}" TargetType="GridViewItem">
-                                        <Setter Property="Margin" Value="0,0,10,10" />
-                                    </Style>
-                                </GridView.ItemContainerStyle>
-                                <GridView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsWrapGrid Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </GridView.ItemsPanel>
-                                <GridView.ItemTemplate>
-                                    <DataTemplate x:DataType="models:ImageCluster">
-                                        <Border
-                                            Width="200"
-                                            Height="240"
-                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
-                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="8">
-                                            <Grid Padding="12">
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="*" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-
-                                                <!--  Image Preview  -->
-                                                <Grid Grid.Row="0">
-                                                    <controls:StackedImagesControl
-                                                        HorizontalAlignment="Stretch"
-                                                        VerticalAlignment="Stretch"
-                                                        ImagePaths="{x:Bind GetPreviewImagePaths()}" />
-
-                                                    <!--  Selection Checkbox  -->
-                                                    <CheckBox
-                                                        x:Name="SelectionCheckBox"
-                                                        MinWidth="0"
-                                                        MinHeight="0"
-                                                        Margin="4"
-                                                        Padding="0"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Top"
-                                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                                        CornerRadius="4" />
-                                                </Grid>
-
-                                                <!--  Group Info  -->
-                                                <StackPanel Grid.Row="1">
-                                                    <Grid>
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-
-                                                        <StackPanel Grid.Column="0" Spacing="4">
-                                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                                                                <Run FontWeight="SemiBold" Text="{x:Bind Name}" />
-                                                            </TextBlock>
-
-                                                            <StackPanel Orientation="Horizontal" Spacing="5">
-                                                                <FontIcon
-                                                                    FontSize="16"
-                                                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                                                    Glyph="&#xE8B9;" />
-                                                                <TextBlock
-                                                                    FontSize="18"
-                                                                    FontWeight="Bold"
-                                                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}">
-                                                                    <Run Text="{x:Bind Count}" />
-                                                                    <Run
-                                                                        FontSize="14"
-                                                                        FontWeight="SemiBold"
-                                                                        Text=" images" />
-                                                                </TextBlock>
-                                                            </StackPanel>
-                                                        </StackPanel>
-
-                                                        <!--  Similarity  -->
-                                                        <Border
-                                                            Grid.Column="1"
-                                                            Padding="8,4"
-                                                            VerticalAlignment="Bottom"
-                                                            Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                                            CornerRadius="4">
-                                                            <StackPanel Orientation="Horizontal" Spacing="2">
-                                                                <TextBlock
-                                                                    FontSize="14"
-                                                                    FontWeight="SemiBold"
-                                                                    Foreground="White"
-                                                                    Text="{x:Bind AverageSimilarity, Converter={StaticResource SimilarityToPercentageConverter}}" />
-                                                                <TextBlock
-                                                                    FontSize="14"
-                                                                    FontWeight="SemiBold"
-                                                                    Foreground="White"
-                                                                    Text="%" />
-                                                            </StackPanel>
-                                                        </Border>
-                                                    </Grid>
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </GridView.ItemTemplate>
-                            </GridView>
-                        </ScrollViewer>
-                    </Grid>
-                </Border>
-
-                <!--  GridSplitter  -->
-                <splitter:GridSplitter
-                    x:Name="GroupContentSplitter"
-                    Grid.Column="1"
-                    Width="16"
-                    HorizontalAlignment="Center"
-                    Background="Transparent"
-                    ResizeBehavior="BasedOnAlignment"
-                    ResizeDirection="Auto"
-                    Style="{StaticResource CustomGridSplitterStyle}"
-                    Visibility="{x:Bind ViewModel.SelectedCluster, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
-
-                <!--  Right Panel - Group Content  -->
-                <Border
-                    x:Name="GroupContentPanel"
-                    Grid.Column="2"
-                    MinWidth="300"
-                    Padding="20"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Opacity="0"
-                    Visibility="{x:Bind ViewModel.SelectedCluster, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
-                    <Border.RenderTransform>
-                        <TranslateTransform x:Name="GroupContentPanelTransform" X="400" />
-                    </Border.RenderTransform>
-
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <!--  Header  -->
-                        <Grid Grid.Row="0" Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0" FontSize="18">
-                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.SelectedCluster.Name, Mode=OneWay}" />
-                            </TextBlock>
+                        <!--  Similarity Threshold  -->
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock VerticalAlignment="Center" Text="Similarity Threshold:" />
+                                <Slider
+                                    x:Name="SimilaritySlider"
+                                    Width="120"
+                                    VerticalAlignment="Center"
+                                    Maximum="1.0"
+                                    Minimum="0.3"
+                                    StepFrequency="0.01"
+                                    ThumbToolTipValueConverter="{StaticResource SimilarityToPercentageConverter}"
+                                    ToolTipService.ToolTip="How similar images must be to be grouped."
+                                    Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}" />
+                                <TextBlock
+                                    Width="50"
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource SimilarityToPercentageConverter}}" />
+                            </StackPanel>
 
                             <Button
-                                Grid.Column="1"
-                                Click="CloseGroupContentPanel_Click"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                ToolTipService.ToolTip="Close details">
-                                <FontIcon FontSize="16" Glyph="&#xE711;" />
+                                Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                ToolTipService.ToolTip="Higher values = more strict matching">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xE9D9;" />
+                                    <TextBlock Text="Analyze" />
+                                </StackPanel>
                             </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <!--  Empty State  -->
+                    <StackPanel
+                        Grid.Row="2"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16"
+                        Visibility="{x:Bind ViewModel.ShowEmptyState, Mode=OneWay}">
+                        <FontIcon
+                            FontSize="64"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Glyph="&#xE8B9;" />
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="Click Analyze to find duplicate groups"
+                            TextAlignment="Center" />
+                    </StackPanel>
+
+                    <!--  Cluster Grid  -->
+                    <ScrollViewer Grid.Row="2" Visibility="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
+                        <GridView
+                            IsItemClickEnabled="True"
+                            ItemsSource="{x:Bind ViewModel.ClusterGroups, Mode=OneWay}"
+                            SelectedItem="{x:Bind ViewModel.SelectedCluster, Mode=TwoWay}"
+                            SelectionMode="Single">
+                            <GridView.ItemTemplate>
+                                <DataTemplate x:DataType="models:ImageCluster">
+                                    <Border
+                                        Width="280"
+                                        Height="260"
+                                        Margin="4"
+                                        Padding="10"
+                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8">
+                                        <Grid RowSpacing="10">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+
+                                            <!--  Stacked Images  -->
+                                            <Grid Grid.Row="0">
+                                                <controls:StackedImagesControl
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"
+                                                    ImagePaths="{x:Bind GetPreviewImagePaths()}" />
+
+                                                <!--  Selection Checkbox  -->
+                                                <CheckBox
+                                                    x:Name="SelectionCheckBox"
+                                                    MinWidth="0"
+                                                    MinHeight="0"
+                                                    Margin="4"
+                                                    Padding="0"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Top"
+                                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                                    CornerRadius="4" />
+                                            </Grid>
+
+                                            <!--  Group Info  -->
+                                            <StackPanel Grid.Row="1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0" Spacing="4">
+                                                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                                            <Run FontWeight="SemiBold" Text="{x:Bind Name, Mode=OneWay}" />
+                                                        </TextBlock>
+
+                                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                                            <FontIcon
+                                                                FontSize="16"
+                                                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                                                Glyph="&#xE8B9;" />
+                                                            <TextBlock
+                                                                FontSize="18"
+                                                                FontWeight="Bold"
+                                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}">
+                                                                <Run Text="{x:Bind Count}" />
+                                                                <Run
+                                                                    FontSize="14"
+                                                                    FontWeight="SemiBold"
+                                                                    Text=" images" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <!--  Similarity  -->
+                                                    <Border
+                                                        Grid.Column="1"
+                                                        Padding="8,4"
+                                                        VerticalAlignment="Bottom"
+                                                        Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                        CornerRadius="4">
+                                                        <TextBlock
+                                                            FontSize="14"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="White"
+                                                            Text="{x:Bind AverageSimilarity, Converter={StaticResource SimilarityToPercentageConverter}}" />
+                                                    </Border>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                        </GridView>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!--  GridSplitter  -->
+            <splitter:GridSplitter
+                x:Name="GroupContentSplitter"
+                Grid.Column="1"
+                Width="16"
+                HorizontalAlignment="Center"
+                Background="Transparent"
+                ResizeBehavior="BasedOnAlignment"
+                ResizeDirection="Auto"
+                Style="{StaticResource CustomGridSplitterStyle}"
+                Visibility="{x:Bind ViewModel.SelectedCluster, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}" />
+
+            <!--  Right Panel - Group Content  -->
+            <Border
+                x:Name="GroupContentPanel"
+                Grid.Column="2"
+                MinWidth="300"
+                Padding="20"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Opacity="0"
+                Visibility="{x:Bind ViewModel.SelectedCluster, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="GroupContentPanelTransform" X="400" />
+                </Border.RenderTransform>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  Header  -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  Editable Group Name  -->
+                        <Grid Grid.Column="0">
+                            <!--  Display Mode  -->
+                            <StackPanel
+                                x:Name="GroupNameDisplayPanel"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <TextBlock
+                                    x:Name="GroupNameTextBlock"
+                                    VerticalAlignment="Center"
+                                    DoubleTapped="GroupNameTextBlock_DoubleTapped"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind ViewModel.SelectedCluster.Name, Mode=OneWay}"
+                                    ToolTipService.ToolTip="Double-click to rename" />
+                                <Button
+                                    x:Name="EditGroupNameButton"
+                                    Padding="6"
+                                    VerticalAlignment="Center"
+                                    Click="EditGroupNameButton_Click"
+                                    Style="{StaticResource SubtleButtonStyle}"
+                                    ToolTipService.ToolTip="Rename group">
+                                    <FontIcon FontSize="12" Glyph="&#xE70F;" />
+                                </Button>
+                            </StackPanel>
+
+                            <!--  Edit Mode  -->
+                            <StackPanel
+                                x:Name="GroupNameEditPanel"
+                                Orientation="Horizontal"
+                                Spacing="4"
+                                Visibility="Collapsed">
+                                <TextBox
+                                    x:Name="GroupNameTextBox"
+                                    MinWidth="200"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    KeyDown="GroupNameTextBox_KeyDown"
+                                    LostFocus="GroupNameTextBox_LostFocus"
+                                    PlaceholderText="Enter group name" />
+                                <Button
+                                    x:Name="ConfirmRenameButton"
+                                    Padding="6"
+                                    VerticalAlignment="Center"
+                                    Click="ConfirmRenameButton_Click"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    ToolTipService.ToolTip="Confirm (Enter)">
+                                    <FontIcon FontSize="12" Glyph="&#xE8FB;" />
+                                </Button>
+                                <Button
+                                    x:Name="CancelRenameButton"
+                                    Padding="6"
+                                    VerticalAlignment="Center"
+                                    Click="CancelRenameButton_Click"
+                                    Style="{StaticResource SubtleButtonStyle}"
+                                    ToolTipService.ToolTip="Cancel (Escape)">
+                                    <FontIcon FontSize="12" Glyph="&#xE711;" />
+                                </Button>
+                            </StackPanel>
                         </Grid>
 
-                        <!--  Group Content  -->
-                        <ScrollViewer Grid.Row="1">
-                            <StackPanel Spacing="16" />
-                        </ScrollViewer>
+                        <!--  Close Button  -->
+                        <Button
+                            Grid.Column="1"
+                            VerticalAlignment="Top"
+                            Click="CloseGroupContentPanel_Click"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            ToolTipService.ToolTip="Close details">
+                            <FontIcon FontSize="16" Glyph="&#xE711;" />
+                        </Button>
                     </Grid>
-                </Border>
-            </Grid>
+
+                    <!--  Group Content  -->
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel Spacing="16" />
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Page>

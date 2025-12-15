@@ -183,7 +183,6 @@ namespace DeDupe.Services.Analysis
             int clusterId = 0;
             int duplicateGroupNumber = 1;
 
-
             for (int i = 0; i < clusters.Count; i++)
             {
                 if (!activeClusters[i])

@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DeDupe.Models.Analysis
 {
@@ -7,37 +9,52 @@ namespace DeDupe.Models.Analysis
     /// Cluster of similar images
     /// </summary>
     /// <remarks>
-    /// Create new cluster with list of images
+    /// Create new cluster with images
     /// </remarks>
-    public class ImageCluster(int id, List<ExtractedFeatures> images, string? name = null)  // <-- No parameters here!
+    public partial class ImageCluster(int id, List<ExtractedFeatures> images, string? name = null) : INotifyPropertyChanged
     {
+        private string _name = name ?? $"Group {id + 1}";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         /// <summary>
-        /// Internal unique identifier (stable, not for display)
+        /// Unique identifier
         /// </summary>
         public int Id { get; } = id;
 
         /// <summary>
-        /// User-editable display name
+        /// Display name
         /// </summary>
-        public string Name { get; set; } = name ?? $"Group {id + 1}";
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (_name != value)
+                {
+                    _name = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         /// <summary>
-        /// List of extracted features of the cluster
+        /// Extracted features of cluster
         /// </summary>
         public List<ExtractedFeatures> Images { get; } = images ?? [];
 
         /// <summary>
-        /// Average similarity within the cluster
+        /// Average similarity within cluster
         /// </summary>
         public double AverageSimilarity { get; set; } = 0.0;
 
         /// <summary>
-        /// Number of images in the cluster
+        /// Number of images in cluster
         /// </summary>
         public int Count => Images.Count;
 
         /// <summary>
-        /// Contains potential duplicates (more than 1 image)
+        /// Contains duplicates (more than 1 image)
         /// </summary>
         public bool IsDuplicateGroup => Images.Count > 1;
 
@@ -49,7 +66,7 @@ namespace DeDupe.Models.Analysis
         }
 
         /// <summary>
-        /// Original file paths of all images in the cluster
+        /// File paths of all images in the cluster
         /// </summary>
         public List<string> GetOriginalFilePaths()
         {
@@ -67,7 +84,7 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// First image of the cluster
         /// </summary>
-        public ExtractedFeatures? GetRepresentativeImage()
+        public ExtractedFeatures? GetFirstImage()
         {
             return Images.FirstOrDefault();
         }
@@ -78,6 +95,11 @@ namespace DeDupe.Models.Analysis
         public override string ToString()
         {
             return $"Cluster {Id} ({Name}): {Count} image{(Count == 1 ? "" : "s")} (Avg Similarity: {AverageSimilarity:F3})";
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
