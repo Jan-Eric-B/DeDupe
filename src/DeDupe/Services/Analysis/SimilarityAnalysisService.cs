@@ -181,16 +181,23 @@ namespace DeDupe.Services.Analysis
             // Convert clusters to ImageCluster objects
             List<ImageCluster> imageClusters = [];
             int clusterId = 0;
+            int duplicateGroupNumber = 1;
+
 
             for (int i = 0; i < clusters.Count; i++)
             {
                 if (!activeClusters[i])
-                {
                     continue;
-                }
 
                 List<ExtractedFeatures> clusterFeatures = [.. clusters[i].Select(idx => features[idx])];
-                ImageCluster imageCluster = new(clusterId++, clusterFeatures);
+
+                string? groupName = null;
+                if (clusterFeatures.Count > 1)
+                {
+                    groupName = $"Group {duplicateGroupNumber++}";
+                }
+
+                ImageCluster imageCluster = new(clusterId++, clusterFeatures, groupName);
                 imageClusters.Add(imageCluster);
             }
 

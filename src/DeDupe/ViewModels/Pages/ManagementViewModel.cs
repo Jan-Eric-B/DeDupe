@@ -1,35 +1,31 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 namespace DeDupe.ViewModels.Pages
 {
-    public partial class ManagementViewModel : ObservableObject
+    public partial class ManagementViewModel : PageViewModelBase
     {
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly ILogger<ManagementViewModel> _logger;
 
-        private SimilarityResult? _similarityResult;
-        private double _similarityThreshold = 0.85;
         private bool _isAnalyzingSimilarity;
         private bool _hasSimilarityResults;
-        private string _status = string.Empty;
-        private string _resultsMessage = string.Empty;
+        private double _similarityThreshold = 0.85;
+        private SimilarityResult? _similarityResult;
+        private ImageCluster? _selectedCluster;
 
         #endregion Fields
 
         #region Properties
-
-        public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
-
-        public bool HasExtractedFeatures => _appStateService.ExtractedFeaturesCount > 0;
 
         public bool IsAnalyzingSimilarity
         {
@@ -51,49 +47,77 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (SetProperty(ref _hasSimilarityResults, value))
                 {
-                    OnPropertyChanged(nameof(ResultsMessage));
+                    OnPropertyChanged(nameof(ShowEmptyState));
                 }
             }
         }
 
+        public bool ShowEmptyState => !HasSimilarityResults;
+
         public double SimilarityThreshold
         {
             get => _similarityThreshold;
-            set => SetProperty(ref _similarityThreshold, value);
+            set
+            {
+                if (SetProperty(ref _similarityThreshold, value) && HasSimilarityResults)
+                {
+                    Status = "Threshold changed. Click Analyze to update results.";
+                }
+            }
         }
 
-        public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && HasExtractedFeatures;
-
-        public string Status
+        public SimilarityResult? SimilarityResult
         {
-            get => _status;
-            set => SetProperty(ref _status, value);
+            get => _similarityResult;
+            set
+            {
+                if (SetProperty(ref _similarityResult, value))
+                {
+                    UpdateClusterGroups();
+                    OnPropertyChanged(nameof(TotalClusters));
+                    OnPropertyChanged(nameof(DuplicateGroupsCount));
+                    OnPropertyChanged(nameof(TotalImages));
+                    OnPropertyChanged(nameof(ResultSummary));
+                }
+            }
         }
 
-        public string ResultsMessage
+        public ObservableCollection<ImageCluster> ClusterGroups { get; } = [];
+
+        public ImageCluster? SelectedCluster
         {
-            get => _resultsMessage;
-            set => SetProperty(ref _resultsMessage, value);
+            get => _selectedCluster;
+            set => SetProperty(ref _selectedCluster, value);
         }
 
-        public SimilarityResult? SimilarityResult => _similarityResult;
+        public bool CanStartSimilarityAnalysis =>
+            !IsAnalyzingSimilarity &&
+            _appStateService.ExtractedFeaturesCount > 0;
+
+        // Statistics Properties
+        public int TotalClusters => SimilarityResult?.TotalClusters ?? 0;
+
+        public int DuplicateGroupsCount => SimilarityResult?.DuplicateGroupsCount ?? 0;
+        public int TotalImages => SimilarityResult?.TotalImagesAnalyzed ?? 0;
+        public string ResultSummary => SimilarityResult?.GetSummary() ?? string.Empty;
+
+        // Configuration Info Properties
+        public int TotalFileCount => _appStateService.FileCount;
+
+        public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
+
+        public string ModelName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_appStateService.ModelFilePath))
+                    return "No model";
+
+                return System.IO.Path.GetFileNameWithoutExtension(_appStateService.ModelFilePath);
+            }
+        }
 
         #endregion Properties
-
-        #region Constructor
-
-        public ManagementViewModel(IAppStateService appStateService)
-        {
-            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
-
-            // Subscribe to extracted features changes
-            _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
-
-            // Update UI with current state
-            UpdateExtractedFeaturesStatus();
-        }
-
-        #endregion Constructor
 
         #region Commands
 
@@ -103,87 +127,95 @@ namespace DeDupe.ViewModels.Pages
             try
             {
                 IsAnalyzingSimilarity = true;
-                Status = "Starting similarity analysis...";
-                ResultsMessage = string.Empty;
+                IsBusy = true;
+                Status = "Analyzing image similarities...";
 
-                List<ExtractedFeatures>? extractedFeatures = _appStateService.ExtractedFeatures.ToList();
+                // Get extracted features
+                List<ExtractedFeatures> features = [.. _appStateService.ExtractedFeatures];
 
-                if (extractedFeatures.Count == 0)
+                if (features.Count == 0)
                 {
-                    Status = "No extracted features available for similarity analysis";
+                    Status = "No features available. Please extract features first.";
                     return;
                 }
 
-                Status = $"Analyzing similarity between {extractedFeatures.Count} images...";
-
                 // Perform clustering
-                _similarityResult = await SimilarityAnalysisService.PerformClusteringAsync(extractedFeatures, SimilarityThreshold);
+                SimilarityResult = await SimilarityAnalysisService.PerformClusteringAsync(features, SimilarityThreshold);
 
-                // Update results
-                if (_similarityResult != null)
-                {
-                    HasSimilarityResults = true;
-                    Status = "Similarity analysis completed!";
-                    ResultsMessage = _similarityResult.GetSummary();
+                HasSimilarityResults = true;
+                Status = $"Analysis complete: {ResultSummary}";
 
-                    // Log clustering results
-                    System.Diagnostics.Debug.WriteLine($"Clustering completed:");
-                    System.Diagnostics.Debug.WriteLine($"Total clusters: {_similarityResult.TotalClusters}");
-                    System.Diagnostics.Debug.WriteLine($"Duplicate groups: {_similarityResult.DuplicateGroupsCount}");
-                    System.Diagnostics.Debug.WriteLine($"Singleton clusters: {_similarityResult.SingletonClustersCount}");
-
-                    foreach (ImageCluster cluster in _similarityResult.DuplicateGroups)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Cluster {cluster.Id}: {cluster.Count} images, avg similarity: {cluster.AverageSimilarity:F3}");
-                    }
-                }
-                else
-                {
-                    Status = "Similarity analysis failed: No results generated.";
-                    ResultsMessage = "Analysis did not produce any results.";
-                }
+                _logger.LogInformation("Similarity analysis completed: {Summary}", ResultSummary);
             }
             catch (Exception ex)
             {
                 Status = $"Error during similarity analysis: {ex.Message}";
-                ResultsMessage = "An error occurred during analysis.";
-                System.Diagnostics.Debug.WriteLine($"Similarity analysis error: {ex}");
+                _logger.LogError(ex, "Error during similarity analysis");
+                HasSimilarityResults = false;
             }
             finally
             {
                 IsAnalyzingSimilarity = false;
+                IsBusy = false;
             }
         }
 
         #endregion Commands
 
+        #region Constructor
+
+        public ManagementViewModel(
+            IAppStateService appStateService,
+            ILogger<ManagementViewModel> logger) : base(3)
+        {
+            _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            Title = "Duplicate Management";
+            Status = "Ready to analyze similarities";
+
+            // Subscribe to feature changes
+            _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
+
+            UpdateCanAnalyze();
+        }
+
+        #endregion Constructor
+
         #region Methods
 
-        private void UpdateExtractedFeaturesStatus()
+        private void UpdateClusterGroups()
         {
-            if (HasExtractedFeatures)
-            {
-                Status = $"{ExtractedFeaturesCount} feature vectors loaded. Ready to analyze similarity.";
-            }
-            else
-            {
-                Status = "No extracted features available.";
-            }
+            ClusterGroups.Clear();
 
-            OnPropertyChanged(nameof(HasExtractedFeatures));
-            OnPropertyChanged(nameof(ExtractedFeaturesCount));
-            OnPropertyChanged(nameof(CanStartSimilarityAnalysis));
-            AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
+            if (SimilarityResult == null)
+                return;
+
+            // Show duplicate groups
+            foreach (ImageCluster cluster in SimilarityResult.DuplicateGroups)
+            {
+                ClusterGroups.Add(cluster);
+            }
         }
 
         private void OnExtractedFeaturesChanged(object? sender, EventArgs e)
         {
-            UpdateExtractedFeaturesStatus();
+            UpdateCanAnalyze();
         }
 
-        public void Cleanup()
+        private void UpdateCanAnalyze()
         {
-            _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
+            OnPropertyChanged(nameof(CanStartSimilarityAnalysis));
+            AnalyzeSimilarityCommand.NotifyCanExecuteChanged();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
+            }
+            base.Dispose(disposing);
         }
 
         #endregion Methods

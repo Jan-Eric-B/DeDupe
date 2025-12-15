@@ -6,12 +6,20 @@ namespace DeDupe.Models.Analysis
     /// <summary>
     /// Cluster of similar images
     /// </summary>
-    public class ImageCluster(int clusterId, List<ExtractedFeatures> images)
+    /// <remarks>
+    /// Create new cluster with list of images
+    /// </remarks>
+    public class ImageCluster(int id, List<ExtractedFeatures> images, string? name = null)  // <-- No parameters here!
     {
         /// <summary>
-        /// Unique identifier for the cluster
+        /// Internal unique identifier (stable, not for display)
         /// </summary>
-        public int Id { get; } = clusterId;
+        public int Id { get; } = id;
+
+        /// <summary>
+        /// User-editable display name
+        /// </summary>
+        public string Name { get; set; } = name ?? $"Group {id + 1}";
 
         /// <summary>
         /// List of extracted features of the cluster
@@ -36,7 +44,7 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// Create new cluster with single image
         /// </summary>
-        public ImageCluster(int id, ExtractedFeatures image) : this(id, [image])
+        public ImageCluster(int id, ExtractedFeatures image, string? name = null) : this(id, [image], name)
         {
         }
 
@@ -46,6 +54,14 @@ namespace DeDupe.Models.Analysis
         public List<string> GetOriginalFilePaths()
         {
             return [.. Images.Select(img => img.OriginalFilePath)];
+        }
+
+        /// <summary>
+        /// Get up to 4 image paths for group card
+        /// </summary>
+        public List<string> GetPreviewImagePaths()
+        {
+            return [.. Images.Take(4).Select(img => img.OriginalFilePath)];
         }
 
         /// <summary>
@@ -61,7 +77,7 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public override string ToString()
         {
-            return $"Cluster {Id}: {Count} image{(Count == 1 ? "" : "s")} (Avg Similarity: {AverageSimilarity:F3})";
+            return $"Cluster {Id} ({Name}): {Count} image{(Count == 1 ? "" : "s")} (Avg Similarity: {AverageSimilarity:F3})";
         }
     }
 }
