@@ -9,79 +9,80 @@
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>true</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-16.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-24.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-256.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-32.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-48.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-16.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-24.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-256.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-32.png" />
-    <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-48.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="Assets\Icon\BadgeLogo.scale-100.png" />
-    <None Remove="Assets\Icon\BadgeLogo.scale-125.png" />
-    <None Remove="Assets\Icon\BadgeLogo.scale-150.png" />
-    <None Remove="Assets\Icon\BadgeLogo.scale-200.png" />
-    <None Remove="Assets\Icon\BadgeLogo.scale-400.png" />
-    <None Remove="Assets\Icon\LargeTile.scale-100.png" />
-    <None Remove="Assets\Icon\LargeTile.scale-125.png" />
-    <None Remove="Assets\Icon\LargeTile.scale-150.png" />
-    <None Remove="Assets\Icon\LargeTile.scale-200.png" />
-    <None Remove="Assets\Icon\LargeTile.scale-400.png" />
-    <None Remove="Assets\Icon\SmallTile.scale-100.png" />
-    <None Remove="Assets\Icon\SmallTile.scale-125.png" />
-    <None Remove="Assets\Icon\SmallTile.scale-150.png" />
-    <None Remove="Assets\Icon\SmallTile.scale-200.png" />
-    <None Remove="Assets\Icon\SmallTile.scale-400.png" />
-    <None Remove="Assets\Icon\SplashScreen.scale-100.png" />
-    <None Remove="Assets\Icon\SplashScreen.scale-125.png" />
-    <None Remove="Assets\Icon\SplashScreen.scale-150.png" />
-    <None Remove="Assets\Icon\SplashScreen.scale-200.png" />
-    <None Remove="Assets\Icon\SplashScreen.scale-400.png" />
-    <None Remove="Assets\Icon\Square150x150Logo.scale-100.png" />
-    <None Remove="Assets\Icon\Square150x150Logo.scale-125.png" />
-    <None Remove="Assets\Icon\Square150x150Logo.scale-150.png" />
-    <None Remove="Assets\Icon\Square150x150Logo.scale-200.png" />
-    <None Remove="Assets\Icon\Square150x150Logo.scale-400.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.scale-100.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.scale-125.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.scale-150.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.scale-200.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.scale-400.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-16.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-24.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-256.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-32.png" />
-    <None Remove="Assets\Icon\Square44x44Logo.targetsize-48.png" />
-    <None Remove="Assets\Icon\StoreLogo.scale-100.png" />
-    <None Remove="Assets\Icon\StoreLogo.scale-125.png" />
-    <None Remove="Assets\Icon\StoreLogo.scale-150.png" />
-    <None Remove="Assets\Icon\StoreLogo.scale-200.png" />
-    <None Remove="Assets\Icon\StoreLogo.scale-400.png" />
-    <None Remove="Assets\Icon\Wide310x150Logo.scale-100.png" />
-    <None Remove="Assets\Icon\Wide310x150Logo.scale-125.png" />
-    <None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
-    <None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
-    <None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
-	<None Remove="Controls\StepperControl.xaml" />
-    <None Remove="Views\Pages\FileInputPage.xaml" />
-    <None Remove="Views\Pages\ManagementPage.xaml" />
-  </ItemGroup>
 
-  <ItemGroup>
-    <Manifest Include="$(ApplicationManifest)" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-16.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-24.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-256.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-32.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-lightunplated_targetsize-48.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-16.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-24.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-256.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-32.png" />
+		<Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-48.png" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="Assets\Icon\BadgeLogo.scale-100.png" />
+		<None Remove="Assets\Icon\BadgeLogo.scale-125.png" />
+		<None Remove="Assets\Icon\BadgeLogo.scale-150.png" />
+		<None Remove="Assets\Icon\BadgeLogo.scale-200.png" />
+		<None Remove="Assets\Icon\BadgeLogo.scale-400.png" />
+		<None Remove="Assets\Icon\LargeTile.scale-100.png" />
+		<None Remove="Assets\Icon\LargeTile.scale-125.png" />
+		<None Remove="Assets\Icon\LargeTile.scale-150.png" />
+		<None Remove="Assets\Icon\LargeTile.scale-200.png" />
+		<None Remove="Assets\Icon\LargeTile.scale-400.png" />
+		<None Remove="Assets\Icon\SmallTile.scale-100.png" />
+		<None Remove="Assets\Icon\SmallTile.scale-125.png" />
+		<None Remove="Assets\Icon\SmallTile.scale-150.png" />
+		<None Remove="Assets\Icon\SmallTile.scale-200.png" />
+		<None Remove="Assets\Icon\SmallTile.scale-400.png" />
+		<None Remove="Assets\Icon\SplashScreen.scale-100.png" />
+		<None Remove="Assets\Icon\SplashScreen.scale-125.png" />
+		<None Remove="Assets\Icon\SplashScreen.scale-150.png" />
+		<None Remove="Assets\Icon\SplashScreen.scale-200.png" />
+		<None Remove="Assets\Icon\SplashScreen.scale-400.png" />
+		<None Remove="Assets\Icon\Square150x150Logo.scale-100.png" />
+		<None Remove="Assets\Icon\Square150x150Logo.scale-125.png" />
+		<None Remove="Assets\Icon\Square150x150Logo.scale-150.png" />
+		<None Remove="Assets\Icon\Square150x150Logo.scale-200.png" />
+		<None Remove="Assets\Icon\Square150x150Logo.scale-400.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.scale-100.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.scale-125.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.scale-150.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.scale-200.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.scale-400.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-16.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-24.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-24_altform-unplated.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-256.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-32.png" />
+		<None Remove="Assets\Icon\Square44x44Logo.targetsize-48.png" />
+		<None Remove="Assets\Icon\StoreLogo.scale-100.png" />
+		<None Remove="Assets\Icon\StoreLogo.scale-125.png" />
+		<None Remove="Assets\Icon\StoreLogo.scale-150.png" />
+		<None Remove="Assets\Icon\StoreLogo.scale-200.png" />
+		<None Remove="Assets\Icon\StoreLogo.scale-400.png" />
+		<None Remove="Assets\Icon\Wide310x150Logo.scale-100.png" />
+		<None Remove="Assets\Icon\Wide310x150Logo.scale-125.png" />
+		<None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
+		<None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
+		<None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
+		<None Remove="Controls\StepperControl.xaml" />
+		<None Remove="Views\Pages\FileInputPage.xaml" />
+		<None Remove="Views\Pages\ManagementPage.xaml" />
+	</ItemGroup>
 
-  <!--
+	<ItemGroup>
+		<Manifest Include="$(ApplicationManifest)" />
+	</ItemGroup>
+
+	<!--
     Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
     Tools extension to be activated for this project even if the Windows App SDK Nuget
     package has not yet been restored.
@@ -102,7 +103,8 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
-  <ItemGroup>
+  
+    <ItemGroup>
     <Page Update="Controls\StackedImagesControl.xaml">
       <SubType>Designer</SubType>
     </Page>

@@ -8,15 +8,15 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="4d3e9c17-ff4b-4db3-bcaf-460e56b6d1f1"
-    Publisher="CN=debednaj"
+    Name="98e6fc67-9ab8-4bc8-b8bb-b3b7f46fed7e"
+    Publisher="CN=Jan-Eric-B"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="4d3e9c17-ff4b-4db3-bcaf-460e56b6d1f1" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="98e6fc67-9ab8-4bc8-b8bb-b3b7f46fed7e" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
     <DisplayName>DeDupe</DisplayName>
-    <PublisherDisplayName>debednaj</PublisherDisplayName>
+    <PublisherDisplayName>Jan-Eric-B</PublisherDisplayName>
     <Logo>Assets\Icon\StoreLogo.png</Logo>
   </Properties>
 
