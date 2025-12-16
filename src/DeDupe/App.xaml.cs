@@ -55,6 +55,7 @@ namespace DeDupe
             services.AddSingleton<MainWindowViewModel>();
 
             // App State
+            services.AddSingleton<IBundledModelService, BundledModelService>();
             services.AddSingleton<IAppStateService, AppStateService>();
 
             // Navigation

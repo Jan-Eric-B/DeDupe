@@ -7,11 +7,11 @@ using System.ComponentModel;
 namespace DeDupe.Services
 {
     /// <summary>
-    /// Centralized state management service for the application.
+    /// Interface for centralized state management service.
     /// </summary>
     public interface IAppStateService : INotifyPropertyChanged
     {
-        #region FileInput Data
+        #region File Management
 
         /// <summary>
         /// File paths
@@ -19,24 +19,106 @@ namespace DeDupe.Services
         IReadOnlyCollection<string> FilePaths { get; }
 
         /// <summary>
+        /// Count of files
+        /// </summary>
+        int FileCount { get; }
+
+
+        /// <summary>
         /// Update file paths
         /// </summary>
         /// <param name="filePaths">New collection of file paths</param>
         void SetFilePaths(IEnumerable<string> filePaths);
 
+        #endregion File Management
+
+        #region Processed Images
+
         /// <summary>
-        /// Count of files
+        /// Processed files
         /// </summary>
-        int FileCount { get; }
-
-        #endregion FileInput Data
-
-        #region Model Configuration Data
+        IReadOnlyCollection<ProcessedMedia> ProcessedImages { get; }
 
         /// <summary>
-        /// Model file path for deep learning
+        /// Count of processed images
+        /// </summary>
+        int ProcessedImageCount { get; }
+
+        /// <summary>
+        /// Path of the temporary folder for processed images
+        /// </summary>
+        string TempFolderPath { get; set; }
+
+        /// <summary>
+        /// Update processed files
+        /// </summary>
+        /// <param name="processedImages">New collection of processed images</param>
+        void SetProcessedImages(IEnumerable<ProcessedMedia> processedImages);
+
+        /// <summary>
+        /// Add processed file
+        /// </summary>
+        /// <param name="processedImage">Adds processed image</param>
+        void AddProcessedImage(ProcessedMedia processedImage);
+
+        /// <summary>
+        /// Clear processed images
+        /// </summary>
+        void ClearProcessedImages();
+
+        #endregion Processed Images
+
+        #region Extracted Features
+
+        /// <summary>
+        /// Extracted features from images
+        /// </summary>
+        IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures { get; }
+
+        /// <summary>
+        /// Count of extracted features
+        /// </summary>
+        int ExtractedFeaturesCount { get; }
+
+        /// <summary>
+        /// Set extracted features
+        /// </summary>
+        /// <param name="features">Collection of extracted features</param>
+        void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features);
+
+        /// <summary>
+        /// Clear extracted features
+        /// </summary>
+        void ClearExtractedFeatures();
+
+        #endregion Extracted Features
+
+        #region Model Configuration
+
+        /// <summary>
+        /// Gets or sets whether the bundled model is being used.
+        /// </summary>
+        bool UseBundledModel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the custom model file path (used when UseBundledModel is false).
+        /// </summary>
+        string CustomModelFilePath { get; set; }
+
+        /// <summary>
+        /// Gets the effective model path (bundled or custom based on UseBundledModel).
+        /// </summary>
+        string ModelPath { get; }
+
+        /// <summary>
+        /// Gets or sets the model file path (for backward compatibility).
+        /// Setting this will switch to custom model mode if different from bundled.
         /// </summary>
         string ModelFilePath { get; set; }
+
+        #endregion Model Configuration
+
+        #region Normalization Parameters
 
         /// <summary>
         /// Mean R value for normalization
@@ -78,65 +160,7 @@ namespace DeDupe.Services
         /// </summary>
         void ResetNormalization();
 
-        #endregion Model Configuration Data
-
-        #region PreProcessing Data
-
-        string TempFolderPath { get; set; }
-
-        /// <summary>
-        /// Processed files
-        /// </summary>
-        IReadOnlyCollection<ProcessedMedia> ProcessedImages { get; }
-
-        /// <summary>
-        /// Update processed files
-        /// </summary>
-        /// <param name="processedImages">New collection of processed images</param>
-        void SetProcessedImages(IEnumerable<ProcessedMedia> processedImages);
-
-        /// <summary>
-        /// Add processed file
-        /// </summary>
-        /// <param name="processedImage">Adds processed image</param>
-        void AddProcessedImage(ProcessedMedia processedImage);
-
-        /// <summary>
-        /// Clear processed images
-        /// </summary>
-        void ClearProcessedImages();
-
-        /// <summary>
-        /// Count of processed images
-        /// </summary>
-        int ProcessedImageCount { get; }
-
-        #endregion PreProcessing Data
-
-        #region Feature Extraction Data
-
-        /// <summary>
-        /// Extracted features from images
-        /// </summary>
-        IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures { get; }
-
-        /// <summary>
-        /// Set extracted features
-        /// </summary>
-        /// <param name="features">Collection of extracted features</param>
-        void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features);
-
-        /// <summary>
-        /// Clear extracted features
-        /// </summary>
-        void ClearExtractedFeatures();
-
-        /// <summary>
-        /// Count of extracted features
-        /// </summary>
-        int ExtractedFeaturesCount { get; }
-
-        #endregion Feature Extraction Data
+        #endregion Normalization Parameters
 
         #region Events
 
@@ -159,6 +183,11 @@ namespace DeDupe.Services
         /// Model Configuration settings changed
         /// </summary>
         event EventHandler? ModelConfigurationSettingsChanged;
+
+        /// <summary>
+        /// Model source changed
+        /// </summary>
+        event EventHandler? ModelSourceChanged;
 
         /// <summary>
         /// Extracted features changed

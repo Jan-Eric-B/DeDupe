@@ -25,7 +25,7 @@
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.Title, Mode=OneWay}" />
             <TextBlock
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="Select an pre trained model to analyze your images."
+                Text="Select a pre-trained model to analyze your images for duplicates."
                 TextWrapping="Wrap" />
         </StackPanel>
 
@@ -35,20 +35,50 @@
             HorizontalScrollBarVisibility="Auto"
             VerticalScrollBarVisibility="Auto">
             <StackPanel Spacing="5">
-                <!--  Model Selection  -->
+
+                <!--  Model Selection Section  -->
                 <TextBlock
                     Margin="0,0,0,3"
                     Style="{StaticResource BodyStrongTextBlockStyle}"
                     Text="Model Selection" />
 
-                <!--  Model File  -->
+                <!--  Bundled Model Option  -->
+                <controls:SettingsCard
+                    Description="ResNet50-v2 optimized for image feature extraction. Recommended for most users."
+                    Header="Use Bundled Model"
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
+                    <ToggleSwitch
+                        IsOn="{x:Bind ViewModel.UseBundledModel, Mode=TwoWay}"
+                        OffContent="Custom"
+                        OnContent="Bundled" />
+                </controls:SettingsCard>
+
+                <!--  Bundled Model Info (shown when bundled is selected and available)  -->
+                <InfoBar
+                    Title="Bundled Model Selected"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.ShowBundledModelAvailable, Mode=OneWay}"
+                    Message="{x:Bind ViewModel.BundledModelName, Mode=OneWay}"
+                    Severity="Success" />
+
+                <!--  Bundled Model Not Found Warning  -->
+                <InfoBar
+                    Title="Bundled Model Not Found"
+                    IsClosable="False"
+                    IsOpen="{x:Bind ViewModel.ShowBundledModelNotFound, Mode=OneWay}"
+                    Message="The bundled model file could not be located. Please select a custom model or rebuild the project."
+                    Severity="Error" />
+
+                <!--  Custom Model Selection (shown when custom is selected)  -->
                 <controls:SettingsExpander
                     VerticalAlignment="Top"
-                    Description="Supported format: ONNX (.onnx)"
-                    Header="Select Model File"
+                    Description="Select your own ONNX model file (.onnx)"
+                    Header="Custom Model"
                     HeaderIcon="{ui:FontIcon Glyph=&#xF003;}"
-                    IsExpanded="True">
-                    <!--  Drag and Drop Container for Model File  -->
+                    IsEnabled="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}"
+                    IsExpanded="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}">
+
+                    <!--  Custom Model File Picker  -->
                     <Grid
                         x:Name="ModelFileDropGrid"
                         AllowDrop="True"
@@ -57,7 +87,7 @@
                         Drop="ModelFileDropGrid_Drop">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Border
                             Grid.Column="0"
@@ -74,19 +104,19 @@
                                 VerticalAlignment="Center"
                                 Foreground="{ThemeResource TextControlForeground}"
                                 TextTrimming="CharacterEllipsis"
-                                ToolTipService.ToolTip="{x:Bind ViewModel.ModelFilePath, Mode=OneWay}">
+                                ToolTipService.ToolTip="{x:Bind ViewModel.CustomModelFilePath, Mode=OneWay}">
                                 <Run
                                     FontSize="11"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.DirectoryPath, Mode=OneWay}" />
-                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.FileName, Mode=OneWay}" />
+                                    Text="{x:Bind ViewModel.CustomDirectoryPath, Mode=OneWay}" />
+                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.CustomFileName, Mode=OneWay}" />
                             </TextBlock>
                         </Border>
                         <Button
                             Grid.Column="1"
                             HorizontalAlignment="Stretch"
                             AllowDrop="True"
-                            Command="{x:Bind ViewModel.SelectModelFileCommand}"
+                            Command="{x:Bind ViewModel.SelectCustomModelFileCommand}"
                             ToolTipService.ToolTip="Browse for model file">
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
                         </Button>
@@ -101,7 +131,7 @@
                                             FontFamily="{StaticResource SymbolThemeFontFamily}"
                                             FontSize="14"
                                             Glyph="&#xE8A7;" />
-                                        <TextBlock Text="Download from HuggingFace" />
+                                        <TextBlock Text="HuggingFace" />
                                     </StackPanel>
                                 </HyperlinkButton>
                                 <HyperlinkButton NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model">
@@ -110,7 +140,7 @@
                                             FontFamily="{StaticResource SymbolThemeFontFamily}"
                                             FontSize="14"
                                             Glyph="&#xE8A7;" />
-                                        <TextBlock Text="Download from GitHub" />
+                                        <TextBlock Text="GitHub" />
                                     </StackPanel>
                                 </HyperlinkButton>
                             </StackPanel>
@@ -118,7 +148,7 @@
                     </controls:SettingsExpander.Items>
                 </controls:SettingsExpander>
 
-                <!--  Model Configuration  -->
+                <!--  Model Configuration Section  -->
                 <TextBlock
                     Margin="0,29,0,3"
                     Style="{StaticResource BodyStrongTextBlockStyle}"

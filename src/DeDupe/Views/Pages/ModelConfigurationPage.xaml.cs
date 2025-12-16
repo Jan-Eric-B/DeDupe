@@ -24,11 +24,17 @@ namespace DeDupe.Views.Pages
 
         private void ModelFileDropGrid_DragOver(object sender, DragEventArgs e)
         {
+            if (!ViewModel.UseCustomModel)
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+                return;
+            }
+
             // Dragged items contains files
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "Add model file";
+                e.DragUIOverride.Caption = "Use as custom model";
                 e.DragUIOverride.IsContentVisible = true;
                 e.DragUIOverride.IsCaptionVisible = true;
             }
@@ -40,6 +46,11 @@ namespace DeDupe.Views.Pages
 
         private async void ModelFileDropGrid_Drop(object sender, DragEventArgs e)
         {
+            if (!ViewModel.UseCustomModel)
+            {
+                return;
+            }
+
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 try
@@ -58,8 +69,8 @@ namespace DeDupe.Views.Pages
 
                             if (ModelFileExtensions.IsSupportedFile(extension))
                             {
-                                // Set model file path
-                                ViewModel.ModelFilePath = file.Path;
+                                // Set custom model file path
+                                ViewModel.CustomModelFilePath = file.Path;
                             }
                         }
                     }
@@ -73,12 +84,14 @@ namespace DeDupe.Views.Pages
 
         private void ModelFileTextBlock_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(ViewModel.ModelFilePath) && File.Exists(ViewModel.ModelFilePath))
+            string pathToOpen = ViewModel.UseCustomModel ? ViewModel.CustomModelFilePath : ViewModel.ModelFilePath;
+
+            if (!string.IsNullOrEmpty(pathToOpen) && File.Exists(pathToOpen))
             {
                 try
                 {
-                    // Open folder and select the file
-                    Process.Start("explorer.exe", $"/select,\"{ViewModel.ModelFilePath}\"");
+                    // Open folder and select file
+                    Process.Start("explorer.exe", $"/select,\"{pathToOpen}\"");
                 }
                 catch (Exception ex)
                 {

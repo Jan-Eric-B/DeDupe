@@ -16,14 +16,22 @@ namespace DeDupe.Services
     {
         #region Fields
 
+        private readonly IBundledModelService _bundledModelService;
+
         private readonly List<string> _filePaths = [];
         private readonly List<ProcessedMedia> _processedImages = [];
         private readonly List<ExtractedFeatures> _extractedFeatures = [];
 
         private string _tempFolderPath = ApplicationData.Current.TemporaryFolder.Path + Path.DirectorySeparatorChar + "ProcessedImages";
 
-        private string _modelFilePath = string.Empty;
+        // Model configuration
+        private bool _useBundledModel = true;
+
+        private string _customModelFilePath = string.Empty;
+
+        // Normalization parameters
         private double _meanR = 0.485;
+
         private double _meanG = 0.456;
         private double _meanB = 0.406;
         private double _stdR = 0.229;
@@ -31,6 +39,15 @@ namespace DeDupe.Services
         private double _stdB = 0.225;
 
         #endregion Fields
+
+        #region Constructor
+
+        public AppStateService(IBundledModelService bundledModelService)
+        {
+            _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
+        }
+
+        #endregion Constructor
 
         #region Properties
 
@@ -60,19 +77,81 @@ namespace DeDupe.Services
 
         public int ExtractedFeaturesCount => _extractedFeatures.Count;
 
-        public string ModelFilePath
+        #region Model Configuration Properties
+
+        /// <summary>
+        /// Gets or sets whether to use bundled model.
+        /// </summary>
+        public bool UseBundledModel
         {
-            get => _modelFilePath;
+            get => _useBundledModel;
             set
             {
-                if (_modelFilePath != value)
+                if (_useBundledModel != value)
                 {
-                    _modelFilePath = value;
+                    _useBundledModel = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ModelPath));
+                    OnPropertyChanged(nameof(ModelFilePath));
+                    ModelSourceChanged?.Invoke(this, EventArgs.Empty);
                     ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets custom model file path.
+        /// </summary>
+        public string CustomModelFilePath
+        {
+            get => _customModelFilePath;
+            set
+            {
+                if (_customModelFilePath != value)
+                {
+                    _customModelFilePath = value;
+                    OnPropertyChanged();
+                    if (!UseBundledModel)
+                    {
+                        OnPropertyChanged(nameof(ModelPath));
+                        OnPropertyChanged(nameof(ModelFilePath));
+                        ModelConfigurationSettingsChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get model path based on current selection.
+        /// </summary>
+        public string ModelPath => UseBundledModel ? _bundledModelService.BundledModelPath : CustomModelFilePath;
+
+        /// <summary>
+        /// Gets or sets custom model file path.
+        /// </summary>
+        public string ModelFilePath
+        {
+            get => ModelPath;
+            set
+            {
+                if (value != _bundledModelService.BundledModelPath)
+                {
+                    CustomModelFilePath = value;
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        UseBundledModel = false;
+                    }
+                }
+                else
+                {
+                    UseBundledModel = true;
+                }
+            }
+        }
+
+        #endregion Model Configuration Properties
+
+        #region Normalization Properties
 
         public double MeanR
         {
@@ -157,6 +236,8 @@ namespace DeDupe.Services
                 }
             }
         }
+
+        #endregion Normalization Properties
 
         #endregion Properties
 
@@ -245,6 +326,8 @@ namespace DeDupe.Services
         public event EventHandler? TempFolderPathChanged;
 
         public event EventHandler? ModelConfigurationSettingsChanged;
+
+        public event EventHandler? ModelSourceChanged;
 
         public event EventHandler? ExtractedFeaturesChanged;
 

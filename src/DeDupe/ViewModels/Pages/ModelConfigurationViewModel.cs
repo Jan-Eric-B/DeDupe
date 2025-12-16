@@ -18,6 +18,7 @@ namespace DeDupe.ViewModels.Pages
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly IBundledModelService _bundledModelService;
         private readonly FeatureExtractionService _featureExtractionService;
 
         private List<ExtractedFeatures> _extractedFeatures = [];
@@ -29,26 +30,174 @@ namespace DeDupe.ViewModels.Pages
 
         #region Properties
 
-        public string ModelFilePath
+        #region Model Selection Properties
+
+        /// <summary>
+        /// Gets or sets whether to use bundled model.
+        /// </summary>
+        public bool UseBundledModel
         {
-            get => _appStateService.ModelFilePath;
+            get => _appStateService.UseBundledModel;
             set
             {
-                if (_appStateService.ModelFilePath != value)
+                if (_appStateService.UseBundledModel != value)
                 {
-                    _appStateService.ModelFilePath = value;
+                    _appStateService.UseBundledModel = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(UseCustomModel));
+                    OnPropertyChanged(nameof(ModelFilePath));
                     OnPropertyChanged(nameof(DirectoryPath));
                     OnPropertyChanged(nameof(FileName));
+                    OnPropertyChanged(nameof(ModelDisplayName));
                     OnPropertyChanged(nameof(CanStartExtraction));
+                    OnPropertyChanged(nameof(IsCustomModelSectionVisible));
+                    OnPropertyChanged(nameof(ShowBundledModelAvailable));
+                    OnPropertyChanged(nameof(ShowBundledModelNotFound));
 
-                    // Reset extraction state
                     ResetExtractionState();
                     UpdateCompletionStatus();
                     ExtractFeaturesCommand.NotifyCanExecuteChanged();
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets whether to use custom model.
+        /// </summary>
+        public bool UseCustomModel
+        {
+            get => !UseBundledModel;
+            set => UseBundledModel = !value;
+        }
+
+        /// <summary>
+        /// Gets whether bundled model is available.
+        /// </summary>
+        public bool IsBundledModelAvailable => _bundledModelService.IsBundledModelAvailable;
+
+        /// <summary>
+        /// Gets display name of bundled model.
+        /// </summary>
+        public string BundledModelName => _bundledModelService.BundledModelName;
+
+        /// <summary>
+        /// Gets whether custom model section should be expanded.
+        /// </summary>
+        public bool IsCustomModelSectionVisible => !UseBundledModel;
+
+        /// <summary>
+        /// Gets whether to show "bundled model available" success message.
+        /// </summary>
+        public bool ShowBundledModelAvailable => UseBundledModel && IsBundledModelAvailable;
+
+        /// <summary>
+        /// Gets whether to show "bundled model not found" error message.
+        /// </summary>
+        public bool ShowBundledModelNotFound => UseBundledModel && !IsBundledModelAvailable;
+
+        /// <summary>
+        /// Gets display name for currently selected model.
+        /// </summary>
+        public string ModelDisplayName
+        {
+            get
+            {
+                if (UseBundledModel)
+                {
+                    return BundledModelName;
+                }
+                return !string.IsNullOrEmpty(CustomModelFilePath) ? Path.GetFileName(CustomModelFilePath) : "No model selected";
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets custom model file path.
+        /// </summary>
+        public string CustomModelFilePath
+        {
+            get => _appStateService.CustomModelFilePath;
+            set
+            {
+                if (_appStateService.CustomModelFilePath != value)
+                {
+                    _appStateService.CustomModelFilePath = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(CustomDirectoryPath));
+                    OnPropertyChanged(nameof(CustomFileName));
+                    OnPropertyChanged(nameof(ModelDisplayName));
+                    OnPropertyChanged(nameof(CanStartExtraction));
+
+                    if (!UseBundledModel)
+                    {
+                        OnPropertyChanged(nameof(ModelFilePath));
+                        OnPropertyChanged(nameof(DirectoryPath));
+                        OnPropertyChanged(nameof(FileName));
+                    }
+
+                    ResetExtractionState();
+                    UpdateCompletionStatus();
+                    ExtractFeaturesCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets model file path (bundled or custom).
+        /// </summary>
+        public string ModelFilePath => _appStateService.ModelPath;
+
+        #endregion Model Selection Properties
+
+        #region Display Properties
+
+        public string DirectoryPath
+        {
+            get
+            {
+                string path = ModelFilePath;
+                return !string.IsNullOrEmpty(path)
+                    ? Path.GetDirectoryName(path) + Path.DirectorySeparatorChar
+                    : string.Empty;
+            }
+        }
+
+        public string FileName
+        {
+            get
+            {
+                if (UseBundledModel)
+                {
+                    return IsBundledModelAvailable ? BundledModelName : "Bundled model not found";
+                }
+                return !string.IsNullOrEmpty(CustomModelFilePath)
+                    ? Path.GetFileName(CustomModelFilePath)
+                    : "Select a model file...";
+            }
+        }
+
+        public string CustomDirectoryPath
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(CustomModelFilePath)
+                    ? Path.GetDirectoryName(CustomModelFilePath) + Path.DirectorySeparatorChar
+                    : string.Empty;
+            }
+        }
+
+        public string CustomFileName
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(CustomModelFilePath)
+                    ? Path.GetFileName(CustomModelFilePath)
+                    : "Select a model file...";
+            }
+        }
+
+        #endregion Display Properties
+
+        #region Extraction State Properties
 
         public bool IsExtracting
         {
@@ -90,14 +239,27 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        public bool CanStartExtraction =>
-            !IsExtracting && !string.IsNullOrEmpty(ModelFilePath) &&
-            File.Exists(ModelFilePath) &&
-            HasProcessedImages();
+        public bool CanStartExtraction
+        {
+            get
+            {
+                if (IsExtracting || !HasProcessedImages())
+                    return false;
+
+                if (UseBundledModel)
+                    return IsBundledModelAvailable;
+
+                return !string.IsNullOrEmpty(CustomModelFilePath) && File.Exists(CustomModelFilePath);
+            }
+        }
 
         public bool CanCloseConfiguration => HasExtractedFeatures;
 
         public List<ExtractedFeatures> ExtractedFeatures => _extractedFeatures;
+
+        #endregion Extraction State Properties
+
+        #region Normalization Properties
 
         public double MeanR
         {
@@ -183,9 +345,7 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        public string DirectoryPath => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetDirectoryName(ModelFilePath) + Path.DirectorySeparatorChar : string.Empty;
-
-        public string FileName => !string.IsNullOrEmpty(ModelFilePath) ? Path.GetFileName(ModelFilePath) : "Select a model file..";
+        #endregion Normalization Properties
 
         #endregion Properties
 
@@ -263,7 +423,7 @@ namespace DeDupe.ViewModels.Pages
         }
 
         [RelayCommand]
-        private async Task SelectModelFileAsync()
+        private async Task SelectCustomModelFileAsync()
         {
             FileOpenPicker fileOpenPicker = new()
             {
@@ -280,7 +440,8 @@ namespace DeDupe.ViewModels.Pages
             StorageFile? file = await fileOpenPicker.PickSingleFileAsync();
             if (file != null)
             {
-                ModelFilePath = file.Path;
+                CustomModelFilePath = file.Path;
+                UseBundledModel = false;
             }
         }
 
@@ -309,15 +470,20 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ModelConfigurationViewModel(IAppStateService appStateService, FeatureExtractionService featureExtractionService) : base(2)
+        public ModelConfigurationViewModel(
+            IAppStateService appStateService,
+            IBundledModelService bundledModelService,
+            FeatureExtractionService featureExtractionService) : base(2)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
 
             Title = "Model Configuration";
 
             // Subscribe to app state changes
             _appStateService.ModelConfigurationSettingsChanged += OnModelConfigurationSettingsChanged;
+            _appStateService.ModelSourceChanged += OnModelSourceChanged;
 
             UpdateCompletionStatus();
         }
@@ -326,13 +492,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Methods
 
-        public override bool CanNavigateToNext
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanNavigateToNext => false;
 
         private bool HasProcessedImages()
         {
@@ -361,7 +521,9 @@ namespace DeDupe.ViewModels.Pages
         {
             try
             {
-                if (!string.IsNullOrEmpty(_appStateService.ModelFilePath) && File.Exists(_appStateService.ModelFilePath))
+                string modelPath = ModelFilePath;
+
+                if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
                 {
                     Status = "Initializing Model...";
 
@@ -370,7 +532,7 @@ namespace DeDupe.ViewModels.Pages
 
                     // Initialize feature extraction service
                     await _featureExtractionService.InitializeAsync(
-                        _appStateService.ModelFilePath,
+                        modelPath,
                         (float)meanR, (float)meanG, (float)meanB,
                         (float)stdR, (float)stdG, (float)stdB);
 
@@ -402,11 +564,26 @@ namespace DeDupe.ViewModels.Pages
             UpdateCompletionStatus();
         }
 
+        private void OnModelSourceChanged(object? sender, EventArgs e)
+        {
+            OnPropertyChanged(nameof(UseBundledModel));
+            OnPropertyChanged(nameof(UseCustomModel));
+            OnPropertyChanged(nameof(ModelFilePath));
+            OnPropertyChanged(nameof(DirectoryPath));
+            OnPropertyChanged(nameof(FileName));
+            OnPropertyChanged(nameof(ModelDisplayName));
+            OnPropertyChanged(nameof(IsCustomModelSectionVisible));
+            OnPropertyChanged(nameof(CanStartExtraction));
+
+            ExtractFeaturesCommand.NotifyCanExecuteChanged();
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _appStateService.ModelConfigurationSettingsChanged -= OnModelConfigurationSettingsChanged;
+                _appStateService.ModelSourceChanged -= OnModelSourceChanged;
             }
             base.Dispose(disposing);
         }
