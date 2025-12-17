@@ -7,13 +7,25 @@ using System.Runtime.CompilerServices;
 namespace DeDupe.Models.Analysis
 {
     /// <summary>
-    /// Wrapper for ExtractedFeatures that adds selection state for UI binding
+    /// Wrapper for ExtractedFeatures that adds selection state for UI binding.
     /// </summary>
     public partial class SelectableImage : INotifyPropertyChanged
     {
+        #region Fields
+
         private bool _isSelected;
 
+        #endregion Fields
+
+        #region Events
+
         public event PropertyChangedEventHandler? PropertyChanged;
+
+        public event EventHandler? SelectionChanged;
+
+        #endregion Events
+
+        #region Properties
 
         /// <summary>
         /// Underlying extracted features
@@ -21,7 +33,7 @@ namespace DeDupe.Models.Analysis
         public ExtractedFeatures Features { get; }
 
         /// <summary>
-        /// Image is selected
+        /// Whether image is selected.
         /// </summary>
         public bool IsSelected
         {
@@ -38,17 +50,12 @@ namespace DeDupe.Models.Analysis
         }
 
         /// <summary>
-        /// Event raised when selection state changes
-        /// </summary>
-        public event EventHandler? SelectionChanged;
-
-        /// <summary>
         /// Path to original image file
         /// </summary>
         public string FilePath => Features.OriginalFilePath;
 
         /// <summary>
-        /// Filename
+        /// File name
         /// </summary>
         public string DisplayName => Features.DisplayName;
 
@@ -58,7 +65,7 @@ namespace DeDupe.Models.Analysis
         public string FileName => Path.GetFileName(FilePath);
 
         /// <summary>
-        /// Directory path
+        /// Directory path containing the file
         /// </summary>
         public string DirectoryPath => Path.GetDirectoryName(FilePath) ?? string.Empty;
 
@@ -92,8 +99,12 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public string Extension => Path.GetExtension(FilePath).ToUpperInvariant().TrimStart('.');
 
+        #endregion Properties
+
+        #region Constructor
+
         /// <summary>
-        /// Create selectable wrapper for given features
+        /// Create a selectable wrapper for the given extracted features.
         /// </summary>
         public SelectableImage(ExtractedFeatures features)
         {
@@ -111,9 +122,15 @@ namespace DeDupe.Models.Analysis
             Height = features.ProcessedMedia.OriginalItem.Height;
         }
 
+        #endregion Constructor
+
+        #region INotifyPropertyChanged
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        #endregion INotifyPropertyChanged
     }
 }

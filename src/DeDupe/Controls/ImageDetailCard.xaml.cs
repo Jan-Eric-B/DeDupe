@@ -4,9 +4,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.System;
 
 namespace DeDupe.Controls
@@ -17,74 +19,68 @@ namespace DeDupe.Controls
 
         public static readonly DependencyProperty SelectableImageProperty = DependencyProperty.Register(nameof(SelectableImage), typeof(SelectableImage), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableImageChanged));
 
-        public static readonly DependencyProperty IsSelectedProperty = DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(ImageDetailCard), new PropertyMetadata(false, OnIsSelectedChanged));
-
         #endregion Dependency Properties
 
         #region Properties
 
-        public SelectableImage SelectableImage
+        public SelectableImage? SelectableImage
         {
-            get => (SelectableImage)GetValue(SelectableImageProperty);
+            get => (SelectableImage?)GetValue(SelectableImageProperty);
             set => SetValue(SelectableImageProperty, value);
-        }
-
-        public bool IsSelected
-        {
-            get => (bool)GetValue(IsSelectedProperty);
-            set => SetValue(IsSelectedProperty, value);
         }
 
         #endregion Properties
 
-        #region Events
-
-        public event EventHandler<bool>? SelectionChanged;
-
-        #endregion Events
+        #region Constructor
 
         public ImageDetailCard()
         {
             InitializeComponent();
         }
 
+        #endregion Constructor
+
         #region Property Changed Handlers
 
         private static void OnSelectableImageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ImageDetailCard control)
+            if (d is not ImageDetailCard control)
             {
-                control.UpdateDisplay();
+                return;
+            }
 
-                // Unsubscribe from old
-                if (e.OldValue is SelectableImage oldImage)
-                {
-                    oldImage.SelectionChanged -= control.OnImageSelectionChanged;
-                }
+            // Unsubscribe from old SelectableImage
+            if (e.OldValue is SelectableImage oldImage)
+            {
+                oldImage.PropertyChanged -= control.OnSelectableImagePropertyChanged;
+            }
 
-                // Subscribe to new
-                if (e.NewValue is SelectableImage newImage)
-                {
-                    newImage.SelectionChanged += control.OnImageSelectionChanged;
-                    control.IsSelected = newImage.IsSelected;
-                }
+            // Subscribe to new SelectableImage
+            if (e.NewValue is SelectableImage newImage)
+            {
+                newImage.PropertyChanged += control.OnSelectableImagePropertyChanged;
+                control.UpdateDisplay(newImage);
+                control.UpdateCheckboxToModel(newImage.IsSelected);
+                control.UpdateSelectionVisualState(newImage.IsSelected);
+            }
+            else
+            {
+                control.ClearDisplay();
             }
         }
 
-        private static void OnIsSelectedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private void OnSelectableImagePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (d is ImageDetailCard control)
+            if (sender is not SelectableImage image)
             {
-                control.UpdateSelectionVisualState();
-                control.UpdateCheckboxState();
+                return;
             }
-        }
 
-        private void OnImageSelectionChanged(object? sender, EventArgs e)
-        {
-            if (SelectableImage != null)
+            // Update UI
+            if (e.PropertyName == nameof(SelectableImage.IsSelected))
             {
-                IsSelected = SelectableImage.IsSelected;
+                UpdateCheckboxToModel(image.IsSelected);
+                UpdateSelectionVisualState(image.IsSelected);
             }
         }
 
@@ -92,28 +88,19 @@ namespace DeDupe.Controls
 
         #region Display Updates
 
-        private void UpdateDisplay()
+        private void UpdateDisplay(SelectableImage image)
         {
-            if (SelectableImage == null)
-            {
-                ClearDisplay();
-                return;
-            }
-
             // Update text fields
-            FileNameTextBlock.Text = SelectableImage.FileName;
-            ResolutionTextBlock.Text = SelectableImage.Resolution;
-            FileSizeTextBlock.Text = SelectableImage.FormattedFileSize;
-            FormatTextBlock.Text = SelectableImage.Extension;
+            FileNameTextBlock.Text = image.FileName;
+            ResolutionTextBlock.Text = image.Resolution;
+            FileSizeTextBlock.Text = image.FormattedFileSize;
+            FormatTextBlock.Text = image.Extension;
 
             // Set tooltip to show full path
-            ToolTipService.SetToolTip(FileNameTextBlock, SelectableImage.FilePath);
-
-            // Update checkbox
-            SelectionCheckBox.IsChecked = SelectableImage.IsSelected;
+            ToolTipService.SetToolTip(FileNameTextBlock, image.FilePath);
 
             // Load image preview
-            _ = LoadImagePreviewAsync(SelectableImage.FilePath);
+            _ = LoadImagePreviewAsync(image.FilePath);
         }
 
         private void ClearDisplay()
@@ -124,6 +111,7 @@ namespace DeDupe.Controls
             FormatTextBlock.Text = string.Empty;
             PreviewImage.Source = null;
             PlaceholderIcon.Visibility = Visibility.Visible;
+            SelectionCheckBox.IsChecked = false;
         }
 
         private async Task LoadImagePreviewAsync(string imagePath)
@@ -132,7 +120,7 @@ namespace DeDupe.Controls
             {
                 StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
 
-                using var stream = await file.OpenReadAsync();
+                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
 
                 BitmapImage bitmap = new()
                 {
@@ -151,38 +139,40 @@ namespace DeDupe.Controls
             }
         }
 
-        private void UpdateSelectionVisualState()
+        /// <summary>
+        /// Update checkbox UI to match models IsSelected state.
+        /// </summary>
+        private void UpdateCheckboxToModel(bool isSelected)
         {
-            string stateName = IsSelected ? "Selected" : "Unselected";
-            VisualStateManager.GoToState(this, stateName, true);
+            if (SelectionCheckBox.IsChecked != isSelected)
+            {
+                // Temporarily unhook event to prevent feedback loop
+                SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
+                SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
+
+                SelectionCheckBox.IsChecked = isSelected;
+
+                // Re-hook events
+                SelectionCheckBox.Checked += SelectionCheckBox_CheckedChanged;
+                SelectionCheckBox.Unchecked += SelectionCheckBox_CheckedChanged;
+            }
         }
 
-        private void UpdateCheckboxState()
+        private void UpdateSelectionVisualState(bool isSelected)
         {
-            if (SelectionCheckBox.IsChecked != IsSelected)
-            {
-                SelectionCheckBox.IsChecked = IsSelected;
-            }
+            string stateName = isSelected ? "Selected" : "Unselected";
+            VisualStateManager.GoToState(this, stateName, true);
         }
 
         #endregion Display Updates
 
         #region Event Handlers
 
-        private void SelectionCheckBox_Changed(object sender, RoutedEventArgs e)
+        private void SelectionCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
         {
             if (SelectableImage != null && SelectionCheckBox.IsChecked.HasValue)
             {
-                bool newValue = SelectionCheckBox.IsChecked.Value;
-
-                // Update if different
-                if (SelectableImage.IsSelected != newValue)
-                {
-                    SelectableImage.IsSelected = newValue;
-                }
-
-                IsSelected = newValue;
-                SelectionChanged?.Invoke(this, newValue);
+                SelectableImage.IsSelected = SelectionCheckBox.IsChecked.Value;
             }
         }
 
@@ -227,5 +217,27 @@ namespace DeDupe.Controls
         }
 
         #endregion Event Handlers
+
+        #region Lifecycle
+
+        private void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            SelectionCheckBox.Checked += SelectionCheckBox_CheckedChanged;
+            SelectionCheckBox.Unchecked += SelectionCheckBox_CheckedChanged;
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
+            SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
+
+            // Unsubscribe from events
+            if (SelectableImage != null)
+            {
+                SelectableImage.PropertyChanged -= OnSelectableImagePropertyChanged;
+            }
+        }
+
+        #endregion Lifecycle
     }
 }

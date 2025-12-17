@@ -16,7 +16,8 @@ namespace DeDupe.Models.Analysis
 
         private string _name;
         private bool? _isSelected = false;
-        private bool _isUpdatingSelection = false;
+        private bool _isBatchUpdating = false;
+        private bool _isInternalUpdate = false;
 
         #endregion Fields
 
@@ -72,11 +73,28 @@ namespace DeDupe.Models.Analysis
             get => _isSelected;
             set
             {
-                if (_isSelected != value)
+                if (_isSelected == value)
+                {
+                    return;
+                }
+
+                // RecalculateGroupSelectionState update
+                if (_isInternalUpdate)
                 {
                     _isSelected = value;
                     OnPropertyChanged();
                     GroupSelectionChanged?.Invoke(this, EventArgs.Empty);
+                    return;
+                }
+
+                // UI update
+                if (AllSelected)
+                {
+                    DeselectAll();
+                }
+                else
+                {
+                    SelectAll();
                 }
             }
         }
@@ -89,7 +107,7 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// If all images selected
         /// </summary>
-        public bool AllSelected => SelectableImages.All(x => x.IsSelected);
+        public bool AllSelected => SelectableImages.Count > 0 && SelectableImages.All(x => x.IsSelected);
 
         /// <summary>
         /// No images selected
@@ -116,7 +134,7 @@ namespace DeDupe.Models.Analysis
         #region Constructors
 
         /// <summary>
-        /// Create new cluster with images
+        /// Create new cluster with images.
         /// </summary>
         public ImageCluster(int id, List<ExtractedFeatures> images, string? name = null)
         {
@@ -124,33 +142,86 @@ namespace DeDupe.Models.Analysis
             _name = name ?? $"Group {id + 1}";
             Images = images ?? [];
 
-            // Create selectable wrappers
-            SelectableImages = new ObservableCollection<SelectableImage>(Images.Select(img => new SelectableImage(img)));
-
-            // Subscribe to individual image selection changes
-            foreach (SelectableImage selectableImage in SelectableImages)
-            {
-                selectableImage.SelectionChanged += OnImageSelectionChanged;
-            }
+            // Create selectable wrappers and subscribe to selection changes
+            SelectableImages = new ObservableCollection<SelectableImage>(
+                Images.Select(img => CreateSelectableImage(img))
+            );
         }
 
         /// <summary>
-        /// Create new cluster with single image
+        /// Create a new cluster with a single image.
         /// </summary>
-        public ImageCluster(int id, ExtractedFeatures image, string? name = null) : this(id, [image], name)
+        public ImageCluster(int id, ExtractedFeatures image, string? name = null)
+            : this(id, [image], name)
         {
         }
 
         #endregion Constructors
 
-        #region Selection Methods
+        #region Private Methods
+
+        private SelectableImage CreateSelectableImage(ExtractedFeatures features)
+        {
+            SelectableImage selectableImage = new(features);
+            selectableImage.SelectionChanged += OnIndividualImageSelectionChanged;
+            return selectableImage;
+        }
+
+        private void OnIndividualImageSelectionChanged(object? sender, EventArgs e)
+        {
+            // Don't recalculate during batch updates
+            if (_isBatchUpdating)
+            {
+                return;
+            }
+
+            RecalculateGroupSelectionState();
+        }
+
+        private void RecalculateGroupSelectionState()
+        {
+            // Calculate new state
+            bool? newState;
+
+            if (NoneSelected)
+            {
+                newState = false;
+            }
+            else if (AllSelected)
+            {
+                newState = true;
+            }
+            else
+            {
+                newState = null; // Partial
+            }
+
+            // Set internal update flag for setter
+            _isInternalUpdate = true;
+            try
+            {
+                IsSelected = newState;
+            }
+            finally
+            {
+                _isInternalUpdate = false;
+            }
+
+            OnPropertyChanged(nameof(SelectedCount));
+            OnPropertyChanged(nameof(AllSelected));
+            OnPropertyChanged(nameof(NoneSelected));
+        }
+
+        #endregion Private Methods
+
+        #region Public Selection Methods
 
         /// <summary>
         /// Select all images in group
         /// </summary>
         public void SelectAll()
         {
-            SetAllSelection(true);
+            SetAllImagesSelection(true);
         }
 
         /// <summary>
@@ -158,7 +229,7 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public void DeselectAll()
         {
-            SetAllSelection(false);
+            SetAllImagesSelection(false);
         }
 
         /// <summary>
@@ -181,48 +252,30 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public void SetGroupSelection(bool selected)
         {
-            SetAllSelection(selected);
+            SetAllImagesSelection(selected);
         }
 
-        private void SetAllSelection(bool selected)
+        /// <summary>
+        /// Set selection state for all images.
+        /// </summary>
+        private void SetAllImagesSelection(bool selected)
         {
-            _isUpdatingSelection = true;
+            // Prevent triggering individual change handlers
+            _isBatchUpdating = true;
 
-            foreach (SelectableImage image in SelectableImages)
+            try
             {
-                image.IsSelected = selected;
+                foreach (SelectableImage image in SelectableImages)
+                {
+                    image.IsSelected = selected;
+                }
+            }
+            finally
+            {
+                _isBatchUpdating = false;
             }
 
-            _isUpdatingSelection = false;
-            UpdateGroupSelectionState();
-        }
-
-        private void OnImageSelectionChanged(object? sender, EventArgs e)
-        {
-            if (!_isUpdatingSelection)
-            {
-                UpdateGroupSelectionState();
-            }
-        }
-
-        private void UpdateGroupSelectionState()
-        {
-            if (NoneSelected)
-            {
-                IsSelected = false;
-            }
-            else if (AllSelected)
-            {
-                IsSelected = true;
-            }
-            else
-            {
-                IsSelected = null; // partial
-            }
-
-            OnPropertyChanged(nameof(SelectedCount));
-            OnPropertyChanged(nameof(AllSelected));
-            OnPropertyChanged(nameof(NoneSelected));
+            RecalculateGroupSelectionState();
         }
 
         /// <summary>
@@ -241,9 +294,9 @@ namespace DeDupe.Models.Analysis
             return [.. SelectableImages.Where(x => x.IsSelected).Select(x => x.FilePath)];
         }
 
-        #endregion Selection Methods
+        #endregion Public Selection Methods
 
-        #region Path Methods
+        #region Path Helper Methods
 
         /// <summary>
         /// File paths of all images in cluster
@@ -269,7 +322,24 @@ namespace DeDupe.Models.Analysis
             return Images.FirstOrDefault();
         }
 
-        #endregion Path Methods
+        #endregion Path Helper Methods
+
+        #region Cleanup
+
+        /// <summary>
+        /// Unsubscribe from all image selection events.
+        /// </summary>
+        public void Cleanup()
+        {
+            foreach (SelectableImage image in SelectableImages)
+            {
+                image.SelectionChanged -= OnIndividualImageSelectionChanged;
+            }
+        }
+
+        #endregion Cleanup
+
+        #region Object Overrides
 
         /// <summary>
         /// String representation of cluster
@@ -279,9 +349,15 @@ namespace DeDupe.Models.Analysis
             return $"Cluster {Id} ({Name}): {Count} image{(Count == 1 ? "" : "s")} (Avg Similarity: {AverageSimilarity:F3})";
         }
 
+        #endregion Object Overrides
+
+        #region INotifyPropertyChanged
+
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        #endregion INotifyPropertyChanged
     }
 }

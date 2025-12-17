@@ -318,7 +318,8 @@
                                                     VerticalAlignment="Top"
                                                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                                                     CornerRadius="4"
-                                                    IsChecked="{x:Bind IsSelected, Mode=TwoWay}" />
+                                                    IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                                    IsThreeState="True" />
                                             </Grid>
 
                                             <!--  Group Info  -->
@@ -516,15 +517,12 @@
                                     MinWidth="0"
                                     MinHeight="0"
                                     VerticalAlignment="Center"
-                                    Checked="SelectAllCheckBox_Changed"
-                                    IsChecked="{x:Bind ViewModel.SelectedCluster.IsSelected, Mode=TwoWay}"
-                                    Unchecked="SelectAllCheckBox_Changed" />
-                                <TextBlock VerticalAlignment="Center" FontSize="13">
-                                    <Run Text="{x:Bind ViewModel.SelectedCluster.SelectedCount, Mode=OneWay}" />
-                                    <Run Text=" of " />
-                                    <Run Text="{x:Bind ViewModel.SelectedCluster.Count, Mode=OneWay}" />
-                                    <Run Text=" selected" />
-                                </TextBlock>
+                                    Click="SelectAllCheckBox_Click"
+                                    IsThreeState="True" />
+                                <TextBlock
+                                    x:Name="SelectionCountText"
+                                    VerticalAlignment="Center"
+                                    FontSize="13" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -543,7 +541,7 @@
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="models:SelectableImage">
-                                    <controls:ImageDetailCard IsSelected="{x:Bind IsSelected, Mode=TwoWay}" SelectableImage="{x:Bind}" />
+                                    <controls:ImageDetailCard SelectableImage="{x:Bind}" />
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>

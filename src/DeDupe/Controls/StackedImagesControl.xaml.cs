@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace DeDupe.Controls
 {
@@ -101,7 +102,7 @@ namespace DeDupe.Controls
                 // Load image
                 StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
 
-                using var stream = await file.OpenReadAsync();
+                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
 
                 // Create BitmapImage thumbnail
                 BitmapImage bitmap = new()

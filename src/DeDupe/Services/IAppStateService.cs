@@ -23,7 +23,6 @@ namespace DeDupe.Services
         /// </summary>
         int FileCount { get; }
 
-
         /// <summary>
         /// Update file paths
         /// </summary>
