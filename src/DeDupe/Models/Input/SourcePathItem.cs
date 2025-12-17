@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Input
 {
     /// <summary>
     /// Holds File and Folder paths in the media selection list

@@ -1,4 +1,5 @@
 using DeDupe.Models;
+using DeDupe.Models.Ui;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

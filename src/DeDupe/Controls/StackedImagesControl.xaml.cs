@@ -87,7 +87,7 @@ namespace DeDupe.Controls
             };
 
             // Load image thumbnail
-            LoadImageAsync(image, imagePath);
+            _ = LoadImageAsync(image, imagePath);
 
             imageBorder.Child = image;
 

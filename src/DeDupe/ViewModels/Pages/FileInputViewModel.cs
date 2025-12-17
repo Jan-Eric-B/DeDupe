@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Models;
+using DeDupe.Models.Input;
 using DeDupe.Services;
 using Microsoft.UI.Xaml;
 using System;

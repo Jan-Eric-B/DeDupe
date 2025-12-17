@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Ui
 {
     /// <summary>
     /// Step in the wizard stepper

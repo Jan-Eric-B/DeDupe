@@ -1,5 +1,6 @@
 using DeDupe.Constants;
 using DeDupe.Models;
+using DeDupe.Models.Input;
 using DeDupe.ViewModels.Pages;
 using Microsoft.UI.Xaml.Controls;
 using System;
