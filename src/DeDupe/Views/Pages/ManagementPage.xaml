@@ -284,7 +284,7 @@
                             SelectedItem="{x:Bind ViewModel.SelectedCluster, Mode=TwoWay}"
                             SelectionMode="Single">
                             <GridView.ItemTemplate>
-                                <DataTemplate x:DataType="models:ImageCluster">
+                                <DataTemplate x:DataType="models:SimilarityGroup">
                                     <Border
                                         Width="280"
                                         Height="260"
@@ -529,7 +529,7 @@
 
                     <!--  Image Cards Grid  -->
                     <ScrollViewer Grid.Row="2">
-                        <ItemsRepeater x:Name="ImageCardsRepeater" ItemsSource="{x:Bind ViewModel.SelectedCluster.SelectableImages, Mode=OneWay}">
+                        <ItemsRepeater x:Name="ImageCardsRepeater" ItemsSource="{x:Bind ViewModel.SelectedCluster.SelectableItems, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout
                                     ItemsStretch="None"
@@ -540,8 +540,8 @@
                                     Orientation="Horizontal" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="models:SelectableImage">
-                                    <controls:ImageDetailCard SelectableImage="{x:Bind}" />
+                                <DataTemplate x:DataType="models:SelectableItem">
+                                    <controls:ImageDetailCard SelectableItem="{x:Bind}" />
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>

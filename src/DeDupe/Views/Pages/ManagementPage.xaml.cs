@@ -18,7 +18,7 @@ namespace DeDupe.Views.Pages
         private double _rightPanelWidthRatio = 0.4;
         private bool _isPanelOpen = false;
 
-        private ImageCluster? _subscribedCluster;
+        private SimilarityGroup? _subscribedCluster;
 
         #endregion Fields
 
@@ -93,7 +93,7 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private void SubscribeToCluster(ImageCluster cluster)
+        private void SubscribeToCluster(SimilarityGroup cluster)
         {
             _subscribedCluster = cluster;
             cluster.PropertyChanged += OnClusterPropertyChanged;
@@ -111,7 +111,7 @@ namespace DeDupe.Views.Pages
         private void OnClusterPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             // update UI when selection change
-            if (e.PropertyName is nameof(ImageCluster.IsSelected) or nameof(ImageCluster.SelectedCount) or nameof(ImageCluster.AllSelected) or nameof(ImageCluster.NoneSelected))
+            if (e.PropertyName is nameof(SimilarityGroup.IsSelected) or nameof(SimilarityGroup.SelectedCount) or nameof(SimilarityGroup.AllSelected) or nameof(SimilarityGroup.NoneSelected))
             {
                 DispatcherQueue.TryEnqueue(UpdateSelection);
             }
@@ -214,7 +214,7 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            ImageCluster cluster = ViewModel.SelectedCluster;
+            SimilarityGroup cluster = ViewModel.SelectedCluster;
 
             // Update checkbox state to match cluster's IsSelected
             SelectAllCheckBox.IsChecked = cluster.IsSelected;

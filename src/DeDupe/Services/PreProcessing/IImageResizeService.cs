@@ -1,4 +1,4 @@
-﻿using DeDupe.Enums.PreProcessing;
+﻿using DeDupe.Enums;
 using System.Threading.Tasks;
 
 namespace DeDupe.Services.PreProcessing
@@ -15,7 +15,7 @@ namespace DeDupe.Services.PreProcessing
             InterpolationMethod upsamplingMethod,
             InterpolationMethod downsamplingMethod,
             byte[] paddingColor,
-            BitDepth bitDepth,
+            ColorFormat bitDepth,
             double dpiX,
             double dpiY);
     }

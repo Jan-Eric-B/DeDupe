@@ -6,7 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
-    d:DataContext="{d:DesignInstance Type=models:SelectableImage}"
+    d:DataContext="{d:DesignInstance Type=models:SelectableItem}"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     mc:Ignorable="d">
@@ -95,7 +95,7 @@
                 <ToolTipService.ToolTip>
                     <ToolTip>
                         <StackPanel Spacing="4">
-                            <TextBlock Text="{Binding SelectableImage.FilePath, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                            <TextBlock Text="{Binding SelectableItem.FilePath, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
                             <TextBlock
                                 FontSize="11"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"

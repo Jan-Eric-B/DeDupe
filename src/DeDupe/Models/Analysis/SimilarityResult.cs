@@ -5,84 +5,147 @@ using System.Linq;
 namespace DeDupe.Models.Analysis
 {
     /// <summary>
-    /// Result of similarity analysis and clustering
+    /// Immutable result of similarity analysis and clustering.
     /// </summary>
-    public class SimilarityResult(List<ImageCluster> clusters, double similarityThreshold, int totalImagesAnalyzed)
+    public sealed class SimilarityResult
     {
-        /// <summary>
-        /// Get all clusters
-        /// </summary>
-        public List<ImageCluster> Clusters { get; } = clusters ?? [];
+        #region Properties
 
         /// <summary>
-        /// Get similarity threshold
+        /// All clusters (immutable).
         /// </summary>
-        public double SimilarityThreshold { get; } = similarityThreshold;
+        public IReadOnlyList<SimilarityGroup> Clusters { get; }
 
         /// <summary>
-        /// Get total number of analyzed images
+        /// Similarity threshold used for clustering.
         /// </summary>
-        public int TotalImagesAnalyzed { get; } = totalImagesAnalyzed;
+        public double SimilarityThreshold { get; }
 
         /// <summary>
-        /// Get timestamp when analysis was completed
+        /// Total number of items that were analyzed.
         /// </summary>
-        public DateTime AnalysisCompletedAt { get; } = DateTime.Now;
+        public int TotalItemsAnalyzed { get; }
 
         /// <summary>
-        /// Get total number of clusters
+        /// Timestamp when analysis was completed.
+        /// </summary>
+        public DateTime AnalysisCompletedAt { get; }
+
+        /// <summary>
+        /// Total number of clusters.
         /// </summary>
         public int TotalClusters => Clusters.Count;
 
         /// <summary>
-        /// Get number of clusters with potential duplicates (more than 1 image)
+        /// Number of clusters with potential duplicates (more than 1 item).
         /// </summary>
         public int DuplicateGroupsCount => Clusters.Count(c => c.IsDuplicateGroup);
 
         /// <summary>
-        /// Get number of singleton clusters (images with no similar matches)
+        /// Number of singleton clusters (items with no similar matches).
         /// </summary>
         public int SingletonClustersCount => Clusters.Count(c => !c.IsDuplicateGroup);
 
         /// <summary>
-        /// Get total number of duplicate images (images in clusters with more than 1 image)
+        /// Total number of items in duplicate groups.
         /// </summary>
-        public int TotalDuplicateImages => Clusters.Where(c => c.IsDuplicateGroup).Sum(c => c.Count);
+        public int TotalDuplicateItems => Clusters.Where(c => c.IsDuplicateGroup).Sum(c => c.Count);
 
         /// <summary>
-        /// Get cluster that contain potential duplicates
-        /// Ordered by cluster size descending
+        /// Clusters that contain potential duplicates, ordered by similarity.
         /// </summary>
-        public List<ImageCluster> DuplicateGroups => [.. Clusters
-            .Where(c => c.IsDuplicateGroup)
-            .OrderByDescending(c => c.Count)];
+        public IReadOnlyList<SimilarityGroup> DuplicateGroups { get; }
 
         /// <summary>
-        /// Get summary string of the results
+        /// Whether this result contains any data.
+        /// </summary>
+        public bool IsEmpty => TotalItemsAnalyzed == 0;
+
+        #endregion Properties
+
+        #region Constructors
+
+        /// <summary>
+        /// Create a new similarity result.
+        /// </summary>
+        /// <param name="clusters">Clusters found during analysis.</param>
+        /// <param name="similarityThreshold">Threshold used for grouping.</param>
+        /// <param name="totalItemsAnalyzed">Number of items that were analyzed.</param>
+        public SimilarityResult(
+            IEnumerable<SimilarityGroup> clusters,
+            double similarityThreshold,
+            int totalItemsAnalyzed)
+        {
+            ArgumentNullException.ThrowIfNull(clusters);
+
+            // Create immutable copies
+            List<SimilarityGroup> clusterList = [.. clusters];
+            Clusters = clusterList.AsReadOnly();
+
+            DuplicateGroups = clusterList
+                .Where(c => c.IsDuplicateGroup)
+                .OrderByDescending(c => c.AverageSimilarity)
+                .ToList()
+                .AsReadOnly();
+
+            SimilarityThreshold = similarityThreshold;
+            TotalItemsAnalyzed = totalItemsAnalyzed;
+            AnalysisCompletedAt = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Private constructor for creating empty results.
+        /// </summary>
+        private SimilarityResult(double similarityThreshold)
+        {
+            Clusters = [];
+            DuplicateGroups = [];
+            SimilarityThreshold = similarityThreshold;
+            TotalItemsAnalyzed = 0;
+            AnalysisCompletedAt = DateTime.Now;
+        }
+
+        #endregion Constructors
+
+        #region Factory Methods
+
+        /// <summary>
+        /// Create an empty result.
+        /// </summary>
+        public static SimilarityResult Empty(double similarityThreshold = 0.0)
+        {
+            return new SimilarityResult(similarityThreshold);
+        }
+
+        #endregion Factory Methods
+
+        #region Methods
+
+        /// <summary>
+        /// Get a human-readable summary of the results.
         /// </summary>
         public string GetSummary()
         {
-            if (TotalClusters == 0)
+            if (IsEmpty)
             {
-                return "No clusters found.";
+                return "No items were analyzed.";
             }
 
             if (DuplicateGroupsCount == 0)
             {
-                return $"No duplicate groups found. All {TotalImagesAnalyzed} images are unique.";
+                return $"No duplicate groups found. All {TotalItemsAnalyzed} items are unique.";
             }
 
             return $"Found {DuplicateGroupsCount} duplicate group{(DuplicateGroupsCount == 1 ? "" : "s")} " +
-                   $"containing {TotalDuplicateImages} image{(TotalDuplicateImages == 1 ? "" : "s")}. " +
-                   $"{SingletonClustersCount} image{(SingletonClustersCount == 1 ? "" : "s")} unique.";
+                   $"containing {TotalDuplicateItems} item{(TotalDuplicateItems == 1 ? "" : "s")}. " +
+                   $"{SingletonClustersCount} item{(SingletonClustersCount == 1 ? "" : "s")} unique.";
         }
 
-        /// <summary>
-        /// Return string representation of analysis result
-        /// </summary>
         public override string ToString()
         {
-            return $"Similarity Analysis Result: {GetSummary()}";
+            return $"SimilarityResult: {GetSummary()}";
         }
+
+        #endregion Methods
     }
 }

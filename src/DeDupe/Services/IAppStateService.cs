@@ -1,5 +1,4 @@
 ﻿using DeDupe.Models;
-using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,189 +6,190 @@ using System.ComponentModel;
 namespace DeDupe.Services
 {
     /// <summary>
-    /// Interface for centralized state management service.
+    /// Interface for centralized application state management.
     /// </summary>
     public interface IAppStateService : INotifyPropertyChanged
     {
-        #region File Management
+        #region Source Media
 
         /// <summary>
-        /// File paths
+        /// All source media files (images and videos).
         /// </summary>
-        IReadOnlyCollection<string> FilePaths { get; }
+        IReadOnlyCollection<SourceMedia> SourceMedia { get; }
 
         /// <summary>
-        /// Count of files
+        /// Number of source media files.
         /// </summary>
-        int FileCount { get; }
+        int SourceCount { get; }
 
         /// <summary>
-        /// Update file paths
+        /// Set source media collection.
         /// </summary>
-        /// <param name="filePaths">New collection of file paths</param>
-        void SetFilePaths(IEnumerable<string> filePaths);
-
-        #endregion File Management
-
-        #region Processed Images
+        void SetSourceMedia(IEnumerable<SourceMedia> sources);
 
         /// <summary>
-        /// Processed files
+        /// Add a single source media.
         /// </summary>
-        IReadOnlyCollection<ProcessedMedia> ProcessedImages { get; }
+        void AddSourceMedia(SourceMedia source);
 
         /// <summary>
-        /// Count of processed images
+        /// Add video frames as analysis items.
         /// </summary>
-        int ProcessedImageCount { get; }
+        void AddVideoFrames(SourceMedia videoSource, IEnumerable<(int frameIndex, TimeSpan timestamp)> frames);
 
         /// <summary>
-        /// Path of the temporary folder for processed images
+        /// Clear all source media.
         /// </summary>
-        string TempFolderPath { get; set; }
+        void ClearSourceMedia();
+
+        #endregion Source Media
+
+        #region Analysis Items
 
         /// <summary>
-        /// Update processed files
+        /// All analysis items (images and video frames).
         /// </summary>
-        /// <param name="processedImages">New collection of processed images</param>
-        void SetProcessedImages(IEnumerable<ProcessedMedia> processedImages);
+        IReadOnlyCollection<AnalysisItem> AnalysisItems { get; }
 
         /// <summary>
-        /// Add processed file
+        /// Number of analysis items.
         /// </summary>
-        /// <param name="processedImage">Adds processed image</param>
-        void AddProcessedImage(ProcessedMedia processedImage);
+        int AnalysisItemCount { get; }
 
         /// <summary>
-        /// Clear processed images
+        /// Items that have been preprocessed.
         /// </summary>
-        void ClearProcessedImages();
-
-        #endregion Processed Images
-
-        #region Extracted Features
+        IReadOnlyCollection<AnalysisItem> ProcessedItems { get; }
 
         /// <summary>
-        /// Extracted features from images
+        /// Number of preprocessed items.
         /// </summary>
-        IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures { get; }
+        int ProcessedItemCount { get; }
 
         /// <summary>
-        /// Count of extracted features
+        /// Items that have features extracted.
+        /// </summary>
+        IReadOnlyCollection<AnalysisItem> ItemsWithFeatures { get; }
+
+        /// <summary>
+        /// Number of items with features.
         /// </summary>
         int ExtractedFeaturesCount { get; }
 
-        /// <summary>
-        /// Set extracted features
-        /// </summary>
-        /// <param name="features">Collection of extracted features</param>
-        void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features);
+        #endregion Analysis Items
+
+        #region Pipeline State
 
         /// <summary>
-        /// Clear extracted features
+        /// Clear preprocessing state for all items.
         /// </summary>
-        void ClearExtractedFeatures();
+        void ClearProcessedState();
 
-        #endregion Extracted Features
+        /// <summary>
+        /// Clear feature extraction state for all items.
+        /// </summary>
+        void ClearFeatureState();
+
+        /// <summary>
+        /// Notify that processing has completed.
+        /// </summary>
+        void NotifyProcessingComplete();
+
+        /// <summary>
+        /// Notify that feature extraction has completed.
+        /// </summary>
+        void NotifyFeaturesExtracted();
+
+        #endregion Pipeline State
+
+        #region Temp Folder
+
+        /// <summary>
+        /// Path to temporary folder for processed images.
+        /// </summary>
+        string TempFolderPath { get; set; }
+
+        #endregion Temp Folder
 
         #region Model Configuration
 
         /// <summary>
-        /// Gets or sets whether the bundled model is being used.
+        /// Whether to use bundled model.
         /// </summary>
         bool UseBundledModel { get; set; }
 
         /// <summary>
-        /// Gets or sets the custom model file path (used when UseBundledModel is false).
+        /// Custom model file path.
         /// </summary>
         string CustomModelFilePath { get; set; }
 
         /// <summary>
-        /// Gets the effective model path (bundled or custom based on UseBundledModel).
+        /// Current model path.
         /// </summary>
         string ModelPath { get; }
 
         /// <summary>
-        /// Gets or sets the model file path (for backward compatibility).
-        /// Setting this will switch to custom model mode if different from bundled.
+        /// Model file path with setter logic.
         /// </summary>
         string ModelFilePath { get; set; }
 
         #endregion Model Configuration
 
-        #region Normalization Parameters
+        #region Normalization
 
-        /// <summary>
-        /// Mean R value for normalization
-        /// </summary>
         double MeanR { get; set; }
-
-        /// <summary>
-        /// Mean G value for normalization
-        /// </summary>
         double MeanG { get; set; }
-
-        /// <summary>
-        /// Mean B value for normalization
-        /// </summary>
         double MeanB { get; set; }
-
-        /// <summary>
-        /// Standard deviation R value for normalization
-        /// </summary>
         double StdR { get; set; }
-
-        /// <summary>
-        /// Standard deviation G value for normalization
-        /// </summary>
         double StdG { get; set; }
-
-        /// <summary>
-        /// Standard deviation B value for normalization
-        /// </summary>
         double StdB { get; set; }
 
         /// <summary>
-        /// Get normalization values as a tuple
+        /// Get all normalization parameters.
         /// </summary>
         (double, double, double, double, double, double) GetNormalization();
 
         /// <summary>
-        /// Reset normalization values to ImageNet defaults
+        /// Reset normalization to ImageNet defaults.
         /// </summary>
         void ResetNormalization();
 
-        #endregion Normalization Parameters
+        #endregion Normalization
 
         #region Events
 
         /// <summary>
-        /// File paths collection changes
+        /// Raised when source media collection changes.
         /// </summary>
-        event EventHandler? FilePathsChanged;
+        event EventHandler? SourceMediaChanged;
 
         /// <summary>
-        /// Processed images collection changes
+        /// Raised when analysis items collection changes.
         /// </summary>
-        event EventHandler? ProcessedImagesChanged;
+        event EventHandler? AnalysisItemsChanged;
 
         /// <summary>
-        /// Temp folder changes
+        /// Raised when processing state changes.
+        /// </summary>
+        event EventHandler? ProcessingStateChanged;
+
+        /// <summary>
+        /// Raised when temp folder path changes.
         /// </summary>
         event EventHandler? TempFolderPathChanged;
 
         /// <summary>
-        /// Model Configuration settings changed
+        /// Raised when model configuration changes.
         /// </summary>
         event EventHandler? ModelConfigurationSettingsChanged;
 
         /// <summary>
-        /// Model source changed
+        /// Raised when model source changes.
         /// </summary>
         event EventHandler? ModelSourceChanged;
 
         /// <summary>
-        /// Extracted features changed
+        /// Raised when extracted features change.
         /// </summary>
         event EventHandler? ExtractedFeaturesChanged;
 

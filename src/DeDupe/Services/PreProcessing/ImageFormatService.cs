@@ -1,4 +1,4 @@
-﻿using DeDupe.Enums.PreProcessing;
+﻿using DeDupe.Enums;
 using System;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
@@ -34,15 +34,15 @@ namespace DeDupe.Services.PreProcessing
             return await BitmapEncoder.CreateAsync(encoderId, stream);
         }
 
-        public BitmapPixelFormat GetPixelFormat(BitDepth bitDepth)
+        public BitmapPixelFormat GetPixelFormat(ColorFormat bitDepth)
         {
             return bitDepth switch
             {
-                BitDepth.BGR8 => BitmapPixelFormat.Bgra8,
-                BitDepth.Gray8 => BitmapPixelFormat.Gray8,
-                BitDepth.RGB8 => BitmapPixelFormat.Rgba8,
-                BitDepth.RGB16 => BitmapPixelFormat.Rgba16,
-                BitDepth.BGR16 => BitmapPixelFormat.Bgra8,
+                ColorFormat.BGR8 => BitmapPixelFormat.Bgra8,
+                ColorFormat.Gray8 => BitmapPixelFormat.Gray8,
+                ColorFormat.RGB8 => BitmapPixelFormat.Rgba8,
+                ColorFormat.RGB16 => BitmapPixelFormat.Rgba16,
+                ColorFormat.BGR16 => BitmapPixelFormat.Bgra8,
                 _ => BitmapPixelFormat.Rgba8,
             };
         }

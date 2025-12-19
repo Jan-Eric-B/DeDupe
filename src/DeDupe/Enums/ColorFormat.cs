@@ -1,6 +1,6 @@
-﻿namespace DeDupe.Enums.PreProcessing
+﻿namespace DeDupe.Enums
 {
-    public enum BitDepth
+    public enum ColorFormat
     {
         RGB8,
         BGR8,

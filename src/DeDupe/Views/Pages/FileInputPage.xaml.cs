@@ -1,5 +1,4 @@
 using DeDupe.Constants;
-using DeDupe.Models;
 using DeDupe.Models.Input;
 using DeDupe.ViewModels.Pages;
 using Microsoft.UI.Xaml.Controls;
@@ -22,7 +21,7 @@ namespace DeDupe.Views.Pages
             DataContext = ViewModel;
         }
 
-        private void LvMediaSelectionList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private void LvInputList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
@@ -33,7 +32,7 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private async void LvMediaSelectionList_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private async void LvInputList_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
@@ -42,12 +41,12 @@ namespace DeDupe.Views.Pages
 
                 if (items.Count > 0)
                 {
-                    List<SourcePathItem> newItems = [];
+                    List<InputListItem> newInputListItem = [];
 
                     foreach (IStorageItem item in items)
                     {
                         // Skip item if already in collection
-                        if (ViewModel.SourcePathItems.Any(existingItem => existingItem.Path.Equals(item.Path, StringComparison.OrdinalIgnoreCase)))
+                        if (ViewModel.InputListItems.Any(existingItem => existingItem.Path.Equals(item.Path, StringComparison.OrdinalIgnoreCase)))
                         {
                             continue;
                         }
@@ -61,7 +60,7 @@ namespace DeDupe.Views.Pages
                                 IReadOnlyList<StorageFolder>? subfolders = await folder.GetFoldersAsync();
                                 bool hasSubdirectories = subfolders.Count > 0;
 
-                                SourcePathItem? mediaPathItem = new()
+                                InputListItem? sourcePathItem = new()
                                 {
                                     Path = folder.Path,
                                     IsFolder = true,
@@ -69,7 +68,7 @@ namespace DeDupe.Views.Pages
                                     IncludeSubdirectories = hasSubdirectories
                                 };
 
-                                newItems.Add(mediaPathItem);
+                                newInputListItem.Add(sourcePathItem);
                             }
                             catch (Exception)
                             {
@@ -82,7 +81,7 @@ namespace DeDupe.Views.Pages
                             string extension = file.FileType.ToLowerInvariant();
                             if (IsImageFile(extension))
                             {
-                                SourcePathItem? mediaPathItem = new()
+                                InputListItem? sourcePathItem = new()
                                 {
                                     Path = file.Path,
                                     IsFolder = false,
@@ -90,15 +89,15 @@ namespace DeDupe.Views.Pages
                                     IncludeSubdirectories = false
                                 };
 
-                                newItems.Add(mediaPathItem);
+                                newInputListItem.Add(sourcePathItem);
                             }
                         }
                     }
 
                     // Add items to collection
-                    foreach (SourcePathItem newItem in newItems)
+                    foreach (InputListItem newItem in newInputListItem)
                     {
-                        ViewModel.SourcePathItems.Add(newItem);
+                        ViewModel.InputListItems.Add(newItem);
 
                         if (newItem.IsFolder)
                         {
@@ -106,7 +105,7 @@ namespace DeDupe.Views.Pages
                         }
                         else
                         {
-                            ViewModel.AddFilePath(newItem.Path, newItem.Path);
+                            await ViewModel.AddFileAsync(newItem.Path, newItem.Path);
                         }
                     }
                 }

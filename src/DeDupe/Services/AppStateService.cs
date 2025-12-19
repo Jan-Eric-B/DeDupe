@@ -1,9 +1,9 @@
 ﻿using DeDupe.Models;
-using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
 
@@ -12,15 +12,17 @@ namespace DeDupe.Services
     /// <summary>
     /// Centralized state management service for the application.
     /// </summary>
-    public partial class AppStateService : IAppStateService
+    public partial class AppStateService(IBundledModelService bundledModelService) : IAppStateService
     {
         #region Fields
 
-        private readonly IBundledModelService _bundledModelService;
+        private readonly IBundledModelService _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
 
-        private readonly List<string> _filePaths = [];
-        private readonly List<ProcessedMedia> _processedImages = [];
-        private readonly List<ExtractedFeatures> _extractedFeatures = [];
+        // Source media files (original images and videos)
+        private readonly List<SourceMedia> _sourceMedia = [];
+
+        // Analysis items
+        private readonly List<AnalysisItem> _analysisItems = [];
 
         private string _tempFolderPath = ApplicationData.Current.TemporaryFolder.Path + Path.DirectorySeparatorChar + "ProcessedImages";
 
@@ -40,20 +42,55 @@ namespace DeDupe.Services
 
         #endregion Fields
 
-        #region Constructor
+        #region Source Media Properties
 
-        public AppStateService(IBundledModelService bundledModelService)
-        {
-            _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
-        }
+        /// <summary>
+        /// All source media files.
+        /// </summary>
+        public IReadOnlyCollection<SourceMedia> SourceMedia => _sourceMedia.AsReadOnly();
 
-        #endregion Constructor
+        /// <summary>
+        /// Number of source media files.
+        /// </summary>
+        public int SourceCount => _sourceMedia.Count;
 
-        #region Properties
+        #endregion Source Media Properties
 
-        public IReadOnlyCollection<string> FilePaths => _filePaths.AsReadOnly();
+        #region Analysis Items Properties
 
-        public int FileCount => _filePaths.Count;
+        /// <summary>
+        /// All analysis items (images and video frames).
+        /// </summary>
+        public IReadOnlyCollection<AnalysisItem> AnalysisItems => _analysisItems.AsReadOnly();
+
+        /// <summary>
+        /// Number of analysis items.
+        /// </summary>
+        public int AnalysisItemCount => _analysisItems.Count;
+
+        /// <summary>
+        /// Analysis items that have been preprocessed.
+        /// </summary>
+        public IReadOnlyCollection<AnalysisItem> ProcessedItems => _analysisItems.Where(i => i.IsProcessed).ToList().AsReadOnly();
+
+        /// <summary>
+        /// Number of preprocessed items.
+        /// </summary>
+        public int ProcessedItemCount => _analysisItems.Count(i => i.IsProcessed);
+
+        /// <summary>
+        /// Analysis items that have features extracted.
+        /// </summary>
+        public IReadOnlyCollection<AnalysisItem> ItemsWithFeatures => _analysisItems.Where(i => i.HasFeatures).ToList().AsReadOnly();
+
+        /// <summary>
+        /// Number of items with features.
+        /// </summary>
+        public int ExtractedFeaturesCount => _analysisItems.Count(i => i.HasFeatures);
+
+        #endregion Analysis Items Properties
+
+        #region Temp Folder Properties
 
         public string TempFolderPath
         {
@@ -69,18 +106,12 @@ namespace DeDupe.Services
             }
         }
 
-        public IReadOnlyCollection<ProcessedMedia> ProcessedImages => _processedImages.AsReadOnly();
-
-        public int ProcessedImageCount => _processedImages.Count;
-
-        public IReadOnlyCollection<ExtractedFeatures> ExtractedFeatures => _extractedFeatures.AsReadOnly();
-
-        public int ExtractedFeaturesCount => _extractedFeatures.Count;
+        #endregion Temp Folder Properties
 
         #region Model Configuration Properties
 
         /// <summary>
-        /// Gets or sets whether to use bundled model.
+        /// Use bundled model.
         /// </summary>
         public bool UseBundledModel
         {
@@ -100,7 +131,7 @@ namespace DeDupe.Services
         }
 
         /// <summary>
-        /// Gets or sets custom model file path.
+        /// Custom model file path.
         /// </summary>
         public string CustomModelFilePath
         {
@@ -122,12 +153,12 @@ namespace DeDupe.Services
         }
 
         /// <summary>
-        /// Get model path based on current selection.
+        /// Current model path based on selection.
         /// </summary>
         public string ModelPath => UseBundledModel ? _bundledModelService.BundledModelPath : CustomModelFilePath;
 
         /// <summary>
-        /// Gets or sets custom model file path.
+        /// Model file path (ModelPath alias).
         /// </summary>
         public string ModelFilePath
         {
@@ -239,66 +270,149 @@ namespace DeDupe.Services
 
         #endregion Normalization Properties
 
-        #endregion Properties
+        #region Source Media Methods
 
-        #region Methods
-
-        public void SetFilePaths(IEnumerable<string> filePaths)
+        /// <summary>
+        /// Set source media from file paths.
+        /// </summary>
+        public void SetSourceMedia(IEnumerable<SourceMedia> sources)
         {
-            _filePaths.Clear();
-            _filePaths.AddRange(filePaths ?? []);
+            _sourceMedia.Clear();
+            _analysisItems.Clear();
 
-            OnPropertyChanged(nameof(FilePaths));
-            OnPropertyChanged(nameof(FileCount));
-            FilePathsChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void SetProcessedImages(IEnumerable<ProcessedMedia> processedImages)
-        {
-            _processedImages.Clear();
-            _processedImages.AddRange(processedImages ?? []);
-
-            OnPropertyChanged(nameof(ProcessedImages));
-            OnPropertyChanged(nameof(ProcessedImageCount));
-            ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void AddProcessedImage(ProcessedMedia processedImage)
-        {
-            if (processedImage != null)
+            if (sources != null)
             {
-                _processedImages.Add(processedImage);
-                OnPropertyChanged(nameof(ProcessedImages));
-                OnPropertyChanged(nameof(ProcessedImageCount));
-                ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
+                foreach (SourceMedia source in sources)
+                {
+                    _sourceMedia.Add(source);
+
+                    // For images create one AnalysisItem per source
+                    // For videos AnalysisItems will be created during frame extraction
+                    if (source.IsImage)
+                    {
+                        _analysisItems.Add(new AnalysisItem(source));
+                    }
+                }
             }
+
+            OnPropertyChanged(nameof(SourceMedia));
+            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(AnalysisItems));
+            OnPropertyChanged(nameof(AnalysisItemCount));
+            SourceMediaChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public void ClearProcessedImages()
+        /// <summary>
+        /// Add source media.
+        /// </summary>
+        public void AddSourceMedia(SourceMedia source)
         {
-            _processedImages.Clear();
-            OnPropertyChanged(nameof(ProcessedImages));
-            OnPropertyChanged(nameof(ProcessedImageCount));
-            ProcessedImagesChanged?.Invoke(this, EventArgs.Empty);
+            if (source == null) return;
+
+            _sourceMedia.Add(source);
+
+            if (source.IsImage)
+            {
+                _analysisItems.Add(new AnalysisItem(source));
+            }
+
+            OnPropertyChanged(nameof(SourceMedia));
+            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(AnalysisItems));
+            OnPropertyChanged(nameof(AnalysisItemCount));
+            SourceMediaChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public void SetExtractedFeatures(IEnumerable<ExtractedFeatures> features)
+        /// <summary>
+        /// Add video frames as analysis items.
+        /// </summary>
+        public void AddVideoFrames(SourceMedia videoSource, IEnumerable<(int frameIndex, TimeSpan timestamp)> frames)
         {
-            _extractedFeatures.Clear();
-            _extractedFeatures.AddRange(features ?? []);
+            if (videoSource == null || !videoSource.IsVideo) return;
 
-            OnPropertyChanged(nameof(ExtractedFeatures));
+            foreach ((int frameIndex, TimeSpan timestamp) in frames)
+            {
+                _analysisItems.Add(new AnalysisItem(videoSource, frameIndex, timestamp));
+            }
+
+            OnPropertyChanged(nameof(AnalysisItems));
+            OnPropertyChanged(nameof(AnalysisItemCount));
+            AnalysisItemsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Clear all source media and analysis items.
+        /// </summary>
+        public void ClearSourceMedia()
+        {
+            _sourceMedia.Clear();
+            _analysisItems.Clear();
+
+            OnPropertyChanged(nameof(SourceMedia));
+            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(AnalysisItems));
+            OnPropertyChanged(nameof(AnalysisItemCount));
+            SourceMediaChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        #endregion Source Media Methods
+
+        #region State Methods
+
+        /// <summary>
+        /// Reset preprocessing state for all items.
+        /// </summary>
+        public void ClearProcessedState()
+        {
+            foreach (AnalysisItem item in _analysisItems)
+            {
+                item.ProcessedFilePath = null;
+            }
+
+            OnPropertyChanged(nameof(ProcessedItems));
+            OnPropertyChanged(nameof(ProcessedItemCount));
+            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Reset feature extraction state for all items.
+        /// </summary>
+        public void ClearFeatureState()
+        {
+            foreach (AnalysisItem item in _analysisItems)
+            {
+                item.FeatureVector = null;
+                item.FeatureDimensions = null;
+            }
+
+            OnPropertyChanged(nameof(ItemsWithFeatures));
             OnPropertyChanged(nameof(ExtractedFeaturesCount));
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        public void ClearExtractedFeatures()
+        /// <summary>
+        /// Notify processing state has changed.
+        /// </summary>
+        public void NotifyProcessingComplete()
         {
-            _extractedFeatures.Clear();
-            OnPropertyChanged(nameof(ExtractedFeatures));
+            OnPropertyChanged(nameof(ProcessedItems));
+            OnPropertyChanged(nameof(ProcessedItemCount));
+            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Notify feature extraction has completed.
+        /// </summary>
+        public void NotifyFeaturesExtracted()
+        {
+            OnPropertyChanged(nameof(ItemsWithFeatures));
             OnPropertyChanged(nameof(ExtractedFeaturesCount));
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
         }
+
+        #endregion State Methods
+
+        #region Normalization Methods
 
         public (double, double, double, double, double, double) GetNormalization()
         {
@@ -315,13 +429,15 @@ namespace DeDupe.Services
             StdB = 0.225;
         }
 
-        #endregion Methods
+        #endregion Normalization Methods
 
         #region Events
 
-        public event EventHandler? FilePathsChanged;
+        public event EventHandler? SourceMediaChanged;
 
-        public event EventHandler? ProcessedImagesChanged;
+        public event EventHandler? AnalysisItemsChanged;
+
+        public event EventHandler? ProcessingStateChanged;
 
         public event EventHandler? TempFolderPathChanged;
 

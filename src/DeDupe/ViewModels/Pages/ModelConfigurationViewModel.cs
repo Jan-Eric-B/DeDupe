@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Models;
-using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -19,9 +19,8 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly IAppStateService _appStateService;
         private readonly IBundledModelService _bundledModelService;
-        private readonly FeatureExtractionService _featureExtractionService;
+        private readonly IFeatureExtractionService _featureExtractionService;
 
-        private List<ExtractedFeatures> _extractedFeatures = [];
         private bool _isExtracting;
         private bool _hasExtractedFeatures;
         private int _extractedFeaturesCount;
@@ -243,7 +242,7 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                if (IsExtracting || !HasProcessedImages())
+                if (IsExtracting || !HasProcessedItems())
                     return false;
 
                 if (UseBundledModel)
@@ -254,8 +253,6 @@ namespace DeDupe.ViewModels.Pages
         }
 
         public bool CanCloseConfiguration => HasExtractedFeatures;
-
-        public List<ExtractedFeatures> ExtractedFeatures => _extractedFeatures;
 
         #endregion Extraction State Properties
 
@@ -361,7 +358,7 @@ namespace DeDupe.ViewModels.Pages
                 Status = "Starting feature extraction...";
                 ExtractedFeaturesCount = 0;
 
-                // Check if the service is initialized
+                // Initialize service if needed
                 if (!_featureExtractionService.IsInitialized)
                 {
                     await InitializeFeatureExtractionAsync();
@@ -372,37 +369,46 @@ namespace DeDupe.ViewModels.Pages
                     }
                 }
 
-                // Get processed images
-                IReadOnlyCollection<ProcessedMedia>? processedImages = _appStateService.ProcessedImages;
+                // Get processed items
+                IReadOnlyCollection<AnalysisItem> processedItems = _appStateService.ProcessedItems;
 
-                if (processedImages.Count == 0)
+                if (processedItems.Count == 0)
                 {
-                    Status = "No processed images available for feature extraction";
+                    Status = "No processed items available for feature extraction";
                     return;
                 }
 
-                Status = $"Extracting features from {processedImages.Count} images...";
+                Status = $"Extracting features from {processedItems.Count} items...";
+
+                (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization = (
+                    MeanR: (float)_appStateService.MeanR,
+                    MeanG: (float)_appStateService.MeanG,
+                    MeanB: (float)_appStateService.MeanB,
+                    StdR: (float)_appStateService.StdR,
+                    StdG: (float)_appStateService.StdG,
+                    StdB: (float)_appStateService.StdB
+                );
 
                 // Extract features
-                _extractedFeatures = await _featureExtractionService.ExtractFeaturesAsync(processedImages);
+                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization);
+
+                // Notify state service
+                _appStateService.NotifyFeaturesExtracted();
 
                 // Update results
-                ExtractedFeaturesCount = _extractedFeatures.Count;
+                ExtractedFeaturesCount = _appStateService.ExtractedFeaturesCount;
 
-                if (_extractedFeatures.Count > 0)
+                if (ExtractedFeaturesCount > 0)
                 {
                     HasExtractedFeatures = true;
-
-                    // Store in AppStateService
-                    _appStateService.SetExtractedFeatures(_extractedFeatures);
                     Status = $"Successfully extracted {ExtractedFeaturesCount} feature vectors.";
 
                     // Log feature info
-                    if (_extractedFeatures.Count > 0)
+                    AnalysisItem? firstItem = _appStateService.ItemsWithFeatures.FirstOrDefault();
+                    if (firstItem != null)
                     {
-                        ExtractedFeatures firstFeature = _extractedFeatures[0];
-                        System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstFeature.FeatureCount}");
-                        System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstFeature.FeatureDimensions)}]");
+                        System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstItem.FeatureCount}");
+                        System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstItem.FeatureDimensions ?? [])}]");
                     }
                 }
                 else
@@ -470,10 +476,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ModelConfigurationViewModel(
-            IAppStateService appStateService,
-            IBundledModelService bundledModelService,
-            FeatureExtractionService featureExtractionService) : base(2)
+        public ModelConfigurationViewModel(IAppStateService appStateService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService) : base(2)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
@@ -494,16 +497,18 @@ namespace DeDupe.ViewModels.Pages
 
         public override bool CanNavigateToNext => false;
 
-        private bool HasProcessedImages()
+        private bool HasProcessedItems()
         {
-            return _appStateService?.ProcessedImageCount > 0;
+            return _appStateService?.ProcessedItemCount > 0;
         }
 
         private void ResetExtractionState()
         {
             if (HasExtractedFeatures)
             {
-                _extractedFeatures.Clear();
+                // Clear feature state in all items
+                _appStateService.ClearFeatureState();
+
                 HasExtractedFeatures = false;
                 ExtractedFeaturesCount = 0;
                 Status = "Configuration changed. Please extract features again.";
@@ -526,16 +531,7 @@ namespace DeDupe.ViewModels.Pages
                 if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
                 {
                     Status = "Initializing Model...";
-
-                    // Get normalization values
-                    (double meanR, double meanG, double meanB, double stdR, double stdG, double stdB) = _appStateService.GetNormalization();
-
-                    // Initialize feature extraction service
-                    await _featureExtractionService.InitializeAsync(
-                        modelPath,
-                        (float)meanR, (float)meanG, (float)meanB,
-                        (float)stdR, (float)stdG, (float)stdB);
-
+                    await _featureExtractionService.InitializeAsync(modelPath);
                     Status = "Model loaded successfully. Ready to extract features.";
                 }
                 else

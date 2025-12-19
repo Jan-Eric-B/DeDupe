@@ -2,12 +2,11 @@
 <Page
     x:Class="DeDupe.Views.Pages.FileInputPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:input="using:DeDupe.Models.Input"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:models="using:DeDupe.Models"
+    xmlns:converters="using:DeDupe.Converters"
+    xmlns:input="using:DeDupe.Models.Input"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
     d:DataContext="{d:DesignInstance Type=pages:FileInputViewModel}"
     mc:Ignorable="d">
@@ -19,7 +18,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -37,7 +35,7 @@
 
         <!--  Item List  -->
         <ListView
-            x:Name="lvMediaSelectionList"
+            x:Name="LvInputList"
             Grid.Row="1"
             Padding="0,5"
             AllowDrop="True"
@@ -45,12 +43,12 @@
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
             CornerRadius="8"
-            DragOver="LvMediaSelectionList_DragOver"
-            Drop="LvMediaSelectionList_Drop"
-            ItemsSource="{x:Bind ViewModel.SourcePathItems, Mode=OneWay}"
+            DragOver="LvInputList_DragOver"
+            Drop="LvInputList_Drop"
+            ItemsSource="{x:Bind ViewModel.InputListItems, Mode=OneWay}"
             SelectionMode="None">
             <ListView.ItemTemplate>
-                <DataTemplate x:DataType="input:SourcePathItem">
+                <DataTemplate x:DataType="input:InputListItem">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -91,9 +89,9 @@
                             VerticalAlignment="Center"
                             Background="Transparent"
                             BorderThickness="0"
-                            Command="{Binding ElementName=lvMediaSelectionList, Path=DataContext.RemoveItemCommand}"
+                            Command="{Binding ElementName=LvInputList, Path=DataContext.RemoveItemCommand}"
                             CommandParameter="{Binding}"
-                            IsEnabled="{Binding ElementName=lvMediaSelectionList, Path=DataContext.IsBusy, Converter={StaticResource InverseBoolConverter}}"
+                            IsEnabled="{Binding ElementName=LvInputList, Path=DataContext.IsBusy, Converter={StaticResource InverseBoolConverter}}"
                             ToolTipService.ToolTip="Remove item">
                             <FontIcon Glyph="&#xE74D;" />
                         </Button>

@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DeDupe.Models;
 using DeDupe.Models.Ui;
 using DeDupe.ViewModels.Pages;
 using Microsoft.Extensions.DependencyInjection;

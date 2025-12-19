@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
@@ -15,13 +16,14 @@ namespace DeDupe.ViewModels.Pages
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly ISimilarityAnalysisService _similarityAnalysisService;
         private readonly ILogger<ManagementViewModel> _logger;
 
         private bool _isAnalyzingSimilarity;
         private bool _hasSimilarityResults;
         private double _similarityThreshold = 0.85;
         private SimilarityResult? _similarityResult;
-        private ImageCluster? _selectedCluster;
+        private SimilarityGroup? _selectedCluster;
 
         #endregion Fields
 
@@ -76,20 +78,19 @@ namespace DeDupe.ViewModels.Pages
                     UpdateClusterGroups();
                     OnPropertyChanged(nameof(TotalClusters));
                     OnPropertyChanged(nameof(DuplicateGroupsCount));
-                    OnPropertyChanged(nameof(TotalImages));
+                    OnPropertyChanged(nameof(TotalItems));
                     OnPropertyChanged(nameof(ResultSummary));
                 }
             }
         }
 
-        public ObservableCollection<ImageCluster> ClusterGroups { get; } = [];
+        public ObservableCollection<SimilarityGroup> ClusterGroups { get; } = [];
 
-        public ImageCluster? SelectedCluster
+        public SimilarityGroup? SelectedCluster
         {
             get => _selectedCluster;
             set
             {
-                // Unsubscribe from old cluster
                 if (_selectedCluster != null)
                 {
                     _selectedCluster.GroupSelectionChanged -= OnGroupSelectionChanged;
@@ -97,7 +98,6 @@ namespace DeDupe.ViewModels.Pages
 
                 if (SetProperty(ref _selectedCluster, value))
                 {
-                    // Subscribe to new cluster
                     if (_selectedCluster != null)
                     {
                         _selectedCluster.GroupSelectionChanged += OnGroupSelectionChanged;
@@ -110,17 +110,17 @@ namespace DeDupe.ViewModels.Pages
 
         public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && _appStateService.ExtractedFeaturesCount > 0;
 
-        public bool HasSelectedImages => SelectedCluster?.SelectedCount > 0;
+        public bool HasSelectedItems => SelectedCluster?.SelectedCount > 0;
 
-        // Statistics Properties
+        // Statistics
         public int TotalClusters => SimilarityResult?.TotalClusters ?? 0;
 
         public int DuplicateGroupsCount => SimilarityResult?.DuplicateGroupsCount ?? 0;
-        public int TotalImages => SimilarityResult?.TotalImagesAnalyzed ?? 0;
+        public int TotalItems => SimilarityResult?.TotalItemsAnalyzed ?? 0;
         public string ResultSummary => SimilarityResult?.GetSummary() ?? string.Empty;
 
-        // Configuration Info Properties
-        public int TotalFileCount => _appStateService.FileCount;
+        // Configuration Info
+        public int TotalFileCount => _appStateService.SourceCount;
 
         public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
 
@@ -146,19 +146,19 @@ namespace DeDupe.ViewModels.Pages
             {
                 IsAnalyzingSimilarity = true;
                 IsBusy = true;
-                Status = "Analyzing image similarities...";
+                Status = "Analyzing similarities...";
 
-                // Get extracted features
-                List<ExtractedFeatures> features = [.. _appStateService.ExtractedFeatures];
+                // Get items with features
+                IReadOnlyCollection<AnalysisItem> itemsWithFeatures = _appStateService.ItemsWithFeatures;
 
-                if (features.Count == 0)
+                if (itemsWithFeatures.Count == 0)
                 {
                     Status = "No features available. Please extract features first.";
                     return;
                 }
 
                 // Perform clustering
-                SimilarityResult = await SimilarityAnalysisService.PerformClusteringAsync(features, SimilarityThreshold);
+                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold);
 
                 HasSimilarityResults = true;
                 Status = $"Analysis complete: {ResultSummary}";
@@ -182,17 +182,15 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ManagementViewModel(
-            IAppStateService appStateService,
-            ILogger<ManagementViewModel> logger) : base(3)
+        public ManagementViewModel(IAppStateService appStateService, ISimilarityAnalysisService similarityAnalysisService, ILogger<ManagementViewModel> logger) : base(3)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _similarityAnalysisService = similarityAnalysisService ?? throw new ArgumentNullException(nameof(similarityAnalysisService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Duplicate Management";
             Status = "Ready to analyze similarities";
 
-            // Subscribe to feature changes
             _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
 
             UpdateCanAnalyze();
@@ -207,10 +205,12 @@ namespace DeDupe.ViewModels.Pages
             ClusterGroups.Clear();
 
             if (SimilarityResult == null)
+            {
                 return;
+            }
 
             // Show duplicate groups
-            foreach (ImageCluster cluster in SimilarityResult.DuplicateGroups)
+            foreach (SimilarityGroup cluster in SimilarityResult.DuplicateGroups)
             {
                 ClusterGroups.Add(cluster);
             }
@@ -234,7 +234,7 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateSelectionCommands()
         {
-            OnPropertyChanged(nameof(HasSelectedImages));
+            OnPropertyChanged(nameof(HasSelectedItems));
         }
 
         protected override void Dispose(bool disposing)

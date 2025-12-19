@@ -1,3 +1,4 @@
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,16 +18,16 @@ namespace DeDupe.Controls
     {
         #region Dependency Properties
 
-        public static readonly DependencyProperty SelectableImageProperty = DependencyProperty.Register(nameof(SelectableImage), typeof(SelectableImage), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableImageChanged));
+        public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register(nameof(Models.Analysis.SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
 
         #endregion Dependency Properties
 
         #region Properties
 
-        public SelectableImage? SelectableImage
+        public SelectableItem? SelectableItem
         {
-            get => (SelectableImage?)GetValue(SelectableImageProperty);
-            set => SetValue(SelectableImageProperty, value);
+            get => (SelectableItem?)GetValue(SelectableItemProperty);
+            set => SetValue(SelectableItemProperty, value);
         }
 
         #endregion Properties
@@ -42,23 +43,23 @@ namespace DeDupe.Controls
 
         #region Property Changed Handlers
 
-        private static void OnSelectableImageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnSelectableItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not ImageDetailCard control)
             {
                 return;
             }
 
-            // Unsubscribe from old SelectableImage
-            if (e.OldValue is SelectableImage oldImage)
+            // Unsubscribe from old SelectableItem
+            if (e.OldValue is SelectableItem oldImage)
             {
-                oldImage.PropertyChanged -= control.OnSelectableImagePropertyChanged;
+                oldImage.PropertyChanged -= control.OnSelectableItemPropertyChanged;
             }
 
-            // Subscribe to new SelectableImage
-            if (e.NewValue is SelectableImage newImage)
+            // Subscribe to new SelectableItem
+            if (e.NewValue is SelectableItem newImage)
             {
-                newImage.PropertyChanged += control.OnSelectableImagePropertyChanged;
+                newImage.PropertyChanged += control.OnSelectableItemPropertyChanged;
                 control.UpdateDisplay(newImage);
                 control.UpdateCheckboxToModel(newImage.IsSelected);
                 control.UpdateSelectionVisualState(newImage.IsSelected);
@@ -69,15 +70,15 @@ namespace DeDupe.Controls
             }
         }
 
-        private void OnSelectableImagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void OnSelectableItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (sender is not SelectableImage image)
+            if (sender is not SelectableItem image)
             {
                 return;
             }
 
             // Update UI
-            if (e.PropertyName == nameof(SelectableImage.IsSelected))
+            if (e.PropertyName == nameof(SelectableItem.IsSelected))
             {
                 UpdateCheckboxToModel(image.IsSelected);
                 UpdateSelectionVisualState(image.IsSelected);
@@ -88,19 +89,22 @@ namespace DeDupe.Controls
 
         #region Display Updates
 
-        private void UpdateDisplay(SelectableImage image)
+        private void UpdateDisplay(SelectableItem image)
         {
+            // Get metadata
+            MediaMetadata metadata = image.Metadata;
+
             // Update text fields
-            FileNameTextBlock.Text = image.FileName;
-            ResolutionTextBlock.Text = image.Resolution;
-            FileSizeTextBlock.Text = image.FormattedFileSize;
-            FormatTextBlock.Text = image.Extension;
+            FileNameTextBlock.Text = metadata.FileName;
+            ResolutionTextBlock.Text = metadata.Resolution;
+            FileSizeTextBlock.Text = metadata.FormattedFileSize;
+            FormatTextBlock.Text = metadata.ExtensionDisplay;
 
             // Set tooltip to show full path
-            ToolTipService.SetToolTip(FileNameTextBlock, image.FilePath);
+            ToolTipService.SetToolTip(FileNameTextBlock, metadata.FilePath);
 
             // Load image preview
-            _ = LoadImagePreviewAsync(image.FilePath);
+            _ = LoadImagePreviewAsync(metadata.FilePath);
         }
 
         private void ClearDisplay()
@@ -170,22 +174,22 @@ namespace DeDupe.Controls
 
         private void SelectionCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
         {
-            if (SelectableImage != null && SelectionCheckBox.IsChecked.HasValue)
+            if (SelectableItem != null && SelectionCheckBox.IsChecked.HasValue)
             {
-                SelectableImage.IsSelected = SelectionCheckBox.IsChecked.Value;
+                SelectableItem.IsSelected = SelectionCheckBox.IsChecked.Value;
             }
         }
 
         private async void ImagePreview_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
-            if (SelectableImage == null)
+            if (SelectableItem == null)
             {
                 return;
             }
 
             try
             {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(SelectableImage.FilePath);
+                StorageFile file = await StorageFile.GetFileFromPathAsync(SelectableItem.FilePath);
                 await Launcher.LaunchFileAsync(file);
             }
             catch (Exception ex)
@@ -196,14 +200,14 @@ namespace DeDupe.Controls
 
         private async void FileName_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
-            if (SelectableImage == null)
+            if (SelectableItem == null)
             {
                 return;
             }
 
             try
             {
-                string? folderPath = SelectableImage.DirectoryPath;
+                string? folderPath = SelectableItem.Metadata.DirectoryPath;
                 if (!string.IsNullOrEmpty(folderPath))
                 {
                     StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
@@ -232,9 +236,9 @@ namespace DeDupe.Controls
             SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
 
             // Unsubscribe from events
-            if (SelectableImage != null)
+            if (SelectableItem != null)
             {
-                SelectableImage.PropertyChanged -= OnSelectableImagePropertyChanged;
+                SelectableItem.PropertyChanged -= OnSelectableItemPropertyChanged;
             }
         }
 

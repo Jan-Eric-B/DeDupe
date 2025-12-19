@@ -1,5 +1,5 @@
 ﻿using DeDupe.Constants;
-using DeDupe.Enums.PreProcessing;
+using DeDupe.Enums;
 using DeDupe.Models;
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,9 @@ using Windows.Storage.Streams;
 
 namespace DeDupe.Services.PreProcessing
 {
+    /// <summary>
+    /// Service for preprocessing images before feature extraction.
+    /// </summary>
     public class ImageProcessingService
     {
         #region Fields
@@ -24,39 +27,33 @@ namespace DeDupe.Services.PreProcessing
 
         #region Properties
 
-        // Resize
+        // Resize settings
         public bool EnableResizing { get; set; } = ProcessingDefaults.EnableResizing;
 
-        // Target size for resizing
         public uint TargetSize { get; set; } = ProcessingDefaults.TargetSize;
-
-        // Resize method
-        public ResizeMethod ResizeMethod { get; set; } = ProcessingDefaults.ResizeMethod;
-
-        // Padding color (RGBA)
-        public byte[] PaddingColor { get; set; } = ProcessingDefaults.PaddingColor;
+        public ResizeMethod ResizeMethod { get; set; } = ProcessingDefaults.DefaultResizeMethod;
+        public byte[] PaddingColor { get; set; } = ProcessingDefaults.PaddingColorRgba;
 
         // Border Detection
         public bool EnableBorderDetection { get; set; } = ProcessingDefaults.EnableBorderDetection;
 
-        // Tolerance for border detection (0-255)
         public int BorderDetectionTolerance { get; set; } = ProcessingDefaults.BorderDetectionTolerance;
 
-        // Interpolation Methods
-        public InterpolationMethod UpsamplingMethod { get; set; } = ProcessingDefaults.UpsamplingMethod;
+        // Interpolation
+        public InterpolationMethod UpsamplingMethod { get; set; } = ProcessingDefaults.DefaultUpsamplingMethod;
 
-        public InterpolationMethod DownsamplingMethod { get; set; } = ProcessingDefaults.DownsamplingMethod;
+        public InterpolationMethod DownsamplingMethod { get; set; } = ProcessingDefaults.DefaultDownsamplingMethod;
 
         // Output
-        public OutputFormat OutputFormat { get; set; } = ProcessingDefaults.OutputFormat;
+        public OutputFormat OutputFormat { get; set; } = ProcessingDefaults.DefaultOutputFormat;
 
-        public BitDepth BitDepth { get; set; } = ProcessingDefaults.BitDepth;
+        public ColorFormat BitDepth { get; set; } = ProcessingDefaults.DefaultColorFormat;
         public double DpiX { get; set; } = ProcessingDefaults.DpiX;
         public double DpiY { get; set; } = ProcessingDefaults.DpiY;
 
         #endregion Properties
 
-        #region Initialization
+        #region Constructor
 
         public ImageProcessingService(
             IAppStateService appStateService,
@@ -72,11 +69,15 @@ namespace DeDupe.Services.PreProcessing
             InitializeTempFolder();
         }
 
+        #endregion Constructor
+
+        #region Initialization
+
         public bool InitializeTempFolder()
         {
             try
             {
-                string? tempPath = _appStateService.TempFolderPath;
+                string tempPath = _appStateService.TempFolderPath;
 
                 if (Directory.Exists(tempPath))
                 {
@@ -88,6 +89,7 @@ namespace DeDupe.Services.PreProcessing
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to initialize temp folder: {ex.Message}");
                 return false;
             }
         }
@@ -96,7 +98,7 @@ namespace DeDupe.Services.PreProcessing
         {
             try
             {
-                string? tempPath = _appStateService.TempFolderPath;
+                string tempPath = _appStateService.TempFolderPath;
 
                 if (Directory.Exists(tempPath))
                 {
@@ -106,6 +108,7 @@ namespace DeDupe.Services.PreProcessing
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to clear temp folder: {ex.Message}");
                 return false;
             }
         }
@@ -114,80 +117,74 @@ namespace DeDupe.Services.PreProcessing
 
         #region Methods
 
-        public async Task ProcessImagesAsync(IEnumerable<string> imagePaths)
+        /// <summary>
+        /// Process all analysis items.
+        /// </summary>
+        public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items)
         {
-            // Clear processed images
-            _appStateService.ClearProcessedImages();
-
+            // Clear previous processing state
+            _appStateService.ClearProcessedState();
             InitializeTempFolder();
 
-            foreach (string imagePath in imagePaths)
+            foreach (AnalysisItem item in items)
             {
                 try
                 {
-                    // Create ImageSource
-                    StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
-                    using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
-                    BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                    string? processedPath = await ProcessSingleItemAsync(item);
 
-                    ImageSource imageSource = new(imagePath, (int)decoder.PixelWidth, (int)decoder.PixelHeight);
-
-                    // Process image
-                    ProcessedMedia? processedImage = await ProcessSingleImageAsync(imageSource);
-                    if (processedImage != null)
+                    if (!string.IsNullOrEmpty(processedPath))
                     {
-                        _appStateService.AddProcessedImage(processedImage);
+                        item.SetProcessed(processedPath);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error processing {imagePath}: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Error processing {item.Source.FilePath}: {ex.Message}");
                 }
             }
+
+            _appStateService.NotifyProcessingComplete();
         }
 
-        private async Task<ProcessedMedia?> ProcessSingleImageAsync(ImageSource imageSource)
+        /// <summary>
+        /// Process single analysis item.
+        /// For images: processes original file.
+        /// For video frames: processes extracted frame image.
+        /// </summary>
+        private async Task<string?> ProcessSingleItemAsync(AnalysisItem item)
         {
-            if (!imageSource.Exists() || _appStateService.TempFolderPath == null)
+            if (item == null || string.IsNullOrEmpty(_appStateService.TempFolderPath))
             {
                 return null;
             }
 
-            // Create unique filename
+            // Determine source path
+            // TODO handle video file
+            string sourcePath = item.IsVideoFrame ? throw new NotImplementedException("Video frame processing not yet implemented") : item.Source.FilePath;
+
+            // Create output file
             string extension = _imageFormatService.GetFileExtension(OutputFormat);
             string processedFileName = $"{Guid.NewGuid()}{extension}";
-            StorageFolder _tempFolder = await StorageFolder.GetFolderFromPathAsync(_appStateService.TempFolderPath);
-            StorageFile outputFile = await _tempFolder.CreateFileAsync(processedFileName);
+            StorageFolder tempFolder = await StorageFolder.GetFolderFromPathAsync(_appStateService.TempFolderPath);
+            StorageFile outputFile = await tempFolder.CreateFileAsync(processedFileName);
 
             try
             {
-                // Load source file
-                StorageFile sourceFile = await StorageFile.GetFileFromPathAsync(imageSource.FilePath);
+                StorageFile sourceFile = await StorageFile.GetFileFromPathAsync(sourcePath);
 
                 using IRandomAccessStream sourceStream = await sourceFile.OpenAsync(FileAccessMode.Read);
-
-                // Read image
                 BitmapDecoder decoder = await BitmapDecoder.CreateAsync(sourceStream);
 
-                // Is image grayscale
                 bool isGrayscale = decoder.BitmapPixelFormat == BitmapPixelFormat.Gray8 || decoder.BitmapPixelFormat == BitmapPixelFormat.Gray16;
 
-                // Create resized image
                 using (IRandomAccessStream outputStream = await outputFile.OpenAsync(FileAccessMode.ReadWrite))
                 {
-                    // Create encoder
                     BitmapEncoder encoder = await _imageFormatService.CreateEncoderAsync(outputStream, OutputFormat);
 
-                    // Get pixel data from decoder (original size)
                     BitmapPixelFormat pixelFormat = _imageFormatService.GetPixelFormat(BitDepth);
                     BitmapAlphaMode alphaMode = BitmapAlphaMode.Premultiplied;
 
-                    PixelDataProvider? pixelData = await decoder.GetPixelDataAsync(
-                        pixelFormat,
-                        alphaMode,
-                        new BitmapTransform(),
-                        ExifOrientationMode.RespectExifOrientation,
-                        ColorManagementMode.ColorManageToSRgb);
+                    PixelDataProvider pixelData = await decoder.GetPixelDataAsync(pixelFormat, alphaMode, new BitmapTransform(), ExifOrientationMode.RespectExifOrientation, ColorManagementMode.ColorManageToSRgb);
 
                     byte[] pixels = pixelData.DetachPixelData();
                     uint width = decoder.PixelWidth;
@@ -204,7 +201,6 @@ namespace DeDupe.Services.PreProcessing
                     {
                         (byte[] borderRemovedPixels, uint newWidth, uint newHeight) = _borderDetectionService.RemoveBorders(pixels, width, height, BorderDetectionTolerance);
 
-                        // If borders removed
                         if (newWidth != width || newHeight != height)
                         {
                             pixels = borderRemovedPixels;
@@ -218,9 +214,8 @@ namespace DeDupe.Services.PreProcessing
                     {
                         uint outputWidth = TargetSize;
                         uint outputHeight = TargetSize;
-                        byte[] resizedPixels;
 
-                        resizedPixels = await _imageResizeService.ResizeImageAsync(pixels, width, height, TargetSize, TargetSize, ResizeMethod, UpsamplingMethod, DownsamplingMethod, PaddingColor, BitDepth, DpiX, DpiY);
+                        byte[] resizedPixels = await _imageResizeService.ResizeImageAsync(pixels, width, height, TargetSize, TargetSize, ResizeMethod, UpsamplingMethod, DownsamplingMethod, PaddingColor, BitDepth, DpiX, DpiY);
 
                         encoder.SetPixelData(
                             pixelFormat,
@@ -244,9 +239,7 @@ namespace DeDupe.Services.PreProcessing
                     await encoder.FlushAsync();
                 }
 
-                return new ProcessedMedia(
-                    imageSource,
-                    outputFile.Path);
+                return outputFile.Path;
             }
             catch (Exception ex)
             {
@@ -263,7 +256,6 @@ namespace DeDupe.Services.PreProcessing
             for (int i = 0; i < grayscaleData.Length; i++)
             {
                 byte grayValue = grayscaleData[i];
-
                 rgbData[rgbIndex++] = grayValue;  // R
                 rgbData[rgbIndex++] = grayValue;  // G
                 rgbData[rgbIndex++] = grayValue;  // B

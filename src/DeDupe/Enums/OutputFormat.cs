@@ -1,4 +1,4 @@
-﻿namespace DeDupe.Enums.PreProcessing
+﻿namespace DeDupe.Enums
 {
     public enum OutputFormat
     {

@@ -1,24 +1,25 @@
-﻿using DeDupe.Enums.PreProcessing;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
-using Windows.UI;
+﻿using DeDupe.Enums;
 
+// Constants/ProcessingDefaults.cs - Service layer only
 namespace DeDupe.Constants
 {
+    /// <summary>
+    /// Default values for image processing operations.
+    /// </summary>
     public static class ProcessingDefaults
     {
         #region Resize Settings
 
         public const bool EnableResizing = true;
         public const uint TargetSize = 224;
-        public const ResizeMethod ResizeMethod = Enums.PreProcessing.ResizeMethod.Padding;
+        public const ResizeMethod DefaultResizeMethod = ResizeMethod.Padding;
 
         #endregion Resize Settings
 
         #region Interpolation Methods
 
-        public const InterpolationMethod UpsamplingMethod = InterpolationMethod.Lanczos;
-        public const InterpolationMethod DownsamplingMethod = InterpolationMethod.Lanczos;
+        public const InterpolationMethod DefaultUpsamplingMethod = InterpolationMethod.Lanczos;
+        public const InterpolationMethod DefaultDownsamplingMethod = InterpolationMethod.Lanczos;
 
         #endregion Interpolation Methods
 
@@ -31,8 +32,8 @@ namespace DeDupe.Constants
 
         #region Output Settings
 
-        public const OutputFormat OutputFormat = Enums.PreProcessing.OutputFormat.PNG;
-        public const BitDepth BitDepth = Enums.PreProcessing.BitDepth.RGB8;
+        public const OutputFormat DefaultOutputFormat = OutputFormat.PNG;
+        public const ColorFormat DefaultColorFormat = ColorFormat.RGB8;
         public const double DpiX = 96.0;
         public const double DpiY = 96.0;
 
@@ -40,9 +41,19 @@ namespace DeDupe.Constants
 
         #region Padding Color
 
-        public static readonly byte[] PaddingColor = [255, 255, 255, 255];
-        public static readonly Color PaddingColorUI = Colors.White;
-        public static SolidColorBrush PaddingColorBrush => new(PaddingColorUI);
+        /// <summary>
+        /// Default padding color as RGBA byte array.
+        /// </summary>
+        public static readonly byte[] PaddingColorRgba = [255, 255, 255, 255];
+
+        /// <summary>
+        /// Default padding color components.
+        /// </summary>
+        public const byte PaddingColorR = 255;
+
+        public const byte PaddingColorG = 255;
+        public const byte PaddingColorB = 255;
+        public const byte PaddingColorA = 255;
 
         #endregion Padding Color
     }

@@ -3,69 +3,44 @@
 namespace DeDupe.Models.Ui
 {
     /// <summary>
-    /// Step in the wizard stepper
+    /// Represents a step in the wizard stepper control.
     /// </summary>
     public partial class StepItem : ObservableObject
     {
-        private int _stepNumber;
-        private string _title = string.Empty;
-        private string _description = string.Empty;
-        private bool _isCompleted;
-        private bool _isCurrent;
-        private bool _isEnabled = true;
+        /// <summary>
+        /// The step number (1-based).
+        /// </summary>
+        [ObservableProperty]
+        public partial int StepNumber { get; set; }
 
         /// <summary>
-        /// Number
+        /// Display title for the step.
         /// </summary>
-        public int StepNumber
-        {
-            get => _stepNumber;
-            set => SetProperty(ref _stepNumber, value);
-        }
+        [ObservableProperty]
+        public partial string Title { get; set; } = string.Empty;
 
         /// <summary>
-        /// Title
+        /// Description or subtitle for the step.
         /// </summary>
-        public string Title
-        {
-            get => _title;
-            set => SetProperty(ref _title, value);
-        }
+        [ObservableProperty]
+        public partial string Description { get; set; } = string.Empty;
 
         /// <summary>
-        /// Description
+        /// Whether this step has been completed.
         /// </summary>
-        public string Description
-        {
-            get => _description;
-            set => SetProperty(ref _description, value);
-        }
+        [ObservableProperty]
+        public partial bool IsCompleted { get; set; }
 
         /// <summary>
-        /// Has been completed
+        /// Whether this is the currently active step.
         /// </summary>
-        public bool IsCompleted
-        {
-            get => _isCompleted;
-            set => SetProperty(ref _isCompleted, value);
-        }
+        [ObservableProperty]
+        public partial bool IsCurrent { get; set; }
 
         /// <summary>
-        /// Is current step
+        /// Whether this step can be navigated to.
         /// </summary>
-        public bool IsCurrent
-        {
-            get => _isCurrent;
-            set => SetProperty(ref _isCurrent, value);
-        }
-
-        /// <summary>
-        /// Can be clicked / navigated to
-        /// </summary>
-        public bool IsEnabled
-        {
-            get => _isEnabled;
-            set => SetProperty(ref _isEnabled, value);
-        }
+        [ObservableProperty]
+        public partial bool IsEnabled { get; set; } = true;
     }
 }

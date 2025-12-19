@@ -1,35 +1,45 @@
-﻿using DeDupe.Models.Analysis;
+﻿using DeDupe.Models;
+using DeDupe.Models.Analysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DeDupe.Services.Analysis
 {
-    public class SimilarityAnalysisService
+    /// <summary>
+    /// Service for analyzing similarity between items and clustering them.
+    /// </summary>
+    public class SimilarityAnalysisService : ISimilarityAnalysisService
     {
-        /// <summary>
-        /// Hierarchical clustering on extracted features using cosine similarity
-        /// </summary>
-        public static async Task<SimilarityResult> PerformClusteringAsync(List<ExtractedFeatures> extractedFeatures, double similarityThreshold)
+        public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default)
         {
-            if (extractedFeatures == null || extractedFeatures.Count == 0)
+            ArgumentNullException.ThrowIfNull(items);
+
+            List<AnalysisItem> itemList = [.. items.Where(i => i.HasFeatures)];
+
+            if (itemList.Count == 0)
             {
-                return new SimilarityResult([], similarityThreshold, 0);
+                return SimilarityResult.Empty(similarityThreshold);
             }
 
             try
             {
-                // Step 1 - Similarity matrix
-                double[,] similarityMatrix = await CalculateSimilarityMatrixAsync(extractedFeatures);
+                // Step 1 - Build similarity matrix
+                double[,] similarityMatrix = await CalculateSimilarityMatrixAsync(itemList, cancellationToken);
 
                 // Step 2 - Hierarchical clustering
-                List<ImageCluster> clusters = await PerformHierarchicalClusteringAsync(extractedFeatures, similarityMatrix, similarityThreshold);
+                List<SimilarityGroup> clusters = await PerformHierarchicalClusteringAsync(itemList, similarityMatrix, similarityThreshold, cancellationToken);
 
-                // Step 3 - Cluster statistics
+                // Step 3 - Calculate cluster statistics
                 CalculateClusterStatistics(clusters);
 
-                return new SimilarityResult(clusters, similarityThreshold, extractedFeatures.Count);
+                return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -38,45 +48,12 @@ namespace DeDupe.Services.Analysis
             }
         }
 
-        /// <summary>
-        /// Calculate cosine similarity matrix for all feature vectors
-        /// </summary>
-        private static async Task<double[,]> CalculateSimilarityMatrixAsync(List<ExtractedFeatures> features)
+        public double CalculateCosineSimilarity(float[] vectorA, float[] vectorB)
         {
-            int count = features.Count;
-            double[,] matrix = new double[count, count];
+            ArgumentNullException.ThrowIfNull(vectorA);
 
-            int completedComparisons = 0;
+            ArgumentNullException.ThrowIfNull(vectorB);
 
-            // Calculate similarities (symmetric matrix - only upper triangle)
-            for (int i = 0; i < count; i++)
-            {
-                matrix[i, i] = 1.0; // Similarity with self is always 1.0
-
-                for (int j = i + 1; j < count; j++)
-                {
-                    double similarity = CalculateCosineSimilarity(features[i].FeatureVector, features[j].FeatureVector);
-                    matrix[i, j] = similarity;
-                    matrix[j, i] = similarity; // Matrix is symmetric
-
-                    completedComparisons++;
-
-                    // Allow cancellation and UI updates
-                    if (completedComparisons % 1000 == 0)
-                    {
-                        await Task.Delay(1);
-                    }
-                }
-            }
-
-            return matrix;
-        }
-
-        /// <summary>
-        /// Calculate cosine similarity between two feature vectors
-        /// </summary>
-        private static double CalculateCosineSimilarity(float[] vectorA, float[] vectorB)
-        {
             if (vectorA.Length != vectorB.Length)
             {
                 throw new ArgumentException("Feature vectors must have the same length");
@@ -98,38 +75,82 @@ namespace DeDupe.Services.Analysis
 
             if (magnitudeA == 0.0 || magnitudeB == 0.0)
             {
-                return 0.0; // Cannot calculate similarity for zero vectors
+                return 0.0;
             }
 
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
         /// <summary>
-        /// Perform agglomerative hierarchical clustering
+        /// Calculate cosine similarity matrix for all items.
         /// </summary>
-        private static async Task<List<ImageCluster>> PerformHierarchicalClusteringAsync(List<ExtractedFeatures> features, double[,] similarityMatrix, double similarityThreshold)
+        private async Task<double[,]> CalculateSimilarityMatrixAsync(List<AnalysisItem> items, CancellationToken cancellationToken)
         {
-            int count = features.Count;
+            int count = items.Count;
+            double[,] matrix = new double[count, count];
 
-            // Initialize each feature as its own cluster
+            int completedComparisons = 0;
+
+            // Calculate similarities (symmetric matrix - only upper triangle)
+            for (int i = 0; i < count; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                matrix[i, i] = 1.0; // Similarity with self is always 1.0
+
+                for (int j = i + 1; j < count; j++)
+                {
+                    // If items are from same source (video frames) set similarity to 0
+                    if (items[i].SourceId == items[j].SourceId)
+                    {
+                        matrix[i, j] = 0.0;
+                        matrix[j, i] = 0.0;
+                    }
+                    else
+                    {
+                        double similarity = CalculateCosineSimilarity(items[i].FeatureVector!, items[j].FeatureVector!);
+                        matrix[i, j] = similarity;
+                        matrix[j, i] = similarity; // Matrix is symmetric
+                    }
+
+                    completedComparisons++;
+
+                    // Yield for UI updates and cancellation checks
+                    if (completedComparisons % 1000 == 0)
+                    {
+                        await Task.Delay(1, cancellationToken);
+                    }
+                }
+            }
+
+            return matrix;
+        }
+
+        /// <summary>
+        /// Perform agglomerative hierarchical clustering.
+        /// </summary>
+        private static async Task<List<SimilarityGroup>> PerformHierarchicalClusteringAsync(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
+        {
+            int count = items.Count;
+
+            // Initialize each item as its own cluster
             List<List<int>> clusters = [];
             for (int i = 0; i < count; i++)
             {
                 clusters.Add([i]);
             }
 
-            // Keep track of active clusters
+            // Track active clusters
             bool[] activeClusters = new bool[count];
-            for (int i = 0; i < count; i++)
-            {
-                activeClusters[i] = true;
-            }
+            Array.Fill(activeClusters, true);
 
             int mergeOperations = 0;
 
             // Agglomerative clustering - merge closest clusters
             while (true)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Find pair of clusters with highest similarity
                 double maxSimilarity = -1.0;
                 int clusterI = -1, clusterJ = -1;
@@ -148,6 +169,11 @@ namespace DeDupe.Services.Analysis
                             continue;
                         }
 
+                        if (WouldViolateSourceConstraint(clusters[i], clusters[j], items))
+                        {
+                            continue;
+                        }
+
                         double similarity = CalculateClusterSimilarity(clusters[i], clusters[j], similarityMatrix);
 
                         if (similarity > maxSimilarity)
@@ -159,52 +185,69 @@ namespace DeDupe.Services.Analysis
                     }
                 }
 
-                // Stop clustering - No pair found or similarity below threshold
+                // Stop if no valid pair or similarity below threshold
                 if (clusterI == -1 || maxSimilarity < similarityThreshold)
                 {
                     break;
                 }
 
-                // Merge two clusters
+                // Merge clusters
                 clusters[clusterI].AddRange(clusters[clusterJ]);
-                activeClusters[clusterJ] = false; // Mark cluster j as inactive
+                activeClusters[clusterJ] = false;
 
                 mergeOperations++;
 
-                // Allow UI updates
                 if (mergeOperations % 10 == 0)
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1, cancellationToken);
                 }
             }
 
-            // Convert clusters to ImageCluster objects
-            List<ImageCluster> imageClusters = [];
+            // Convert to SimilarityGroup objects
+            List<SimilarityGroup> result = [];
             int clusterId = 0;
             int duplicateGroupNumber = 1;
 
             for (int i = 0; i < clusters.Count; i++)
             {
                 if (!activeClusters[i])
-                    continue;
-
-                List<ExtractedFeatures> clusterFeatures = [.. clusters[i].Select(idx => features[idx])];
-
-                string? groupName = null;
-                if (clusterFeatures.Count > 1)
                 {
-                    groupName = $"Group {duplicateGroupNumber++}";
+                    continue;
                 }
 
-                ImageCluster imageCluster = new(clusterId++, clusterFeatures, groupName);
-                imageClusters.Add(imageCluster);
+                List<AnalysisItem> clusterItems = [.. clusters[i].Select(idx => items[idx])];
+
+                string? groupName = clusterItems.Count > 1 ? $"Group {duplicateGroupNumber++}" : null;
+
+                SimilarityGroup group = new(clusterId++, clusterItems, groupName);
+                result.Add(group);
             }
 
-            return imageClusters;
+            return result;
         }
 
         /// <summary>
-        /// Calculate similarity between two clusters using average linkage
+        /// Check if merging two clusters would put items from the same source together.
+        /// </summary>
+        private static bool WouldViolateSourceConstraint(List<int> clusterA, List<int> clusterB, List<AnalysisItem> items)
+        {
+            // Get all source IDs in cluster A
+            HashSet<Guid> sourceIdsA = [.. clusterA.Select(idx => items[idx].SourceId)];
+
+            // Check if any item in cluster B shares a source with cluster A
+            foreach (int idx in clusterB)
+            {
+                if (sourceIdsA.Contains(items[idx].SourceId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Calculate similarity between two clusters using average linkage.
         /// </summary>
         private static double CalculateClusterSimilarity(List<int> clusterA, List<int> clusterB, double[,] similarityMatrix)
         {
@@ -224,11 +267,11 @@ namespace DeDupe.Services.Analysis
         }
 
         /// <summary>
-        /// Calculate statistics for each cluster
+        /// Calculate average similarity within each cluster.
         /// </summary>
-        private static void CalculateClusterStatistics(List<ImageCluster> clusters)
+        private void CalculateClusterStatistics(List<SimilarityGroup> clusters)
         {
-            foreach (ImageCluster cluster in clusters)
+            foreach (SimilarityGroup cluster in clusters)
             {
                 if (cluster.Count <= 1)
                 {
@@ -239,14 +282,13 @@ namespace DeDupe.Services.Analysis
                 double totalSimilarity = 0.0;
                 int pairCount = 0;
 
-                // Calculate average pairwise similarity within cluster
-                for (int i = 0; i < cluster.Images.Count; i++)
+                for (int i = 0; i < cluster.Items.Count; i++)
                 {
-                    for (int j = i + 1; j < cluster.Images.Count; j++)
+                    for (int j = i + 1; j < cluster.Items.Count; j++)
                     {
                         // Find indices of images in original similarity matrix
                         // TODO - Maintain index mappings
-                        double similarity = CalculateCosineSimilarity(cluster.Images[i].FeatureVector, cluster.Images[j].FeatureVector);
+                        double similarity = CalculateCosineSimilarity(cluster.Items[i].FeatureVector!, cluster.Items[j].FeatureVector!);
 
                         totalSimilarity += similarity;
                         pairCount++;

@@ -73,7 +73,9 @@ namespace DeDupe
             services.AddSingleton<PreProcessingViewModel>();
             services.AddSingleton<ManagementViewModel>();
 
-            services.AddSingleton<FeatureExtractionService>();
+            // Feature Extraction
+            services.AddSingleton<IFeatureExtractionService, FeatureExtractionService>();
+            services.AddSingleton<ISimilarityAnalysisService, SimilarityAnalysisService>();
 
             // Logging
             services.AddLogging();

@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
-using DeDupe.Enums.PreProcessing;
+using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Services;
 using DeDupe.Services.PreProcessing;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Windows.System;
 using Windows.UI;
@@ -17,32 +17,20 @@ namespace DeDupe.ViewModels.Pages
         #region Fields
 
         private readonly IAppStateService _appStateService;
-
         private readonly ImageProcessingService _imageProcessingService;
 
         private bool _enableResizing = ProcessingDefaults.EnableResizing;
-
         private uint _resizeSize = ProcessingDefaults.TargetSize;
-
-        private ResizeMethod _resizeMethod = ProcessingDefaults.ResizeMethod;
-
-        private Color _paddingColor = ProcessingDefaults.PaddingColorBrush.Color;
-
-        private InterpolationMethod _downsamplingMethod = ProcessingDefaults.DownsamplingMethod;
-
-        private InterpolationMethod _upsamplingMethod = ProcessingDefaults.UpsamplingMethod;
-
+        private ResizeMethod _resizeMethod = ProcessingDefaults.DefaultResizeMethod;
+        private Color _paddingColor = Color.FromArgb(ProcessingDefaults.PaddingColorA, ProcessingDefaults.PaddingColorR, ProcessingDefaults.PaddingColorG, ProcessingDefaults.PaddingColorB);
+        private InterpolationMethod _downsamplingMethod = ProcessingDefaults.DefaultDownsamplingMethod;
+        private InterpolationMethod _upsamplingMethod = ProcessingDefaults.DefaultUpsamplingMethod;
         private bool _enableBorderDetection = ProcessingDefaults.EnableBorderDetection;
-
         private int _borderDetectionTolerance = ProcessingDefaults.BorderDetectionTolerance;
-
-        private OutputFormat _outputFormat = ProcessingDefaults.OutputFormat;
-
-        private BitDepth _bitDepth = ProcessingDefaults.BitDepth;
-
+        private OutputFormat _outputFormat = ProcessingDefaults.DefaultOutputFormat;
+        private ColorFormat _bitDepth = ProcessingDefaults.DefaultColorFormat;
         private int _processingProgress;
-
-        private bool _hasProcessedImages;
+        private bool _hasProcessedItems;
 
         #endregion Fields
 
@@ -129,7 +117,7 @@ namespace DeDupe.ViewModels.Pages
         }
 
         // Bit Depth
-        public BitDepth BitDepth
+        public ColorFormat BitDepth
         {
             get => _bitDepth;
             set => SetProperty(ref _bitDepth, value);
@@ -141,12 +129,12 @@ namespace DeDupe.ViewModels.Pages
             set => SetProperty(ref _processingProgress, value);
         }
 
-        public bool HasProcessedImages
+        public bool HasProcessedItems
         {
-            get => _hasProcessedImages;
+            get => _hasProcessedItems;
             set
             {
-                if (SetProperty(ref _hasProcessedImages, value))
+                if (SetProperty(ref _hasProcessedItems, value))
                 {
                     OnPropertyChanged(nameof(CanOpenTempFolder));
                     OpenTempFolderCommand.NotifyCanExecuteChanged();
@@ -155,16 +143,16 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        public bool CanStartProcessing => !IsBusy && _appStateService.FileCount >= 0;
+        public bool CanStartProcessing => !IsBusy && _appStateService.AnalysisItemCount > 0;
 
-        public bool CanOpenTempFolder => HasProcessedImages && !string.IsNullOrEmpty(_appStateService.TempFolderPath);
+        public bool CanOpenTempFolder => HasProcessedItems && !string.IsNullOrEmpty(_appStateService.TempFolderPath);
 
         // Available options for dropdowns
         public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
 
         public IEnumerable<ResizeMethod> ResizeMethods => Enum.GetValues<ResizeMethod>();
         public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
-        public IEnumerable<BitDepth> BitDepths => Enum.GetValues<BitDepth>();
+        public IEnumerable<ColorFormat> BitDepths => Enum.GetValues<ColorFormat>();
 
         #endregion Properties
 
@@ -214,23 +202,23 @@ namespace DeDupe.ViewModels.Pages
                 // Configure image processing service
                 ConfigureImageProcessingService();
 
-                // Get all image paths from input
-                IEnumerable<string>? imagePaths = GetAllImagePaths();
+                // Get analysis items to process
+                IReadOnlyCollection<AnalysisItem> analysisItems = _appStateService.AnalysisItems;
 
-                if (!imagePaths.Any())
+                if (analysisItems.Count == 0)
                 {
-                    Status = "No images to process";
+                    Status = "No items to process";
                     return;
                 }
 
-                Status = $"Processing {imagePaths.Count()} images...";
+                Status = $"Processing {analysisItems.Count} items...";
 
-                // Process images
-                await _imageProcessingService.ProcessImagesAsync(imagePaths);
+                // Process items
+                await _imageProcessingService.ProcessItemsAsync(analysisItems);
 
-                if (_appStateService.ProcessedImageCount != 0)
+                if (_appStateService.ProcessedItemCount > 0)
                 {
-                    HasProcessedImages = true;
+                    HasProcessedItems = true;
                 }
             }
             catch (Exception ex)
@@ -250,24 +238,19 @@ namespace DeDupe.ViewModels.Pages
 
         #region Methods
 
-        private IEnumerable<string> GetAllImagePaths()
-        {
-            return _appStateService?.FilePaths ?? [];
-        }
-
         private void UpdateStatus()
         {
             if (IsBusy)
             {
                 Status = "Processing files...";
             }
-            else if (_appStateService.ProcessedImageCount > 0)
+            else if (_appStateService.ProcessedItemCount > 0)
             {
-                Status = $"{_appStateService.ProcessedImageCount} image{(_appStateService.ProcessedImageCount == 1 ? "" : "s")} processed";
+                Status = $"{_appStateService.ProcessedItemCount} item{(_appStateService.ProcessedItemCount == 1 ? "" : "s")} processed";
             }
             else
             {
-                Status = "No images processed";
+                Status = "No items processed";
             }
         }
 
@@ -287,7 +270,7 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateCompletionStatus()
         {
-            IsComplete = HasProcessedImages;
+            IsComplete = HasProcessedItems;
         }
 
         #endregion Methods

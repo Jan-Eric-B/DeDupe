@@ -1,4 +1,4 @@
-﻿using DeDupe.Enums.PreProcessing;
+﻿using DeDupe.Enums;
 using System;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
@@ -20,7 +20,7 @@ namespace DeDupe.Services.PreProcessing
             InterpolationMethod upsamplingMethod,
             InterpolationMethod downsamplingMethod,
             byte[] paddingColor,
-            BitDepth bitDepth,
+            ColorFormat bitDepth,
             double dpiX,
             double dpiY)
         {
@@ -144,7 +144,7 @@ namespace DeDupe.Services.PreProcessing
             uint targetWidth,
             uint targetHeight,
             InterpolationMethod method,
-            BitDepth bitDepth,
+            ColorFormat bitDepth,
             double dpiX,
             double dpiY)
         {
