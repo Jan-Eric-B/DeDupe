@@ -12,12 +12,7 @@ namespace DeDupe.Controls
 {
     public sealed partial class StepperControl : UserControl
     {
-        public static readonly DependencyProperty StepsProperty =
-            DependencyProperty.Register(
-                nameof(Steps),
-                typeof(ObservableCollection<StepItem>),
-                typeof(StepperControl),
-                new PropertyMetadata(null, OnStepsChanged));
+        public static readonly DependencyProperty StepsProperty = DependencyProperty.Register(nameof(Steps), typeof(ObservableCollection<StepItem>), typeof(StepperControl), new PropertyMetadata(null, OnStepsChanged));
 
         public ObservableCollection<StepItem> Steps
         {
@@ -52,7 +47,7 @@ namespace DeDupe.Controls
                     {
                         step.PropertyChanged += control.Step_PropertyChanged;
                     }
-                    control.RebuildStepperUI();
+                    control.UpdateStepper();
                 }
             }
         }
@@ -75,38 +70,37 @@ namespace DeDupe.Controls
                 }
             }
 
-            RebuildStepperUI();
+            UpdateStepper();
         }
 
         private void Step_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            // When step properties change, update the UI
-            if (e.PropertyName == nameof(StepItem.IsCompleted) ||
-                e.PropertyName == nameof(StepItem.IsCurrent) ||
-                e.PropertyName == nameof(StepItem.IsEnabled))
+            if (e.PropertyName == nameof(StepItem.IsCompleted) || e.PropertyName == nameof(StepItem.IsCurrent) || e.PropertyName == nameof(StepItem.IsEnabled))
             {
-                RebuildStepperUI();
+                UpdateStepper();
             }
         }
 
-        private void RebuildStepperUI()
+        private void UpdateStepper()
         {
             StepsGrid.Children.Clear();
 
             if (Steps == null || Steps.Count == 0)
+            {
                 return;
+            }
 
             for (int i = 0; i < Steps.Count; i++)
             {
                 StepItem step = Steps[i];
                 int columnIndex = i * 2; // Step + Connector
 
-                // Create step button
+                // Step button
                 Button stepButton = CreateStepButton(step);
                 Grid.SetColumn(stepButton, columnIndex);
                 StepsGrid.Children.Add(stepButton);
 
-                // Create connector
+                // Connector
                 if (i < Steps.Count - 1)
                 {
                     Rectangle connector = CreateConnector(step);
@@ -128,7 +122,6 @@ namespace DeDupe.Controls
                 IsEnabled = step.IsEnabled
             };
 
-            // Style based on state
             if (step.IsCurrent)
             {
                 button.Background = (SolidColorBrush)Application.Current.Resources["LayerFillColorAltBrush"];
@@ -208,9 +201,7 @@ namespace DeDupe.Controls
                 Text = step.Title,
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = step.IsEnabled ?
-                    (SolidColorBrush)Application.Current.Resources["TextFillColorPrimaryBrush"] :
-                    (SolidColorBrush)Application.Current.Resources["TextFillColorDisabledBrush"]
+                Foreground = step.IsEnabled ? (SolidColorBrush)Application.Current.Resources["TextFillColorPrimaryBrush"] : (SolidColorBrush)Application.Current.Resources["TextFillColorDisabledBrush"]
             };
             stackPanel.Children.Add(titleText);
 
@@ -220,9 +211,7 @@ namespace DeDupe.Controls
                 Text = step.Description,
                 FontSize = 12,
                 HorizontalAlignment = HorizontalAlignment.Center,
-                Foreground = step.IsEnabled ?
-                    (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"] :
-                    (SolidColorBrush)Application.Current.Resources["TextFillColorDisabledBrush"]
+                Foreground = step.IsEnabled ? (SolidColorBrush)Application.Current.Resources["TextFillColorSecondaryBrush"] : (SolidColorBrush)Application.Current.Resources["TextFillColorDisabledBrush"]
             };
             stackPanel.Children.Add(subtitleText);
 
@@ -238,9 +227,7 @@ namespace DeDupe.Controls
                 Width = 40,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 28, 0, 0),
-                Fill = step.IsCompleted ?
-                    (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"] :
-                    (SolidColorBrush)Application.Current.Resources["DividerStrokeColorDefaultBrush"]
+                Fill = step.IsCompleted ? (SolidColorBrush)Application.Current.Resources["AccentFillColorDefaultBrush"] : (SolidColorBrush)Application.Current.Resources["DividerStrokeColorDefaultBrush"]
             };
 
             return connector;
