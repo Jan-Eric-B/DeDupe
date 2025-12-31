@@ -1,22 +1,20 @@
-﻿using Microsoft.UI;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System;
 
 namespace DeDupe.Converters
 {
-    /// <summary>
-    /// Converter used for 'disabled' look for textblocks
-    /// </summary>
-    public partial class BoolToColorConverter : IValueConverter
+    public partial class StatusToBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
             if (value is bool isEnabled)
             {
-                return isEnabled ? new SolidColorBrush(Colors.White) : new SolidColorBrush(Colors.Gray);
+                string resourceKey = isEnabled ? "TextFillColorPrimaryBrush" : "TextFillColorDisabledBrush";
+                return (Brush)Application.Current.Resources[resourceKey];
             }
-            return new SolidColorBrush(Colors.White);
+            return (Brush)Application.Current.Resources["TextFillColorPrimaryBrush"];
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

@@ -4,18 +4,15 @@ using System;
 
 namespace DeDupe.Converters
 {
-    /// <summary>
-    /// Converter to negate boolean values for visibility binding
-    /// </summary>
-    public partial class BoolNegationConverter : IValueConverter
+    public partial class BoolToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
             if (value is bool boolValue)
             {
-                return boolValue ? Visibility.Collapsed : Visibility.Visible;
+                return boolValue ? Visibility.Visible : Visibility.Collapsed;
             }
-            return Visibility.Visible;
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
