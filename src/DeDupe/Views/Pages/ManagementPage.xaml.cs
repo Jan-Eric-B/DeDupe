@@ -5,7 +5,13 @@ using DeDupe.ViewModels.Pages;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace DeDupe.Views.Pages
 {
@@ -327,13 +333,13 @@ namespace DeDupe.Views.Pages
 
                 if (!string.IsNullOrWhiteSpace(newName) && newName != ViewModel.SelectedCluster.Name)
                 {
-                    if (FolderNameValidator.Validate(newName))
+                    if (FolderNameValidationService.Validate(newName))
                     {
                         ViewModel.SelectedCluster.Name = newName;
                     }
                     else
                     {
-                        ViewModel.SelectedCluster.Name = FolderNameValidator.Sanitize(newName);
+                        ViewModel.SelectedCluster.Name = FolderNameValidationService.Sanitize(newName);
                     }
                 }
             }

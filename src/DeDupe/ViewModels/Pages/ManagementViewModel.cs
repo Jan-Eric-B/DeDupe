@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DeDupe.Enums;
 using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
@@ -7,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DeDupe.ViewModels.Pages

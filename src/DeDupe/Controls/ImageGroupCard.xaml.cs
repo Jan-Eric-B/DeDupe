@@ -1,3 +1,4 @@
+using DeDupe.Models.Analysis;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -11,29 +12,32 @@ using Windows.Storage.Streams;
 
 namespace DeDupe.Controls
 {
-    public sealed partial class StackedImagesControl : UserControl
+    public sealed partial class ImageGroupCard : UserControl
     {
-        public static readonly DependencyProperty ImagePathsProperty =
-            DependencyProperty.Register(
-                nameof(ImagePaths),
-                typeof(List<string>),
-                typeof(StackedImagesControl),
-                new PropertyMetadata(null, OnImagePathsChanged));
+        #region Properties
 
-        public List<string> ImagePaths
+        public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupCard), new PropertyMetadata(null, OnGroupChanged));
+
+        public SimilarityGroup? Group
         {
-            get => (List<string>)GetValue(ImagePathsProperty);
-            set => SetValue(ImagePathsProperty, value);
+            get => (SimilarityGroup?)GetValue(GroupProperty);
+            set => SetValue(GroupProperty, value);
         }
 
-        public StackedImagesControl()
+        #endregion Properties
+
+        #region Constructor
+
+        public ImageGroupCard()
         {
             InitializeComponent();
         }
 
-        private static void OnImagePathsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        #endregion Constructor
+
+        private static void OnGroupChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is StackedImagesControl control)
+            if (d is ImageGroupCard control)
             {
                 control.UpdateStackedImages();
             }
@@ -41,17 +45,16 @@ namespace DeDupe.Controls
 
         private void UpdateStackedImages()
         {
-            RootGrid.Children.Clear();
+            StackedThumbnails.Children.Clear();
 
-            if (ImagePaths == null || ImagePaths.Count == 0)
+            if (Group == null || Group.Count == 0)
             {
-                // No images
                 ShowPlaceholder();
                 return;
             }
 
             // 4 images for display
-            List<string> imagesToShow = [.. ImagePaths.Take(4)];
+            List<string> imagesToShow = [.. Group.GetImageThumbnailPaths().Take(4)];
             int imageCount = imagesToShow.Count;
 
             // Calculate stacking offsets
@@ -63,7 +66,6 @@ namespace DeDupe.Controls
 
         private void CreateStackedImage(string imagePath, int index, int totalCount)
         {
-            // Add shadow and offset
             Border imageBorder = new()
             {
                 CornerRadius = new CornerRadius(4),
@@ -72,11 +74,9 @@ namespace DeDupe.Controls
                 Shadow = new ThemeShadow()
             };
 
-            // Calculate offset based on position in stack
+            // Offset based on position in stack
             double offsetX = (totalCount - 1 - index) * 16;
             double offsetY = (totalCount - 1 - index) * 12;
-
-            // Margin for stacked effect
             imageBorder.Margin = new Thickness(offsetX, offsetY, -offsetX, -offsetY);
 
             Image image = new()
@@ -86,20 +86,18 @@ namespace DeDupe.Controls
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            // Load image thumbnail
             _ = LoadImageAsync(image, imagePath);
 
             imageBorder.Child = image;
 
             // Add to grid (back to front)
-            RootGrid.Children.Add(imageBorder);
+            StackedThumbnails.Children.Add(imageBorder);
         }
 
         private static async Task LoadImageAsync(Image imageControl, string imagePath)
         {
             try
             {
-                // Load image
                 StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
 
                 using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
@@ -107,7 +105,7 @@ namespace DeDupe.Controls
                 // Create BitmapImage thumbnail
                 BitmapImage bitmap = new()
                 {
-                    DecodePixelWidth = 280, // Matching card width
+                    DecodePixelWidth = 280, // Card width
                     DecodePixelType = DecodePixelType.Logical
                 };
 
@@ -132,7 +130,7 @@ namespace DeDupe.Controls
 
             FontIcon placeholderIcon = new()
             {
-                Glyph = "\uEB9F", // Image icon
+                Glyph = "\uEB9F",
                 FontSize = 64,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -140,7 +138,7 @@ namespace DeDupe.Controls
             };
 
             placeholderBorder.Child = placeholderIcon;
-            RootGrid.Children.Add(placeholderBorder);
+            StackedThumbnails.Children.Add(placeholderBorder);
         }
     }
 }
