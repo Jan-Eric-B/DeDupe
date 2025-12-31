@@ -13,7 +13,5 @@ namespace DeDupe.Helper
 
             return attribute?.Description ?? value.ToString();
         }
-
-        public static string GetEnumDescription(Enum value) => value.GetDescription();
     }
 }
