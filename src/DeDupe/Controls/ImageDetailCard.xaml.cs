@@ -8,6 +8,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.Globalization.DateTimeFormatting;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
@@ -16,13 +17,9 @@ namespace DeDupe.Controls
 {
     public sealed partial class ImageDetailCard : UserControl
     {
-        #region Dependency Properties
+        #region Properties
 
         public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register(nameof(Models.Analysis.SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
-
-        #endregion Dependency Properties
-
-        #region Properties
 
         public SelectableItem? SelectableItem
         {
@@ -61,8 +58,7 @@ namespace DeDupe.Controls
             {
                 newImage.PropertyChanged += control.OnSelectableItemPropertyChanged;
                 control.UpdateDisplay(newImage);
-                control.UpdateCheckboxToModel(newImage.IsSelected);
-                control.UpdateSelectionVisualState(newImage.IsSelected);
+                control.UpdateSelection(newImage.IsSelected);
             }
             else
             {
@@ -80,8 +76,7 @@ namespace DeDupe.Controls
             // Update UI
             if (e.PropertyName == nameof(SelectableItem.IsSelected))
             {
-                UpdateCheckboxToModel(image.IsSelected);
-                UpdateSelectionVisualState(image.IsSelected);
+                UpdateSelection(image.IsSelected);
             }
         }
 
@@ -91,20 +86,29 @@ namespace DeDupe.Controls
 
         private void UpdateDisplay(SelectableItem image)
         {
-            // Get metadata
             MediaMetadata metadata = image.Metadata;
 
-            // Update text fields
             FileNameTextBlock.Text = metadata.FileName;
             ResolutionTextBlock.Text = metadata.Resolution;
             FileSizeTextBlock.Text = metadata.FormattedFileSize;
             FormatTextBlock.Text = metadata.ExtensionDisplay;
+            CreatedDateTextBlock.Text = FormatDate(metadata.CreatedDate);
 
-            // Set tooltip to show full path
             ToolTipService.SetToolTip(FileNameTextBlock, metadata.FilePath);
 
-            // Load image preview
-            _ = LoadImagePreviewAsync(metadata.FilePath);
+            _ = LoadImageThumbnailAsync(metadata.FilePath);
+        }
+
+        private static string FormatDate(DateTime date)
+        {
+            if (date == default || date == DateTime.MinValue)
+            {
+                return "";
+            }
+
+            // Globalized formatting
+            DateTimeFormatter formatter = new("shortdate");
+            return formatter.Format(date);
         }
 
         private void ClearDisplay()
@@ -113,12 +117,13 @@ namespace DeDupe.Controls
             ResolutionTextBlock.Text = string.Empty;
             FileSizeTextBlock.Text = string.Empty;
             FormatTextBlock.Text = string.Empty;
-            PreviewImage.Source = null;
+            CreatedDateTextBlock.Text = string.Empty;
+            ImageThumbnail.Source = null;
             PlaceholderIcon.Visibility = Visibility.Visible;
             SelectionCheckBox.IsChecked = false;
         }
 
-        private async Task LoadImagePreviewAsync(string imagePath)
+        private async Task LoadImageThumbnailAsync(string imagePath)
         {
             try
             {
@@ -133,37 +138,23 @@ namespace DeDupe.Controls
                 };
 
                 await bitmap.SetSourceAsync(stream);
-                PreviewImage.Source = bitmap;
+                ImageThumbnail.Source = bitmap;
                 PlaceholderIcon.Visibility = Visibility.Collapsed;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load image preview: {imagePath}, Error: {ex.Message}");
+                Debug.WriteLine($"Failed to load thumbnail: {imagePath}, Error: {ex.Message}");
                 PlaceholderIcon.Visibility = Visibility.Visible;
             }
         }
 
-        /// <summary>
-        /// Update checkbox UI to match models IsSelected state.
-        /// </summary>
-        private void UpdateCheckboxToModel(bool isSelected)
+        private void UpdateSelection(bool isSelected)
         {
             if (SelectionCheckBox.IsChecked != isSelected)
             {
-                // Temporarily unhook event to prevent feedback loop
-                SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
-                SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
-
                 SelectionCheckBox.IsChecked = isSelected;
-
-                // Re-hook events
-                SelectionCheckBox.Checked += SelectionCheckBox_CheckedChanged;
-                SelectionCheckBox.Unchecked += SelectionCheckBox_CheckedChanged;
             }
-        }
 
-        private void UpdateSelectionVisualState(bool isSelected)
-        {
             string stateName = isSelected ? "Selected" : "Unselected";
             VisualStateManager.GoToState(this, stateName, true);
         }
@@ -180,7 +171,7 @@ namespace DeDupe.Controls
             }
         }
 
-        private async void ImagePreview_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        private async void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             if (SelectableItem == null)
             {
@@ -194,7 +185,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to preview file: {ex.Message}");
+                Debug.WriteLine($"Failed to open file: {ex.Message}");
             }
         }
 
@@ -235,7 +226,7 @@ namespace DeDupe.Controls
             SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
             SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
 
-            // Unsubscribe from events
+            // Unsubscribe from event
             if (SelectableItem != null)
             {
                 SelectableItem.PropertyChanged -= OnSelectableItemPropertyChanged;

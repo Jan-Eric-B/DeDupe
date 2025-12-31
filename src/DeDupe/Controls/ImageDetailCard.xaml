@@ -10,7 +10,6 @@
     Loaded="OnLoaded"
     Unloaded="OnUnloaded"
     mc:Ignorable="d">
-
     <Border
         x:Name="CardBorder"
         Width="180"
@@ -26,14 +25,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!--  Image Preview  -->
+            <!--  Item  -->
             <Grid Grid.Row="0">
                 <Border
                     Height="120"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     CornerRadius="6"
-                    DoubleTapped="ImagePreview_DoubleTapped"
-                    ToolTipService.ToolTip="Double-click to preview">
+                    DoubleTapped="OpenItem_DoubleTapped"
+                    ToolTipService.ToolTip="Double-click to open">
                     <Grid>
                         <!--  Placeholder  -->
                         <FontIcon
@@ -44,9 +43,9 @@
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Glyph="&#xEB9F;" />
 
-                        <!--  Actual Image  -->
+                        <!--  Thumbnail  -->
                         <Image
-                            x:Name="PreviewImage"
+                            x:Name="ImageThumbnail"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Stretch="UniformToFill" />
@@ -65,7 +64,7 @@
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     CornerRadius="4" />
 
-                <!--  Format Badge  -->
+                <!--  Image Format Badge  -->
                 <Border
                     Margin="4"
                     Padding="6,2"
@@ -89,7 +88,7 @@
                 DoubleTapped="FileName_DoubleTapped"
                 FontSize="12"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="filename.jpg"
+                Text="filename.jpg (Placeholder)"
                 TextTrimming="CharacterEllipsis"
                 TextWrapping="NoWrap">
                 <ToolTipService.ToolTip>
@@ -105,9 +104,10 @@
                 </ToolTipService.ToolTip>
             </TextBlock>
 
-            <!--  Values  -->
-            <Grid Grid.Row="2" RowSpacing="4">
+            <!--  Metadata Values  -->
+            <Grid Grid.Row="2" RowSpacing="3">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
@@ -130,9 +130,9 @@
                         x:Name="ResolutionTextBlock"
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        FontSize="14"
+                        FontSize="13"
                         FontWeight="SemiBold"
-                        Text="1920×1080" />
+                        Text="1920×1080 (Placeholder)" />
                 </Grid>
 
                 <!--  File Size  -->
@@ -153,9 +153,32 @@
                         x:Name="FileSizeTextBlock"
                         Grid.Column="1"
                         VerticalAlignment="Center"
-                        FontSize="14"
+                        FontSize="13"
                         FontWeight="SemiBold"
-                        Text="2.5 MB" />
+                        Text="2.5 MB (Placeholder)" />
+                </Grid>
+
+                <!--  Creation Date  -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <FontIcon
+                        Grid.Column="0"
+                        Margin="0,0,6,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Glyph="&#xE787;" />
+                    <TextBlock
+                        x:Name="CreatedDateTextBlock"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="13.12.2025 (Placeholder)" />
                 </Grid>
             </Grid>
         </Grid>
