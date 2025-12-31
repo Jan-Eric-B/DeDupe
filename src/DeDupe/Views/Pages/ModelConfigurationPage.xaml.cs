@@ -67,7 +67,7 @@ namespace DeDupe.Views.Pages
                         {
                             string extension = file.FileType.ToLowerInvariant();
 
-                            if (ModelFileExtensions.IsSupportedFile(extension))
+                            if (SupportedFileExtensions.IsSupportedModelFile(extension))
                             {
                                 // Set custom model file path
                                 ViewModel.CustomModelFilePath = file.Path;

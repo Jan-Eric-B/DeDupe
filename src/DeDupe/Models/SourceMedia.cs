@@ -1,4 +1,5 @@
-﻿using DeDupe.Enums;
+﻿using DeDupe.Constants;
+using DeDupe.Enums;
 using System;
 using System.Threading.Tasks;
 
@@ -132,11 +133,11 @@ namespace DeDupe.Models
 
             string extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
 
-            if (Constants.MediaFileExtensions.IsImageFile(extension))
+            if (SupportedFileExtensions.IsImageFile(extension))
             {
                 return await CreateImageAsync(filePath, loadFullMetadata);
             }
-            else if (Constants.MediaFileExtensions.IsVideoFile(extension))
+            else if (SupportedFileExtensions.IsVideoFile(extension))
             {
                 return await CreateVideoAsync(filePath, loadFullMetadata);
             }

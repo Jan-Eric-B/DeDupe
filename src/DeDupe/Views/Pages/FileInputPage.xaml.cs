@@ -114,7 +114,7 @@ namespace DeDupe.Views.Pages
 
         private static bool IsImageFile(string extension)
         {
-            return MediaFileExtensions.IsImageFile(extension);
+            return SupportedFileExtensions.IsImageFile(extension);
         }
     }
 }

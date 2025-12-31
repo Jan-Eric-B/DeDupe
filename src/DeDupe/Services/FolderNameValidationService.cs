@@ -7,7 +7,7 @@ namespace DeDupe.Services
     /// <summary>
     /// Validates and sanitizes folder names for Windows compatibility.
     /// </summary>
-    public static partial class FolderNameValidator
+    public static partial class FolderNameValidationService
     {
         /// <summary>
         /// Not allowed Characters.

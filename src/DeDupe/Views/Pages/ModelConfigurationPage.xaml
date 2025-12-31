@@ -7,9 +7,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converters="using:DeDupe.Converters"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
     d:DataContext="{d:DesignInstance Type=pages:ModelConfigurationViewModel}"
     mc:Ignorable="d">
+    <Page.Resources>
+        <converters:StatusToBrushConverter x:Key="StatusToBrushConverter" />
+    </Page.Resources>
     <Grid RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -102,7 +106,7 @@
                             ToolTipService.ToolTip="Double-click to open in Explorer">
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextControlForeground}"
+                                Foreground="{Binding UseCustomModel, Converter={StaticResource StatusToBrushConverter}}"
                                 TextTrimming="CharacterEllipsis"
                                 ToolTipService.ToolTip="{x:Bind ViewModel.CustomModelFilePath, Mode=OneWay}">
                                 <Run

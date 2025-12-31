@@ -177,7 +177,7 @@ namespace DeDupe.ViewModels.Pages
                 SuggestedStartLocation = PickerLocationId.PicturesLibrary
             };
 
-            foreach (string ext in MediaFileExtensions.SupportedImageExtensions)
+            foreach (string ext in SupportedFileExtensions.SupportedImageExtensions)
             {
                 fileOpenPicker.FileTypeFilter.Add(ext);
             }
@@ -290,7 +290,7 @@ namespace DeDupe.ViewModels.Pages
 
         public static bool IsImageFile(string extension)
         {
-            return MediaFileExtensions.IsImageFile(extension);
+            return SupportedFileExtensions.IsImageFile(extension);
         }
 
         public async Task ProcessFolderAsync(InputListItem folderItem)
@@ -309,7 +309,7 @@ namespace DeDupe.ViewModels.Pages
                 StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderItem.Path);
                 if (folder != null)
                 {
-                    QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, MediaFileExtensions.SupportedImageExtensions)
+                    QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, SupportedFileExtensions.SupportedImageExtensions)
                     {
                         FolderDepth = folderItem.IncludeSubdirectories ? FolderDepth.Deep : FolderDepth.Shallow
                     };
