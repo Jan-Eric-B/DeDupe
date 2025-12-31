@@ -7,10 +7,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converter="using:DeDupe.Converters"
+    xmlns:enums="using:DeDupe.Enums"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
     d:DataContext="{d:DesignInstance Type=pages:PreProcessingViewModel}"
     mc:Ignorable="d">
     <Page.Resources>
+        <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
         <Style x:Key="CustomColorPickerStyle" TargetType="ColorPicker">
             <Setter Property="IsAlphaEnabled" Value="False" />
             <Setter Property="IsAlphaSliderVisible" Value="False" />
@@ -112,7 +115,13 @@
                                 x:Name="UpsamplingComboBox"
                                 HorizontalAlignment="Stretch"
                                 ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
-                                SelectedItem="{x:Bind ViewModel.UpsamplingMethod, Mode=TwoWay}" />
+                                SelectedItem="{x:Bind ViewModel.UpsamplingMethod, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="enums:InterpolationMethod">
+                                        <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </controls:SettingsCard>
 
                         <!--  Downsampling  -->
@@ -124,7 +133,13 @@
                                 x:Name="DownsamplingComboBox"
                                 HorizontalAlignment="Stretch"
                                 ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
-                                SelectedItem="{x:Bind ViewModel.DownsamplingMethod, Mode=TwoWay}" />
+                                SelectedItem="{x:Bind ViewModel.DownsamplingMethod, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="enums:InterpolationMethod">
+                                        <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </controls:SettingsCard>
                     </controls:SettingsExpander.Items>
                 </controls:SettingsExpander>
