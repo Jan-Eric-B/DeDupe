@@ -181,7 +181,7 @@ namespace DeDupe.Models.Analysis
                 {
                     _isSelected = newState;
                     OnPropertyChanged(nameof(IsSelected));
-            }
+                }
 
                 GroupSelectionChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -242,7 +242,7 @@ namespace DeDupe.Models.Analysis
             else
             {
                 SelectAll();
-        }
+            }
         }
 
         /// <summary>
@@ -262,6 +262,97 @@ namespace DeDupe.Models.Analysis
         }
 
         #endregion Public Selection Methods
+
+        #region Item Removal Methods
+
+        /// <summary>
+        /// Remove selectable item from group.
+        /// </summary>
+        public bool RemoveItem(SelectableItem item)
+        {
+            if (item == null || !SelectableItems.Contains(item))
+            {
+                return false;
+            }
+
+            // Unsubscribe from events before removing
+            item.SelectionChanged -= OnIndividualItemSelectionChanged;
+
+            bool removed = SelectableItems.Remove(item);
+
+            if (removed)
+            {
+                RecalculateGroupSelectionState();
+            }
+
+            return removed;
+        }
+
+        /// <summary>
+        /// Remove multiple items from group.
+        /// </summary>
+        public int RemoveItems(IEnumerable<SelectableItem> items)
+        {
+            if (items == null)
+            {
+                return 0;
+            }
+
+            // Create a list to avoid multiple enumeration
+            List<SelectableItem> itemList = [.. items];
+
+            if (itemList.Count == 0)
+            {
+                return 0;
+            }
+
+            _isBatchUpdating = true;
+            int removedCount = 0;
+
+            try
+            {
+                foreach (SelectableItem item in itemList)
+                {
+                    if (SelectableItems.Contains(item))
+                    {
+                        // Unsubscribe from events before removing
+                        item.SelectionChanged -= OnIndividualItemSelectionChanged;
+                        SelectableItems.Remove(item);
+                        removedCount++;
+                    }
+                }
+            }
+            finally
+            {
+                _isBatchUpdating = false;
+            }
+
+            if (removedCount > 0)
+            {
+                RecalculateGroupSelectionState();
+            }
+
+            return removedCount;
+        }
+
+        /// <summary>
+        /// Remove items by file paths.
+        /// </summary>
+        public int RemoveItemsByPath(IEnumerable<string> filePaths)
+        {
+            if (filePaths == null)
+            {
+                return 0;
+            }
+
+            HashSet<string> pathSet = [.. filePaths];
+
+            List<SelectableItem> itemsToRemove = [.. SelectableItems.Where(item => pathSet.Contains(item.FilePath))];
+
+            return RemoveItems(itemsToRemove);
+        }
+
+        #endregion Item Removal Methods
 
         #region Path Helper Methods
 

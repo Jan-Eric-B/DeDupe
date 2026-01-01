@@ -1,3 +1,5 @@
+﻿using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.ViewModels;
@@ -359,6 +361,283 @@ namespace DeDupe.Views.Pages
         }
 
         #endregion Auto Selection - All Groups
+
+        #region Delete Functionality
+
+        private async void DeleteSelectedFiles_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // Show confirmation dialog
+            ContentDialog confirmDialog = new()
+            {
+                Title = "Confirm Deletion",
+                Content = $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.",
+                PrimaryButtonText = "Delete",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            ContentDialogResult result = await confirmDialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                await ViewModel.DeleteSelectedFilesCommand.ExecuteAsync(null);
+            }
+        }
+
+        private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
+        {
+            DeleteSelectedFiles_Click(sender, new RoutedEventArgs());
+        }
+
+        private void DeleteToRecycleBin_Click(object sender, RoutedEventArgs e)
+        {
+            DeleteSelectedFiles_Click(sender, e);
+        }
+
+        private async void DeletePermanently_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0)
+            {
+                return;
+            }
+
+            // Show warning dialog for permanent deletion
+            ContentDialog confirmDialog = new()
+            {
+                Title = "Permanent Deletion",
+                Content = $"Are you sure you want to PERMANENTLY delete {count} file{(count == 1 ? "" : "s")}?\n\nThis action cannot be undone!",
+                PrimaryButtonText = "Delete Permanently",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            ContentDialogResult result = await confirmDialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                // TODO: Implement permanent deletion
+                await ViewModel.DeletePermanentlyCommand.ExecuteAsync(null);
+            }
+        }
+
+        #endregion Delete Functionality
+
+        #region Move and Copy Functionality
+
+        /// <summary>
+        /// Show folder picker dialog and return selected folder path.
+        /// </summary>
+        /// <param name="title">Dialog title for context.</param>
+        /// <returns>Selected folder path, or null if cancelled.</returns>
+        private async System.Threading.Tasks.Task<string?> PickFolderAsync(string title)
+        {
+            FolderPicker folderPicker = new()
+            {
+                ViewMode = PickerViewMode.List,
+                SuggestedStartLocation = PickerLocationId.PicturesLibrary,
+                CommitButtonText = "Select Folder"
+            };
+
+            // FileTypeFilter is required even for folder pickers
+            folderPicker.FileTypeFilter.Add("*");
+
+            // Initialize with window handle
+            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(folderPicker, windowHandle);
+
+            StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
+            return folder?.Path;
+        }
+
+        /// <summary>
+        /// Show confirmation dialog for move/copy operations.
+        /// </summary>
+        private async System.Threading.Tasks.Task<bool> ShowMoveConfirmationAsync(string operation, string destination, int fileCount, int groupCount, bool isGrouped)
+        {
+            string groupInfo = isGrouped
+                ? $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group."
+                : "";
+
+            string message = $"{operation} {fileCount} file{(fileCount == 1 ? "" : "s")} to:\n{destination}{groupInfo}";
+
+            ContentDialog confirmDialog = new()
+            {
+                Title = $"Confirm {operation}",
+                Content = message,
+                PrimaryButtonText = operation,
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            ContentDialogResult result = await confirmDialog.ShowAsync();
+            return result == ContentDialogResult.Primary;
+        }
+
+        /// <summary>
+        /// Show result dialog after operation.
+        /// </summary>
+        private async System.Threading.Tasks.Task ShowOperationResultAsync(string operation, FileOperationResult result)
+        {
+            if (result.HasFailures)
+            {
+                string message = $"Completed with some issues:\n\n" +
+                                $"✓ {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")} {operation.ToLower()}d successfully\n" +
+                                $"✗ {result.FailedCount} file{(result.FailedCount == 1 ? "" : "s")} failed";
+
+                ContentDialog resultDialog = new()
+                {
+                    Title = $"{operation} Completed",
+                    Content = message,
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+
+                await resultDialog.ShowAsync();
+            }
+        }
+
+        /// <summary>
+        /// Move all selected files to a single folder.
+        /// </summary>
+        private async void MoveToSingleFolder_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick destination folder
+            string? folderPath = await PickFolderAsync("Select destination folder");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, 0, isGrouped: false);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute move
+            FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
+
+            // Show result if there were failures
+            await ShowOperationResultAsync("Move", result);
+        }
+
+        /// <summary>
+        /// Move selected files into group-named subfolders.
+        /// </summary>
+        private async void MoveToGroupFolders_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            int groupCount = ViewModel.GroupsWithSelectionsCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick root folder
+            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, groupCount, isGrouped: true);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute move
+            FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
+
+            // Show result if there were failures
+            await ShowOperationResultAsync("Move", result);
+        }
+
+        /// <summary>
+        /// Copy all selected files to a single folder.
+        /// </summary>
+        private async void CopyToSingleFolder_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick destination folder
+            string? folderPath = await PickFolderAsync("Select destination folder");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, 0, isGrouped: false);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute copy
+            FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
+
+            // Show result if there were failures
+            await ShowOperationResultAsync("Copy", result);
+        }
+
+        /// <summary>
+        /// Copy selected files into group-named subfolders.
+        /// </summary>
+        private async void CopyToGroupFolders_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            int groupCount = ViewModel.GroupsWithSelectionsCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick root folder
+            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, groupCount, isGrouped: true);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute copy
+            FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
+
+            // Show result if there were failures
+            await ShowOperationResultAsync("Copy", result);
+        }
+
+        #endregion Move and Copy Functionality
+
         #region Group Name Editing
 
         private void GroupNameTextBlock_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)

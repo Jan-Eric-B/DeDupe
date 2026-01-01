@@ -313,16 +313,16 @@
                                 <Run Text="{x:Bind ViewModel.TotalFileCount, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
-                        </StackPanel>
+                    </StackPanel>
 
-                        <!--  Back to Config Button  -->
+                    <!--  Back to Config Button  -->
                     <Button Click="BackToConfiguration_Click" ToolTipService.ToolTip="Back to configuration">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon FontSize="14" Glyph="&#xE72B;" />
-                                    <TextBlock Text="Configuration" />
-                                </StackPanel>
-                        </Button>
-                    </StackPanel>
+                            <TextBlock Text="Configuration" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -355,15 +355,15 @@
                         Grid.Row="0"
                         Margin="0,0,0,16"
                         Spacing="4">
-                            <TextBlock FontSize="20" FontWeight="SemiBold">
-                                <Run Text="Duplicate Groups" />
+                        <TextBlock FontSize="20" FontWeight="SemiBold">
+                            <Run Text="Duplicate Groups" />
                             <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.DuplicateGroupsCount, Mode=OneWay}" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
-                            </TextBlock>
-                            <TextBlock
+                        </TextBlock>
+                        <TextBlock
                             FontSize="13"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
-                        </StackPanel>
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
+                    </StackPanel>
 
                     <!--  Empty State  -->
                     <StackPanel
@@ -377,18 +377,18 @@
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Glyph="&#xE8B9;" />
                         <StackPanel HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock
-                            HorizontalAlignment="Center"
+                            <TextBlock
+                                HorizontalAlignment="Center"
                                 FontSize="16"
                                 FontWeight="SemiBold"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="No Results Yet" />
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 Text="Adjust the similarity threshold and click Analyze"
-                            TextAlignment="Center" />
-                    </StackPanel>
+                                TextAlignment="Center" />
+                        </StackPanel>
                     </StackPanel>
 
                     <!--  Cluster Grid  -->
@@ -542,22 +542,22 @@
                             </Grid.ColumnDefinitions>
 
                             <!--  Select All Checkbox  -->
-                                <CheckBox
-                                    x:Name="SelectAllCheckBox"
+                            <CheckBox
+                                x:Name="SelectAllCheckBox"
                                 Grid.Column="0"
-                                    MinWidth="0"
-                                    MinHeight="0"
-                                    VerticalAlignment="Center"
+                                MinWidth="0"
+                                MinHeight="0"
+                                VerticalAlignment="Center"
                                 Click="SelectAllGroupCheckBox_Click"
                                 IsThreeState="True"
                                 ToolTipService.ToolTip="Select/deselect all in this group" />
 
                             <!--  Selection Count  -->
-                                <TextBlock
-                                    x:Name="SelectionCountText"
+                            <TextBlock
+                                x:Name="SelectionCountText"
                                 Grid.Column="1"
                                 Margin="4,0,0,0"
-                                    VerticalAlignment="Center"
+                                VerticalAlignment="Center"
                                 FontSize="13"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
@@ -566,7 +566,7 @@
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xF16E;" />
                                     <TextBlock Text="Auto-Select" />
-                            </StackPanel>
+                                </StackPanel>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
                                         <MenuFlyoutSubItem Text="By Resolution">
@@ -644,5 +644,140 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <!--  Bottom Action Bar  -->
+        <Border
+            Grid.Row="2"
+            Margin="10,0,10,10"
+            Padding="16,12"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            CornerRadius="8"
+            Visibility="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!--  Left Side - Selection Summary  -->
+                <StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="16">
+
+                    <!--  Selection Info  -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            FontSize="18"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                            Glyph="&#xE73E;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            Text="{x:Bind ViewModel.SelectionSummary, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <!--  Clear All Button  -->
+                    <Button
+                        Click="ClearAllSelections_Click"
+                        Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="Clear all selections"
+                        Visibility="{x:Bind ViewModel.HasAnySelectedItems, Mode=OneWay}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xE711;" />
+                            <TextBlock Text="Clear All" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!--  Right Side - Action Buttons  -->
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="8">
+
+                    <!--  Copy  -->
+                    <DropDownButton IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}" ToolTipService.ToolTip="Copy selected files to a folder">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE8C8;" />
+                            <TextBlock Text="Copy" />
+                        </StackPanel>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout Placement="Top">
+                                <MenuFlyoutItem Click="CopyToSingleFolder_Click" Text="Copy all to one folder...">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8C8;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="CopyToGroupFolders_Click" Text="Organize into group folders">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xF413;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+
+                    <!--  Move  -->
+                    <DropDownButton IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}" ToolTipService.ToolTip="Move selected files to a folder">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE8C6;" />
+                            <TextBlock Text="Move" />
+                        </StackPanel>
+                        <DropDownButton.Flyout>
+                            <MenuFlyout Placement="Top">
+                                <MenuFlyoutItem Click="MoveToSingleFolder_Click" Text="Move all to one folder...">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8DE;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="MoveToGroupFolders_Click" Text="Organize into group folders">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xF413;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+
+                    <!--  Separator  -->
+                    <Border
+                        Width="1"
+                        Margin="4,4"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                    <!--  Delete Button  -->
+                    <SplitButton
+                        x:Name="DeleteSelectedButton"
+                        Click="DeleteSplitButton_Click"
+                        IsEnabled="{x:Bind ViewModel.HasAnySelectedItems, Mode=OneWay}"
+                        ToolTipService.ToolTip="Move selected files to Recycle Bin">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                            <TextBlock>
+                                <Run Text="Delete" />
+                                <Run Text="(" /><Run Text="{x:Bind ViewModel.TotalSelectedCount, Mode=OneWay}" /><Run Text=")" />
+                            </TextBlock>
+                        </StackPanel>
+                        <SplitButton.Flyout>
+                            <MenuFlyout Placement="Top">
+                                <MenuFlyoutItem Click="DeleteToRecycleBin_Click" Text="Move to Recycle Bin">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="DeletePermanently_Click" Text="Delete Permanently">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Foreground="{ThemeResource SystemFillColorCriticalBrush}" Glyph="&#xE894;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </SplitButton.Flyout>
+                    </SplitButton>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Page>
