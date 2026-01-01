@@ -106,6 +106,11 @@ namespace DeDupe.Models.Analysis
         public bool NoneSelected => SelectableItems.All(x => !x.IsSelected);
 
         /// <summary>
+        /// Whether at least one item is selected.
+        /// </summary>
+        public bool IsAnySelected => SelectableItems.Any(x => x.IsSelected);
+
+        /// <summary>
         /// Average similarity score within this group.
         /// </summary>
         public double AverageSimilarity { get; set; } = 0.0;
@@ -113,12 +118,12 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// Number of items in the group.
         /// </summary>
-        public int Count => Items.Count;
+        public int Count => SelectableItems.Count;
 
         /// <summary>
         /// Whether this group contains potential duplicates (more than 1 item).
         /// </summary>
-        public bool IsDuplicateGroup => Items.Count > 1;
+        public bool IsDuplicateGroup => SelectableItems.Count > 1;
 
         #endregion Properties
 
@@ -135,8 +140,7 @@ namespace DeDupe.Models.Analysis
             Items = items.ToList().AsReadOnly();
             _name = name ?? $"Group {id + 1}";
 
-            SelectableItems = new ObservableCollection<SelectableItem>(
-                Items.Select(CreateSelectableItem));
+            SelectableItems = new ObservableCollection<SelectableItem>(Items.Select(CreateSelectableItem));
         }
 
         /// <summary>
@@ -173,7 +177,13 @@ namespace DeDupe.Models.Analysis
             _isInternalUpdate = true;
             try
             {
-                IsSelected = newState;
+                if (_isSelected != newState)
+                {
+                    _isSelected = newState;
+                    OnPropertyChanged(nameof(IsSelected));
+            }
+
+                GroupSelectionChanged?.Invoke(this, EventArgs.Empty);
             }
             finally
             {
@@ -183,6 +193,8 @@ namespace DeDupe.Models.Analysis
             OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(AllSelected));
             OnPropertyChanged(nameof(NoneSelected));
+            OnPropertyChanged(nameof(Count));
+            OnPropertyChanged(nameof(IsDuplicateGroup));
         }
 
         private void SetAllItemsSelection(bool selected)
@@ -224,9 +236,13 @@ namespace DeDupe.Models.Analysis
         public void ToggleSelection()
         {
             if (AllSelected)
+            {
                 DeselectAll();
+            }
             else
+            {
                 SelectAll();
+        }
         }
 
         /// <summary>
@@ -254,23 +270,23 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public List<string> GetOriginalFilePaths()
         {
-            return [.. Items.Select(item => item.Source.Metadata.FilePath)];
+            return [.. SelectableItems.Select(item => item.FilePath)];
         }
 
         /// <summary>
-        /// Get up to 4 image paths for preview thumbnails.
+        /// Get up to 4 image paths for display.
         /// </summary>
-        public List<string> GetPreviewImagePaths()
+        public List<string> GetImageThumbnailPaths()
         {
-            return [.. Items.Take(4).Select(item => item.Source.Metadata.FilePath)];
+            return [.. SelectableItems.Take(4).Select(item => item.FilePath)];
         }
 
         /// <summary>
         /// Get the first item in the group.
         /// </summary>
-        public AnalysisItem? GetFirstItem()
+        public SelectableItem? GetFirstItem()
         {
-            return Items.Count > 0 ? Items[0] : null;
+            return SelectableItems.Count > 0 ? SelectableItems[0] : null;
         }
 
         #endregion Path Helper Methods

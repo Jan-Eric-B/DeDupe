@@ -100,6 +100,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!--  Toolbar  -->
@@ -110,78 +111,222 @@
             Background="{ThemeResource LayerFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             CornerRadius="8">
-            <Grid ColumnSpacing="10">
+            <Grid ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Left  -->
-                <StackPanel
+                <!--  Auto-Selection  -->
+                <DropDownButton
                     Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="10" />
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
+                    ToolTipService.ToolTip="Apply auto selection to all groups">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xF16E;" />
+                        <TextBlock Text="Auto-Select All" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
 
-                <!--  Right - Config Info  -->
+                            <MenuFlyoutSubItem Text="By Resolution">
+                                <MenuFlyoutSubItem.Icon>
+                                    <FontIcon Glyph="&#xE9E9;" />
+                                </MenuFlyoutSubItem.Icon>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepHighestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepHighestResolution)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE9E9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepLowestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLowestResolution)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE9E9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyoutSubItem>
+
+                            <MenuFlyoutSubItem Text="By File Size">
+                                <MenuFlyoutSubItem.Icon>
+                                    <FontIcon Glyph="&#xE729;" />
+                                </MenuFlyoutSubItem.Icon>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepLargestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLargestFileSize)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE729;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepSmallestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepSmallestFileSize)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE729;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyoutSubItem>
+
+                            <MenuFlyoutSubItem Text="By Date">
+                                <MenuFlyoutSubItem.Icon>
+                                    <FontIcon Glyph="&#xE787;" />
+                                </MenuFlyoutSubItem.Icon>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepNewest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepNewest)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE823;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepOldest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepOldest)}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74B;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyoutSubItem>
+
+                            <MenuFlyoutSeparator />
+
+                            <MenuFlyoutItem Click="SelectAllCheckBox_Click" Text="Select All">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE73A;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+
+                            <MenuFlyoutItem Click="ClearAllSelections_Click" Text="Clear All">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE739;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+
+                <!--  Sort Dropdown  -->
+                <DropDownButton
+                    Grid.Column="1"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
+                    ToolTipService.ToolTip="Sort duplicate groups">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE8CB;" />
+                        <TextBlock Text="{x:Bind ViewModel.CurrentSortOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutItem Click="SortBy_Similarity" Text="Similarity (High to Low)">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE9D9;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="SortBy_ImageCount" Text="Image Count">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE8B9;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="SortBy_Name" Text="Group Name">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE8AC;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+
+                <!--  Separator  -->
                 <Border
-                    Grid.Column="3"
-                    Padding="0"
-                    CornerRadius="6">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    Grid.Column="2"
+                    Width="1"
+                    Margin="4,4"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                        <!--  Model Info  -->
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                <!--  Spacer  -->
+                <Border Grid.Column="3" />
+
+                <!--  Similarity Threshold  -->
+                <StackPanel
+                    Grid.Column="4"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="13"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Similarity Threshold:" />
+                    <Slider
+                        x:Name="SimilaritySlider"
+                        Width="100"
+                        VerticalAlignment="Center"
+                        Maximum="1.0"
+                        Minimum="0.3"
+                        StepFrequency="0.01"
+                        ThumbToolTipValueConverter="{StaticResource SimilarityToPercentageConverter}"
+                        ToolTipService.ToolTip="How similar images must be to be grouped"
+                        Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}" />
+                    <TextBlock
+                        Width="40"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource SimilarityToPercentageConverter}}" />
+                    <Button
+                        Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        ToolTipService.ToolTip="Re-analyze with current threshold">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="&#xE9D9;" />
+                            <TextBlock Text="Analyze" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!--  Separator  -->
+                <Border
+                    Grid.Column="5"
+                    Width="1"
+                    Margin="4,4"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+                <!--  Config Info  -->
+                <StackPanel
+                    Grid.Column="6"
+                    Orientation="Horizontal"
+                    Spacing="12">
+
+                    <StackPanel
+                        Orientation="Horizontal"
+                        Spacing="12"
+                        ToolTipService.ToolTip="Item Count">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon
-                                FontSize="16"
+                                FontSize="14"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
                                 Glyph="&#xE8B8;" />
-                            <TextBlock VerticalAlignment="Center" FontSize="12">
-                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.ModelName, Mode=OneWay}" />
-                            </TextBlock>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Text="{x:Bind ViewModel.ModelName, Mode=OneWay}"
+                                ToolTipService.ToolTip="AI Model" />
                         </StackPanel>
 
-                        <!--  Files Count  -->
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon
-                                FontSize="16"
+                                FontSize="14"
                                 Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                Glyph="&#xE8B7;" />
+                                Glyph="&#xE8B9;" />
                             <TextBlock VerticalAlignment="Center" FontSize="12">
-                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.TotalFileCount, Mode=OneWay}" />
-                                <Run Text="files" />
+                                <Run Text="{x:Bind ViewModel.TotalFileCount, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
-
-                        <!--  Features Count  -->
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <FontIcon
-                                FontSize="16"
-                                Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                Glyph="&#xE9D9;" />
-                            <TextBlock VerticalAlignment="Center" FontSize="12">
-                                <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.ExtractedFeaturesCount, Mode=OneWay}" />
-                                <Run Text="features" />
-                            </TextBlock>
                         </StackPanel>
 
                         <!--  Back to Config Button  -->
-                        <Button Click="BackToConfiguration_Click">
-                            <Button.Content>
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <FontIcon FontSize="14" Glyph="&#xE713;" />
+                    <Button Click="BackToConfiguration_Click" ToolTipService.ToolTip="Back to configuration">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="14" Glyph="&#xE72B;" />
                                     <TextBlock Text="Configuration" />
                                 </StackPanel>
-                            </Button.Content>
                         </Button>
                     </StackPanel>
-                </Border>
             </Grid>
         </Border>
 
-        <!--  Main Content Area  -->
+        <!--  Main Content  -->
         <Grid
             x:Name="SplitViewGrid"
             Grid.Row="1"
@@ -196,72 +341,33 @@
             <Border
                 Grid.Column="0"
                 MinWidth="300"
-                Padding="10,5"
+                Padding="16"
                 BorderThickness="1"
                 CornerRadius="8">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <!--  Header  -->
-                    <Grid Grid.Row="0" Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Spacing="4">
+                    <StackPanel
+                        Grid.Row="0"
+                        Margin="0,0,0,16"
+                        Spacing="4">
                             <TextBlock FontSize="20" FontWeight="SemiBold">
                                 <Run Text="Duplicate Groups" />
-                                <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="(" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.DuplicateGroupsCount, Mode=OneWay}" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
+                            <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.DuplicateGroupsCount, Mode=OneWay}" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
                             </TextBlock>
                             <TextBlock
-                                FontSize="12"
+                            FontSize="13"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
                         </StackPanel>
 
-                        <!--  Similarity Threshold  -->
-                        <StackPanel
-                            Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="12">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock VerticalAlignment="Center" Text="Similarity Threshold:" />
-                                <Slider
-                                    x:Name="SimilaritySlider"
-                                    Width="120"
-                                    VerticalAlignment="Center"
-                                    Maximum="1.0"
-                                    Minimum="0.3"
-                                    StepFrequency="0.01"
-                                    ThumbToolTipValueConverter="{StaticResource SimilarityToPercentageConverter}"
-                                    ToolTipService.ToolTip="How similar images must be to be grouped."
-                                    Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}" />
-                                <TextBlock
-                                    Width="50"
-                                    VerticalAlignment="Center"
-                                    Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource SimilarityToPercentageConverter}}" />
-                            </StackPanel>
-
-                            <Button
-                                Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
-                                Style="{StaticResource AccentButtonStyle}"
-                                ToolTipService.ToolTip="Higher values = more strict matching">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon FontSize="14" Glyph="&#xE9D9;" />
-                                    <TextBlock Text="Analyze" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-
                     <!--  Empty State  -->
                     <StackPanel
-                        Grid.Row="2"
+                        Grid.Row="1"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Spacing="16"
@@ -270,15 +376,23 @@
                             FontSize="64"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             Glyph="&#xE8B9;" />
+                        <StackPanel HorizontalAlignment="Center" Spacing="8">
                         <TextBlock
                             HorizontalAlignment="Center"
+                                FontSize="16"
+                                FontWeight="SemiBold"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="Click Analyze to find duplicate groups"
+                                Text="No Results Yet" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="Adjust the similarity threshold and click Analyze"
                             TextAlignment="Center" />
+                    </StackPanel>
                     </StackPanel>
 
                     <!--  Cluster Grid  -->
-                    <ScrollViewer Grid.Row="2" Visibility="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
+                    <ScrollViewer Grid.Row="1" Visibility="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
                         <GridView
                             IsItemClickEnabled="True"
                             ItemsSource="{x:Bind ViewModel.ClusterGroups, Mode=OneWay}"
@@ -327,16 +441,15 @@
                     <TranslateTransform x:Name="GroupContentPanelTransform" X="400" />
                 </Border.RenderTransform>
 
-                <Grid>
+                <Grid RowSpacing="12">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <!--  Header  -->
-                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid Grid.Row="0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -351,10 +464,10 @@
                                 Spacing="8">
                                 <TextBlock
                                     x:Name="GroupNameTextBlock"
-                                    Padding="0,5"
+                                    Padding="0,3.5"
                                     VerticalAlignment="Center"
                                     DoubleTapped="GroupNameTextBlock_DoubleTapped"
-                                    FontSize="18"
+                                    FontSize="20"
                                     FontWeight="SemiBold"
                                     Text="{x:Bind ViewModel.SelectedCluster.Name, Mode=OneWay}"
                                     ToolTipService.ToolTip="Double-click to rename" />
@@ -415,12 +528,11 @@
                         </Button>
                     </Grid>
 
-                    <!--  Selection Controls Bar  -->
+                    <!--  Selection Controls  -->
                     <Border
                         Grid.Row="1"
-                        Margin="0,0,0,12"
-                        Padding="12,8"
-                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                        Padding="12"
+                        Background="{ThemeResource LayerFillColorAltBrush}"
                         CornerRadius="6">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -430,22 +542,83 @@
                             </Grid.ColumnDefinitions>
 
                             <!--  Select All Checkbox  -->
-                            <StackPanel
-                                Grid.Column="0"
-                                Orientation="Horizontal"
-                                Spacing="8">
                                 <CheckBox
                                     x:Name="SelectAllCheckBox"
+                                Grid.Column="0"
                                     MinWidth="0"
                                     MinHeight="0"
                                     VerticalAlignment="Center"
-                                    Click="SelectAllCheckBox_Click"
-                                    IsThreeState="True" />
+                                Click="SelectAllGroupCheckBox_Click"
+                                IsThreeState="True"
+                                ToolTipService.ToolTip="Select/deselect all in this group" />
+
+                            <!--  Selection Count  -->
                                 <TextBlock
                                     x:Name="SelectionCountText"
+                                Grid.Column="1"
+                                Margin="4,0,0,0"
                                     VerticalAlignment="Center"
-                                    FontSize="13" />
+                                FontSize="13"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                            <!--  Auto-Select Dropdown  -->
+                            <DropDownButton Grid.Column="2" ToolTipService.ToolTip="Auto selection for this group">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon FontSize="14" Glyph="&#xF16E;" />
+                                    <TextBlock Text="Auto-Select" />
                             </StackPanel>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                        <MenuFlyoutSubItem Text="By Resolution">
+                                            <MenuFlyoutSubItem.Icon>
+                                                <FontIcon Glyph="&#xE9E9;" />
+                                            </MenuFlyoutSubItem.Icon>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepHighestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepHighestResolution                                                 )}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE9E9;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepLowestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLowestResolution)}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE9E9;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyoutSubItem>
+
+                                        <MenuFlyoutSubItem Text="By File Size">
+                                            <MenuFlyoutSubItem.Icon>
+                                                <FontIcon Glyph="&#xE729;" />
+                                            </MenuFlyoutSubItem.Icon>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepLargestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLargestFileSize)}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE729;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepSmallestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepSmallestFileSize)}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE729;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyoutSubItem>
+
+                                        <MenuFlyoutSubItem Text="By Date">
+                                            <MenuFlyoutSubItem.Icon>
+                                                <FontIcon Glyph="&#xE787;" />
+                                            </MenuFlyoutSubItem.Icon>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepNewest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepNewest)}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE823;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Click="ApplyStrategy_KeepOldest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepOldest)}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <FontIcon Glyph="&#xE74B;" />
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyoutSubItem>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
                         </Grid>
                     </Border>
 
@@ -456,7 +629,7 @@
                                 <UniformGridLayout
                                     ItemsStretch="None"
                                     MinColumnSpacing="8"
-                                    MinItemHeight="220"
+                                    MinItemHeight="240"
                                     MinItemWidth="180"
                                     MinRowSpacing="8"
                                     Orientation="Horizontal" />

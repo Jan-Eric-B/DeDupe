@@ -20,6 +20,7 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly IAppStateService _appStateService;
         private readonly ISimilarityAnalysisService _similarityAnalysisService;
+        private readonly IAutoSelectionService _autoSelectionService;
         private readonly ILogger<ManagementViewModel> _logger;
 
         private bool _isAnalyzingSimilarity;
@@ -27,6 +28,7 @@ namespace DeDupe.ViewModels.Pages
         private double _similarityThreshold = 0.85;
         private SimilarityResult? _similarityResult;
         private SimilarityGroup? _selectedCluster;
+        private GroupSortingOption _currentSortOption = GroupSortingOption.Similarity;
 
         #endregion Fields
 
@@ -115,12 +117,45 @@ namespace DeDupe.ViewModels.Pages
 
         public bool HasSelectedItems => SelectedCluster?.SelectedCount > 0;
 
+        public bool HasAnySelectedItems => ClusterGroups.Any(g => g.SelectedCount > 0);
+
+
+        public GroupSortingOption CurrentSortOption
+        {
+            get => _currentSortOption;
+            set
+            {
+                if (SetProperty(ref _currentSortOption, value))
+                {
+                    ApplyCurrentSort();
+                }
+            }
+        }
+
         // Statistics
         public int TotalClusters => SimilarityResult?.TotalClusters ?? 0;
 
         public int DuplicateGroupsCount => SimilarityResult?.DuplicateGroupsCount ?? 0;
         public int TotalItems => SimilarityResult?.TotalItemsAnalyzed ?? 0;
         public string ResultSummary => SimilarityResult?.GetSummary() ?? string.Empty;
+        public int TotalSelectedCount => ClusterGroups.Sum(g => g.SelectedCount);
+        public int GroupsWithSelectionsCount => ClusterGroups.Count(g => g.SelectedCount > 0);
+
+        public string SelectionSummary
+        {
+            get
+            {
+                int total = TotalSelectedCount;
+                int groups = GroupsWithSelectionsCount;
+
+                if (total == 0)
+                {
+                    return "No files selected";
+                }
+
+                return $"{total} file{(total == 1 ? "" : "s")} selected from {groups} group{(groups == 1 ? "" : "s")}";
+            }
+        }
 
         // Configuration Info
         public int TotalFileCount => _appStateService.SourceCount;
@@ -134,7 +169,7 @@ namespace DeDupe.ViewModels.Pages
                 if (string.IsNullOrEmpty(_appStateService.ModelFilePath))
                     return "No model";
 
-                return System.IO.Path.GetFileNameWithoutExtension(_appStateService.ModelFilePath);
+                return Path.GetFileNameWithoutExtension(_appStateService.ModelFilePath);
             }
         }
 
@@ -181,14 +216,116 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
+        /// <summary>
+        /// Apply selection strategy to selected group.
+        /// </summary>
+        [RelayCommand]
+        private void ApplyStrategyToCurrentGroup(SelectionStrategy strategy)
+        {
+            if (SelectedCluster == null)
+            {
+                return;
+            }
+
+            _autoSelectionService.ApplyStrategy(SelectedCluster, strategy);
+            UpdateSelectionSummary();
+
+            _logger.LogInformation("Applied strategy {Strategy} to group {GroupId}", strategy, SelectedCluster.Id);
+        }
+
+        /// <summary>
+        /// Apply selection strategy to all groups.
+        /// </summary>
+        [RelayCommand]
+        private void ApplyStrategyToAllGroups(SelectionStrategy strategy)
+        {
+            if (ClusterGroups.Count == 0)
+            {
+                return;
+            }
+
+            _autoSelectionService.ApplyStrategyToAll(ClusterGroups, strategy);
+            UpdateSelectionSummary();
+
+            _logger.LogInformation("Applied strategy {Strategy} to all {Count} groups", strategy, ClusterGroups.Count);
+        }
+
+        /// <summary>
+        /// Clear all selections in group.
+        /// </summary>
+        [RelayCommand]
+        private void ClearCurrentGroupSelection()
+        {
+            SelectedCluster?.DeselectAll();
+            UpdateSelectionSummary();
+        }
+
+        /// <summary>
+        /// Clear all selections in all groups.
+        /// </summary>
+        [RelayCommand]
+        private void ClearAllSelections()
+        {
+            foreach (SimilarityGroup group in ClusterGroups)
+            {
+                group.DeselectAll();
+            }
+
+            UpdateSelectionSummary();
+            Status = "All selections cleared";
+        }
+        }
+
         #endregion Commands
+
+
+        #region Sort Methods
+
+        /// <summary>
+        /// Sort groups by specified option.
+        /// </summary>
+        public void SortGroups(GroupSortingOption sortOption)
+        {
+            CurrentSortOption = sortOption;
+        }
+
+        /// <summary>
+        /// Apply current sort option to cluster groups.
+        /// </summary>
+        private void ApplyCurrentSort()
+        {
+            if (ClusterGroups.Count == 0)
+            {
+                return;
+            }
+
+            List<SimilarityGroup> sorted = CurrentSortOption switch
+            {
+                GroupSortingOption.Similarity => [.. ClusterGroups.OrderByDescending(g => g.AverageSimilarity)],
+                GroupSortingOption.ImageCount => [.. ClusterGroups.OrderByDescending(g => g.Count)],
+                GroupSortingOption.Name => [.. ClusterGroups.OrderBy(g => g.Name)],
+                _ => [.. ClusterGroups]
+            };
+
+            // Rebuild collection in new order
+            ClusterGroups.Clear();
+            foreach (SimilarityGroup group in sorted)
+            {
+                ClusterGroups.Add(group);
+            }
+
+            _logger.LogInformation("Sorted groups by {SortOption}", CurrentSortOption);
+        }
+
+        #endregion Sort Methods
 
         #region Constructor
 
-        public ManagementViewModel(IAppStateService appStateService, ISimilarityAnalysisService similarityAnalysisService, ILogger<ManagementViewModel> logger) : base(3)
+        public ManagementViewModel(IAppStateService appStateService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger) : base(3)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _similarityAnalysisService = similarityAnalysisService ?? throw new ArgumentNullException(nameof(similarityAnalysisService));
+            _autoSelectionService = autoSelectionService ?? throw new ArgumentNullException(nameof(autoSelectionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Duplicate Management";
@@ -205,6 +342,12 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateClusterGroups()
         {
+            // Unsubscribe from existing groups
+            foreach (SimilarityGroup group in ClusterGroups)
+            {
+                group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
+            }
+
             ClusterGroups.Clear();
 
             if (SimilarityResult == null)
@@ -215,8 +358,14 @@ namespace DeDupe.ViewModels.Pages
             // Show duplicate groups
             foreach (SimilarityGroup cluster in SimilarityResult.DuplicateGroups)
             {
+                cluster.GroupSelectionChanged += OnAnyGroupSelectionChanged;
                 ClusterGroups.Add(cluster);
             }
+
+            // Apply current sort
+            ApplyCurrentSort();
+
+            UpdateSelectionSummary();
         }
 
         private void OnExtractedFeaturesChanged(object? sender, EventArgs e)
@@ -233,6 +382,12 @@ namespace DeDupe.ViewModels.Pages
         private void OnGroupSelectionChanged(object? sender, EventArgs e)
         {
             UpdateSelectionCommands();
+            UpdateSelectionSummary();
+        }
+
+        private void OnAnyGroupSelectionChanged(object? sender, EventArgs e)
+        {
+            UpdateSelectionSummary();
         }
 
         private void UpdateSelectionCommands()
@@ -240,6 +395,15 @@ namespace DeDupe.ViewModels.Pages
             OnPropertyChanged(nameof(HasSelectedItems));
         }
 
+        private void UpdateSelectionSummary()
+        {
+            OnPropertyChanged(nameof(TotalSelectedCount));
+            OnPropertyChanged(nameof(GroupsWithSelectionsCount));
+            OnPropertyChanged(nameof(SelectionSummary));
+            OnPropertyChanged(nameof(HasAnySelectedItems));
+            OnPropertyChanged(nameof(CanMoveOrCopy));
+            DeleteSelectedFilesCommand.NotifyCanExecuteChanged();
+        }
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -249,6 +413,12 @@ namespace DeDupe.ViewModels.Pages
                 if (_selectedCluster != null)
                 {
                     _selectedCluster.GroupSelectionChanged -= OnGroupSelectionChanged;
+                }
+
+                foreach (SimilarityGroup group in ClusterGroups)
+                {
+                    group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
+                    group.Cleanup();
                 }
             }
             base.Dispose(disposing);

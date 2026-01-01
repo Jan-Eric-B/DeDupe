@@ -77,6 +77,7 @@ namespace DeDupe
             services.AddSingleton<IFeatureExtractionService, FeatureExtractionService>();
             services.AddSingleton<ISimilarityAnalysisService, SimilarityAnalysisService>();
 
+            services.AddSingleton<IAutoSelectionService, AutoSelectionService>();
             // Logging
             services.AddLogging();
         }

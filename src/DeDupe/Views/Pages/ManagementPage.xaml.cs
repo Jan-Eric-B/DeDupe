@@ -231,7 +231,7 @@ namespace DeDupe.Views.Pages
         /// <summary>
         /// Handle user clicking SelectAll checkbox.
         /// </summary>
-        private void SelectAllCheckBox_Click(object sender, RoutedEventArgs e)
+        private void SelectAllGroupCheckBox_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModel.SelectedCluster == null)
             {
@@ -248,8 +248,117 @@ namespace DeDupe.Views.Pages
             }
         }
 
+        /// <summary>
+        /// Handle user clicking SelectAll checkbox.
+        /// </summary>
+        private void SelectAllCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNone);
+        }
+
         #endregion Selection Handling
 
+        #region Sort Handlers
+
+        private void SortBy_Similarity(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SortGroups(GroupSortingOption.Similarity);
+        }
+
+        private void SortBy_ImageCount(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SortGroups(GroupSortingOption.ImageCount);
+        }
+
+        private void SortBy_Name(object sender, RoutedEventArgs e)
+        {
+            ViewModel.SortGroups(GroupSortingOption.Name);
+        }
+
+        #endregion Sort Handlers
+
+        #region Auto Selection - Current Group
+
+        private void ApplyStrategy_KeepHighestResolution(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepHighestResolution);
+        }
+
+        private void ApplyStrategy_KeepLowestResolution(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepLowestResolution);
+        }
+
+        private void ApplyStrategy_KeepNewest(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepNewest);
+        }
+
+        private void ApplyStrategy_KeepOldest(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepOldest);
+        }
+
+        private void ApplyStrategy_KeepLargestFileSize(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepLargestFileSize);
+        }
+
+        private void ApplyStrategy_KeepSmallestFileSize(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepSmallestFileSize);
+        }
+
+        private void ClearGroupSelection_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ClearCurrentGroupSelectionCommand.Execute(null);
+        }
+
+        #endregion Auto Selection - Current Group
+
+        #region Auto Selection - All Groups
+
+        private void ApplyStrategyToAll_KeepHighestResolution(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepHighestResolution);
+        }
+
+        private void ApplyStrategyToAll_KeepLowestResolution(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepLowestResolution);
+        }
+
+        private void ApplyStrategyToAll_KeepNewest(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNewest);
+        }
+
+        private void ApplyStrategyToAll_KeepOldest(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepOldest);
+        }
+
+        private void ApplyStrategyToAll_KeepLargestFileSize(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepLargestFileSize);
+        }
+
+        private void ApplyStrategyToAll_KeepSmallestFileSize(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepSmallestFileSize);
+        }
+
+        private void ClearAllSelections_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ClearAllSelectionsCommand.Execute(null);
+        }
+
+        private void SelectAllSelections_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ClearAllSelectionsCommand.Execute(null);
+        }
+
+        #endregion Auto Selection - All Groups
         #region Group Name Editing
 
         private void GroupNameTextBlock_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
