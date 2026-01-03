@@ -74,6 +74,7 @@ namespace DeDupe.ViewModels.Settings
 
         // Resize
         public bool IsResizeEnabled => EnableResizing;
+
         public bool IsPaddingColorVisible => ResizeMethod == ResizeMethod.Padding;
 
         // Temp Folder
@@ -81,6 +82,7 @@ namespace DeDupe.ViewModels.Settings
 
         // ComboBox Enums
         public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
+
         public IEnumerable<ResizeMethod> ResizeMethods => Enum.GetValues<ResizeMethod>();
         public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
         public IEnumerable<ColorFormat> ColorFormats => Enum.GetValues<ColorFormat>();

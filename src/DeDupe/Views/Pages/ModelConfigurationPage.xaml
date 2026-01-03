@@ -57,22 +57,6 @@
                         OnContent="Bundled" />
                 </controls:SettingsCard>
 
-                <!--  Bundled Model Info (shown when bundled is selected and available)  -->
-                <InfoBar
-                    Title="Bundled Model Selected"
-                    IsClosable="False"
-                    IsOpen="{x:Bind ViewModel.ShowBundledModelAvailable, Mode=OneWay}"
-                    Message="{x:Bind ViewModel.BundledModelName, Mode=OneWay}"
-                    Severity="Success" />
-
-                <!--  Bundled Model Not Found Warning  -->
-                <InfoBar
-                    Title="Bundled Model Not Found"
-                    IsClosable="False"
-                    IsOpen="{x:Bind ViewModel.ShowBundledModelNotFound, Mode=OneWay}"
-                    Message="The bundled model file could not be located. Please select a custom model or rebuild the project."
-                    Severity="Error" />
-
                 <!--  Custom Model Selection (shown when custom is selected)  -->
                 <controls:SettingsExpander
                     VerticalAlignment="Top"

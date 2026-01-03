@@ -19,11 +19,13 @@ namespace DeDupe.Services
 
         // General
         private const string ThemeKey = "AppTheme";
+
         private const string BackdropKey = "AppBackdrop";
         private const string AccentColorKey = "AppAccentColor";
 
         // Pre-Processing
         private const string EnableResizingKey = "EnableResizing";
+
         private const string ResizeSizeKey = "ResizeSize";
         private const string ResizeMethodKey = "ResizeMethod";
         private const string PaddingColorKey = "PaddingColor";
@@ -39,7 +41,31 @@ namespace DeDupe.Services
         private const string UseCustomTempFolderKey = "UseCustomTempFolder";
         private const string CustomTempFolderPathKey = "CustomTempFolderPath";
 
+        // Model Configuration
+        private const string UseBundledModelKey = "UseBundledModel";
+
+        private const string CustomModelFilePathKey = "CustomModelFilePath";
+        private const string MeanRKey = "NormalizationMeanR";
+        private const string MeanGKey = "NormalizationMeanG";
+        private const string MeanBKey = "NormalizationMeanB";
+        private const string StdRKey = "NormalizationStdR";
+        private const string StdGKey = "NormalizationStdG";
+        private const string StdBKey = "NormalizationStdB";
+
         #endregion Keys
+
+        #region Default Values
+
+        // ImageNet normalization defaults
+        private const double DefaultMeanR = 0.485;
+
+        private const double DefaultMeanG = 0.456;
+        private const double DefaultMeanB = 0.406;
+        private const double DefaultStdR = 0.229;
+        private const double DefaultStdG = 0.224;
+        private const double DefaultStdB = 0.225;
+
+        #endregion Default Values
 
         #region Properties
 
@@ -245,27 +271,174 @@ namespace DeDupe.Services
 
         public string TempFolderPath => UseCustomTempFolder && !string.IsNullOrEmpty(CustomTempFolderPath) ? CustomTempFolderPath : _defaultTempFolderPath;
 
+        // Model Configuration
+        public bool UseBundledModel
+        {
+            get => GetValue(UseBundledModelKey, true);
+            set
+            {
+                if (UseBundledModel != value)
+                {
+                    SetValue(UseBundledModelKey, value);
+                    UseBundledModelChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public string CustomModelFilePath
+        {
+            get => GetValue(CustomModelFilePathKey, string.Empty);
+            set
+            {
+                if (CustomModelFilePath != value)
+                {
+                    SetValue(CustomModelFilePathKey, value ?? string.Empty);
+                    CustomModelFilePathChanged?.Invoke(this, value ?? string.Empty);
+                    if (!UseBundledModel)
+                    {
+                        ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
+
+        public double MeanR
+        {
+            get => GetValue(MeanRKey, DefaultMeanR);
+            set
+            {
+                if (Math.Abs(MeanR - value) > double.Epsilon)
+                {
+                    SetValue(MeanRKey, value);
+                    MeanRChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double MeanG
+        {
+            get => GetValue(MeanGKey, DefaultMeanG);
+            set
+            {
+                if (Math.Abs(MeanG - value) > double.Epsilon)
+                {
+                    SetValue(MeanGKey, value);
+                    MeanGChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double MeanB
+        {
+            get => GetValue(MeanBKey, DefaultMeanB);
+            set
+            {
+                if (Math.Abs(MeanB - value) > double.Epsilon)
+                {
+                    SetValue(MeanBKey, value);
+                    MeanBChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdR
+        {
+            get => GetValue(StdRKey, DefaultStdR);
+            set
+            {
+                if (Math.Abs(StdR - value) > double.Epsilon)
+                {
+                    SetValue(StdRKey, value);
+                    StdRChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdG
+        {
+            get => GetValue(StdGKey, DefaultStdG);
+            set
+            {
+                if (Math.Abs(StdG - value) > double.Epsilon)
+                {
+                    SetValue(StdGKey, value);
+                    StdGChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public double StdB
+        {
+            get => GetValue(StdBKey, DefaultStdB);
+            set
+            {
+                if (Math.Abs(StdB - value) > double.Epsilon)
+                {
+                    SetValue(StdBKey, value);
+                    StdBChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
         #endregion Properties
 
         #region Events
 
         // General
         public event EventHandler<AppTheme>? ThemeChanged;
+
         public event EventHandler<AppBackdrop>? BackdropChanged;
+
         public event EventHandler<AppAccentColor>? AccentColorChanged;
 
         // Pre-Processing
         public event EventHandler<bool>? EnableResizingChanged;
+
         public event EventHandler<int>? ResizeSizeChanged;
+
         public event EventHandler<ResizeMethod>? ResizeMethodChanged;
+
         public event EventHandler<Color>? PaddingColorChanged;
+
         public event EventHandler<InterpolationMethod>? DownsamplingMethodChanged;
+
         public event EventHandler<InterpolationMethod>? UpsamplingMethodChanged;
+
         public event EventHandler<bool>? EnableBorderDetectionChanged;
+
         public event EventHandler<int>? BorderDetectionToleranceChanged;
+
         public event EventHandler<OutputFormat>? OutputFormatChanged;
+
         public event EventHandler<ColorFormat>? ColorFormatChanged;
+
         public event EventHandler? TempFolderPathChanged;
+
+        // Model Configuration
+        public event EventHandler<bool>? UseBundledModelChanged;
+
+        public event EventHandler<string>? CustomModelFilePathChanged;
+
+        public event EventHandler<double>? MeanRChanged;
+
+        public event EventHandler<double>? MeanGChanged;
+
+        public event EventHandler<double>? MeanBChanged;
+
+        public event EventHandler<double>? StdRChanged;
+
+        public event EventHandler<double>? StdGChanged;
+
+        public event EventHandler<double>? StdBChanged;
+
+        public event EventHandler? ModelConfigurationChanged;
 
         #endregion Events
 

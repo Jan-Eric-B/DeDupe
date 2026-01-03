@@ -50,8 +50,6 @@ namespace DeDupe.ViewModels.Pages
                     OnPropertyChanged(nameof(ModelDisplayName));
                     OnPropertyChanged(nameof(CanStartExtraction));
                     OnPropertyChanged(nameof(IsCustomModelSectionVisible));
-                    OnPropertyChanged(nameof(ShowBundledModelAvailable));
-                    OnPropertyChanged(nameof(ShowBundledModelNotFound));
 
                     ResetExtractionState();
                     UpdateCompletionStatus();
@@ -83,16 +81,6 @@ namespace DeDupe.ViewModels.Pages
         /// Gets whether custom model section should be expanded.
         /// </summary>
         public bool IsCustomModelSectionVisible => !UseBundledModel;
-
-        /// <summary>
-        /// Gets whether to show "bundled model available" success message.
-        /// </summary>
-        public bool ShowBundledModelAvailable => UseBundledModel && IsBundledModelAvailable;
-
-        /// <summary>
-        /// Gets whether to show "bundled model not found" error message.
-        /// </summary>
-        public bool ShowBundledModelNotFound => UseBundledModel && !IsBundledModelAvailable;
 
         /// <summary>
         /// Gets display name for currently selected model.
