@@ -2,11 +2,9 @@ using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Settings;
 using Microsoft.UI;
-using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
 
@@ -17,23 +15,35 @@ namespace DeDupe.Views
         private SettingsWindowViewModel ViewModel { get; }
 
         private readonly WindowsSizeService _windowsSizeService;
+        private readonly IThemeService _themeService;
 
         public SettingsWindow()
         {
             InitializeComponent();
-            InitializeTheme();
 
             // Set minimum window size
             nint hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowsSizeService(hwnd, 600, 450);
-            this.Closed += (s, e) => _windowsSizeService?.Dispose();
+            _windowsSizeService = new WindowsSizeService(hwnd, 1000, 700);
+            SetWindowSize(hwnd, 1000, 700);
 
-            SetWindowSize(hwnd, 700, 500);
+            // Theme
+            _themeService = App.Current.GetService<IThemeService>();
+            _themeService.RegisterWindow(this, grdRoot);
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(spTitle);
+
+            this.Closed += OnWindowClosed;
 
             ViewModel = App.Current.GetService<SettingsWindowViewModel>();
             grdRoot.DataContext = ViewModel;
 
             nvSettings.SelectedItem = nvSettings.MenuItems[0];
+        }
+
+        private void OnWindowClosed(object sender, WindowEventArgs args)
+        {
+            _themeService.UnregisterWindow(this);
+            _windowsSizeService?.Dispose();
         }
 
         private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -54,13 +64,6 @@ namespace DeDupe.Views
                     frSettings.Navigate(pageType, null, new EntranceNavigationTransitionInfo());
                 }
             }
-        }
-
-        private void InitializeTheme()
-        {
-            SystemBackdrop = new MicaBackdrop() { Kind = MicaKind.Base };
-            ExtendsContentIntoTitleBar = true;
-            SetTitleBar(spTitle);
         }
 
         private static void SetWindowSize(nint hwnd, int width, int height)

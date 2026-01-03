@@ -17,7 +17,7 @@
         <StackPanel
             x:Name="spTitle"
             Grid.Row="0"
-            Padding="10,7"
+            Padding="10,5"
             Background="Transparent"
             Orientation="Horizontal"
             Spacing="5">
@@ -62,7 +62,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem Content="Info" Tag="Info">
+                <NavigationViewItem Content="About" Tag="About">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE946;" />
                     </NavigationViewItem.Icon>

@@ -3,17 +3,77 @@
     x:Class="DeDupe.Views.Settings.GeneralSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converter="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:enums="using:DeDupe.Enums"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
-
+    <Page.Resources>
+        <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+    </Page.Resources>
     <ScrollViewer>
         <StackPanel Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="General" />
+
+            <!--  Appearance  -->
+            <TextBlock
+                Margin="0,0,0,8"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="Appearance" />
+
+            <!--  Theme  -->
+            <controls:SettingsCard
+                Description="Select which app theme to display"
+                Header="App Theme"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE793;}">
+                <ComboBox
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.ThemeOptions}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedThemeIndex, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="enums:AppTheme">
+                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <!--  Backdrop  -->
+            <controls:SettingsCard Header="Window backdrop" HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">
+                <ComboBox
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.BackdropOptions}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedBackdropIndex, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="enums:AppBackdrop">
+                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <!--  Accent Color  -->
+            <controls:SettingsCard Header="Accent Color" HeaderIcon="{ui:FontIcon Glyph=&#xE771;}">
+                <ComboBox
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.AccentColorOptions}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedAccentColorIndex, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="enums:AppAccentColor">
+                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </controls:SettingsCard>
         </StackPanel>
     </ScrollViewer>
 </Page>

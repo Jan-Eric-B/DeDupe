@@ -1,9 +1,7 @@
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Pages;
-using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.ComponentModel;
 
@@ -16,21 +14,38 @@ namespace DeDupe
         private int _previousStepIndex = 0;
 
         private readonly WindowsSizeService _windowsSizeService;
+        private readonly IThemeService _themeService;
 
         public MainWindow()
         {
             InitializeComponent();
-            InitializeTheme();
 
             // Set minimum window size
             nint hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             _windowsSizeService = new WindowsSizeService(hwnd, 800, 600);
-            this.Closed += (s, e) => _windowsSizeService?.Dispose();
+
+            // Theme
+            _themeService = App.Current.GetService<IThemeService>();
+            _themeService.RegisterWindow(this, grdRoot);
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(grdTitleBar);
+
+            // Cleanup on close
+            this.Closed += OnWindowClosed;
 
             ViewModel = App.Current.GetService<MainWindowViewModel>();
             grdRoot.DataContext = ViewModel;
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             NavigateToPage(ViewModel.SelectedStepIndex);
+        }
+
+        private void OnWindowClosed(object sender, WindowEventArgs args)
+        {
+            _themeService.UnregisterWindow(this);
+            _windowsSizeService?.Dispose();
+
+            // Close entire application
+            App.Current.Shutdown();
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -41,7 +56,6 @@ namespace DeDupe
             }
             else if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode) && ViewModel.IsInManagementMode)
             {
-                // Navigate to management page when entering management mode
                 frManagement.Navigate(typeof(ManagementPage));
             }
         }
@@ -76,13 +90,6 @@ namespace DeDupe
 
             frMain.Navigate(pageType, null, slideTransition);
             _previousStepIndex = pageIndex;
-        }
-
-        private void InitializeTheme()
-        {
-            SystemBackdrop = new MicaBackdrop() { Kind = MicaKind.Base };
-            ExtendsContentIntoTitleBar = true;
-            SetTitleBar(grdTitleBar);
         }
     }
 }

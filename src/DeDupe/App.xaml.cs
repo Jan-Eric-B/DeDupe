@@ -55,6 +55,10 @@ namespace DeDupe
 
         private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         {
+            // Settings & Theme
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IThemeService, ThemeService>();
+
             // MainWindowViewModel
             services.AddSingleton<MainWindowViewModel>();
 
@@ -117,8 +121,25 @@ namespace DeDupe
 
             _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
 
+            // Initialize theme service
+            IThemeService themeService = _serviceProvider.GetRequiredService<IThemeService>();
+            themeService.Initialize();
+
             Window = new MainWindow();
             Window.Activate();
+        }
+
+        public void Shutdown()
+        {
+            // Close settings window
+            _settingsWindow?.Close();
+            _settingsWindow = null;
+
+            // Stop host and dispose resources
+            OnAppClosing();
+
+            // Exit application
+            Environment.Exit(0);
         }
 
         public async void OnAppClosing()
