@@ -159,7 +159,7 @@ namespace DeDupe.Services
 
         private void RefreshAllWindows()
         {
-            foreach ((Window? window, FrameworkElement? rootElement) in _registeredWindows)
+            foreach ((_, FrameworkElement? rootElement) in _registeredWindows)
             {
                 // Force resource refresh
                 ElementTheme currentTheme = rootElement.RequestedTheme;

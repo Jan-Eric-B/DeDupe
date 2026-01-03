@@ -1,6 +1,7 @@
 ﻿using DeDupe.Enums;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 
@@ -184,7 +185,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"MediaMetadata.LoadBasicFileInfo error for {FilePath}: {ex.Message}");
+                Debug.WriteLine($"MediaMetadata.LoadBasicFileInfo error for {FilePath}: {ex.Message}");
             }
         }
 

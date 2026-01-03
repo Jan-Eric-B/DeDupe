@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
+using System.Runtime.InteropServices;
 
 namespace DeDupe.Views
 {
@@ -78,7 +79,7 @@ namespace DeDupe.Views
             appWindow.Resize(new Windows.Graphics.SizeInt32((int)(width * scalingFactor), (int)(height * scalingFactor)));
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [DllImport("user32.dll")]
         private static extern uint GetDpiForWindow(nint hwnd);
     }
 }

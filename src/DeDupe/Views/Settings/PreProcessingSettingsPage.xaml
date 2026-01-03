@@ -2,18 +2,249 @@
 <Page
     x:Class="DeDupe.Views.Settings.PreProcessingSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converters="using:DeDupe.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:enums="using:DeDupe.Enums"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
-
+    <Page.Resources>
+        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+        <Style x:Key="CustomColorPickerStyle" TargetType="ColorPicker">
+            <Setter Property="IsAlphaEnabled" Value="False" />
+            <Setter Property="IsAlphaSliderVisible" Value="False" />
+            <Setter Property="IsColorSliderVisible" Value="True" />
+            <Setter Property="IsColorChannelTextInputVisible" Value="False" />
+            <Setter Property="IsColorSpectrumVisible" Value="True" />
+            <Setter Property="ColorSpectrumShape" Value="Ring" />
+        </Style>
+    </Page.Resources>
     <ScrollViewer>
         <StackPanel Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Image Pre-Processing" />
+
+            <!--  Resize Settings  -->
+            <TextBlock
+                Margin="0,0,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Resize Settings" />
+
+            <!--  Enable Resize  -->
+            <controls:SettingsCard Header="Resize Image" HeaderIcon="{ui:FontIcon Glyph=&#xE799;}">
+                <ToggleSwitch
+                    IsOn="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}"
+                    OffContent="Off"
+                    OnContent="On" />
+            </controls:SettingsCard>
+
+            <!--  Size  -->
+            <controls:SettingsCard
+                Description="Width × Height (px)"
+                Header="Target Size"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE9A6;}"
+                IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                <NumberBox
+                    x:Name="ResizeSizeNumberBox"
+                    Maximum="2048"
+                    Minimum="32"
+                    SpinButtonPlacementMode="Compact"
+                    Value="{x:Bind ViewModel.ResizeSize, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <!--  Method  -->
+            <controls:SettingsCard
+                Description="How to handle images that don't match the target aspect ratio"
+                Header="Aspect Ratio Handling"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE740;}"
+                IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <controls:ColorPickerButton
+                        ColorPickerStyle="{StaticResource CustomColorPickerStyle}"
+                        SelectedColor="{x:Bind ViewModel.PaddingColor, Mode=TwoWay}"
+                        Visibility="{x:Bind ViewModel.IsPaddingColorVisible, Mode=OneWay}" />
+
+                    <ComboBox
+                        x:Name="ResizeMethodComboBox"
+                        Grid.Column="0"
+                        HorizontalAlignment="Stretch"
+                        ItemsSource="{x:Bind ViewModel.ResizeMethods}"
+                        SelectedItem="{x:Bind ViewModel.ResizeMethod, Mode=TwoWay}" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <!--  Interpolation Methods  -->
+            <controls:SettingsExpander
+                Description="Used algorithm when images are scaled up or down"
+                Header="Interpolation Methods"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE158;}"
+                IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                <controls:SettingsExpander.Items>
+
+                    <!--  Upsampling  -->
+                    <controls:SettingsCard
+                        Header="Upsampling"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xEE47;}"
+                        IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                        <ComboBox
+                            x:Name="UpsamplingComboBox"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
+                            SelectedItem="{x:Bind ViewModel.UpsamplingMethod, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="enums:InterpolationMethod">
+                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </controls:SettingsCard>
+
+                    <!--  Downsampling  -->
+                    <controls:SettingsCard
+                        Header="Downsampling"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xEE49;}"
+                        IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                        <ComboBox
+                            x:Name="DownsamplingComboBox"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
+                            SelectedItem="{x:Bind ViewModel.DownsamplingMethod, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="enums:InterpolationMethod">
+                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+
+            <!--  Border Detection  -->
+            <TextBlock
+                Margin="0,29,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Border Detection" />
+
+            <!--  Enable Border Removal  -->
+            <controls:SettingsCard
+                Description="Try to crop black bars or uniform borders from Images"
+                Header="Remove Borders/Letterboxing"
+                HeaderIcon="{ui:FontIcon Glyph=&#xEF2E;}">
+                <ToggleSwitch
+                    x:Name="BorderDetectionCheckBox"
+                    IsOn="{x:Bind ViewModel.EnableBorderDetection, Mode=TwoWay}"
+                    OffContent="Off"
+                    OnContent="On" />
+            </controls:SettingsCard>
+
+            <!--  Color Tolerance  -->
+            <controls:SettingsCard
+                Description="How much color variation to allow (0-255)"
+                Header="Color Tolerance"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE790;}"
+                IsEnabled="{x:Bind ViewModel.EnableBorderDetection, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Slider
+                        Width="150"
+                        Maximum="255"
+                        Minimum="0"
+                        StepFrequency="1"
+                        ToolTipService.ToolTip="Lower values: uniform borders / Higher values: borders with more color variation"
+                        Value="{x:Bind ViewModel.BorderDetectionTolerance, Mode=TwoWay}" />
+                    <TextBlock
+                        Width="25"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind ViewModel.BorderDetectionTolerance, Mode=OneWay}" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <!--  Output Settings  -->
+            <TextBlock
+                Margin="0,29,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Output Settings" />
+
+            <!--  File Format  -->
+            <controls:SettingsCard Header="File Format" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
+                <ComboBox
+                    x:Name="OutputFormatComboBox"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{x:Bind ViewModel.OutputFormats}"
+                    SelectedItem="{x:Bind ViewModel.OutputFormat, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <!--  Color Format  -->
+            <controls:SettingsCard Header="Bit Depth" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
+                <ComboBox
+                    x:Name="BitDepthComboBox"
+                    HorizontalAlignment="Stretch"
+                    ItemsSource="{x:Bind ViewModel.ColorFormats}"
+                    SelectedItem="{x:Bind ViewModel.ColorFormat, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
+            <!--  Temp Folder  -->
+            <TextBlock
+                Margin="0,0,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Temp Folder" />
+
+            <!--  Temp Folder  -->
+            <controls:SettingsExpander
+                Description="Location for storing pre-processed images temporarily"
+                Header="Temporary Folder Location"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE8B7;}"
+                IsExpanded="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <ToggleSwitch
+                        IsOn="{x:Bind ViewModel.UseCustomTempFolder, Mode=TwoWay}"
+                        OffContent="Application Temp Folder"
+                        OnContent="Custom" />
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Command="{x:Bind ViewModel.OpenTempFolderCommand}"
+                        ToolTipService.ToolTip="Open folder in Explorer">
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8DA;" />
+                    </Button>
+                </StackPanel>
+                <controls:SettingsExpander.Items>
+                    <!--  Custom Temp Folder  -->
+                    <controls:SettingsCard
+                        Header="Custom Directory"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE838;}"
+                        IsEnabled="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
+
+                        <!--  Custom Folder Picker  -->
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <Border
+                                MinWidth="300"
+                                MinHeight="32"
+                                Padding="12,5,12,6"
+                                Background="{ThemeResource TextControlBackground}"
+                                BorderBrush="{ThemeResource TextControlBorderBrush}"
+                                BorderThickness="{ThemeResource TextControlBorderThemeThickness}"
+                                CornerRadius="{ThemeResource ControlCornerRadius}"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.CustomTempFolderPath, Mode=OneWay}">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Text="{x:Bind ViewModel.CustomTempFolderPath, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </Border>
+                            <Button
+                                HorizontalAlignment="Stretch"
+                                Command="{x:Bind ViewModel.BrowseTempFolderCommand}"
+                                ToolTipService.ToolTip="Browse for folder">
+                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
+                            </Button>
+                        </StackPanel>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </Page>

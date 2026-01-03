@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -114,7 +115,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load image: {imagePath}, Error: {ex.Message}");
+                Debug.WriteLine($"Failed to load image: {imagePath}, Error: {ex.Message}");
             }
         }
 

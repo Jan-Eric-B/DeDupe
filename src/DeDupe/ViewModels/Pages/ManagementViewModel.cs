@@ -528,7 +528,7 @@ namespace DeDupe.ViewModels.Pages
 
                     foreach (KeyValuePair<string, List<string>> groupEntry in filesByGroup)
                     {
-                        string groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
+                        string? groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
                         string groupFolder = Path.Combine(rootFolder, groupName);
 
                         // Create group folder if it doesn't exist

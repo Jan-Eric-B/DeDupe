@@ -23,8 +23,8 @@
 
             <!--  Appearance  -->
             <TextBlock
-                Margin="0,0,0,8"
-                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,0,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
                 Text="Appearance" />
 
             <!--  Theme  -->

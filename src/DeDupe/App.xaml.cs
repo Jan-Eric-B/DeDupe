@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using System;
+using System.Diagnostics;
 
 namespace DeDupe
 {
@@ -159,8 +160,8 @@ namespace DeDupe
             _logger?.LogError(exception, "Unhandled application exception occurred");
 
             // Debug output
-            System.Diagnostics.Debug.WriteLine(message);
-            System.Diagnostics.Debug.WriteLine(stackTrace);
+            Debug.WriteLine(message);
+            Debug.WriteLine(stackTrace);
 
             // Prevent debugger break
             e.Handled = true;
@@ -171,7 +172,7 @@ namespace DeDupe
         private void DebugSettings_BindingFailed(object sender, BindingFailedEventArgs e)
         {
             string? message = $"Binding Failed: {e.Message}";
-            System.Diagnostics.Debug.WriteLine(message);
+            Debug.WriteLine(message);
 
             _logger?.LogWarning("Data binding failed: {BindingMessage}", e.Message);
         }

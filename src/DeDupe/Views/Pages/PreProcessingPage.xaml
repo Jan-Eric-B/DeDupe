@@ -2,18 +2,18 @@
 <Page
     x:Class="DeDupe.Views.Pages.PreProcessingPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converter="using:DeDupe.Converters"
+    xmlns:converters="using:DeDupe.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enums="using:DeDupe.Enums"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
+    xmlns:ui="using:CommunityToolkit.WinUI"
     d:DataContext="{d:DesignInstance Type=pages:PreProcessingViewModel}"
     mc:Ignorable="d">
     <Page.Resources>
-        <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
         <Style x:Key="CustomColorPickerStyle" TargetType="ColorPicker">
             <Setter Property="IsAlphaEnabled" Value="False" />
             <Setter Property="IsAlphaSliderVisible" Value="False" />
@@ -68,7 +68,7 @@
                     Description="Width × Height (px)"
                     Header="Target Size"
                     HeaderIcon="{ui:FontIcon Glyph=&#xE9A6;}"
-                    IsEnabled="{x:Bind ViewModel.IsResizeSettingsEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                     <NumberBox
                         x:Name="ResizeSizeNumberBox"
                         Maximum="2048"
@@ -82,7 +82,7 @@
                     Description="How to handle images that don't match the target aspect ratio"
                     Header="Aspect Ratio Handling"
                     HeaderIcon="{ui:FontIcon Glyph=&#xE740;}"
-                    IsEnabled="{x:Bind ViewModel.IsResizeSettingsEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <controls:ColorPickerButton
                             ColorPickerStyle="{StaticResource CustomColorPickerStyle}"

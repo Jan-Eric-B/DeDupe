@@ -1,6 +1,7 @@
 ﻿using DeDupe.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -317,7 +318,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ImageMetadata.LoadImagePropertiesAsync error: {ex.Message}");
+                Debug.WriteLine($"ImageMetadata.LoadImagePropertiesAsync error: {ex.Message}");
             }
         }
 
@@ -361,7 +362,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ImageMetadata.LoadExifDataAsync warning: {ex.Message}");
+                Debug.WriteLine($"ImageMetadata.LoadExifDataAsync warning: {ex.Message}");
             }
         }
 
@@ -442,7 +443,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ImageMetadata.LoadExtendedExifPropertiesAsync warning: {ex.Message}");
+                Debug.WriteLine($"ImageMetadata.LoadExtendedExifPropertiesAsync warning: {ex.Message}");
             }
         }
 

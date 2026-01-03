@@ -44,7 +44,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (SetProperty(ref _enableResizing, value))
                 {
-                    OnPropertyChanged(nameof(IsResizeSettingsEnabled));
+                    OnPropertyChanged(nameof(IsResizeEnabled));
                     OnPropertyChanged(nameof(IsInterpolationMethodsEnabled));
                 }
             }
@@ -56,7 +56,7 @@ namespace DeDupe.ViewModels.Pages
             set => SetProperty(ref _resizeSize, value);
         }
 
-        public bool IsResizeSettingsEnabled => EnableResizing;
+        public bool IsResizeEnabled => EnableResizing;
 
         // Resize Method
         public ResizeMethod ResizeMethod
