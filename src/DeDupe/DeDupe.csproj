@@ -77,6 +77,7 @@
 		<None Remove="Controls\StepperControl.xaml" />
 		<None Remove="Views\Pages\FileInputPage.xaml" />
 		<None Remove="Views\Pages\ManagementPage.xaml" />
+		<None Remove="Views\Settings\PreProcessingSettingsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -109,6 +110,14 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\Settings\GeneralSettingsPage.xaml">
+	    <SubType>Designer</SubType>
+	  </Page>
+	  <Page Update="Views\Settings\ModelSettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
 
 	<ItemGroup>
 		<Page Update="Controls\ImageGroupCard.xaml">
@@ -140,6 +149,11 @@
 		<Page Update="Controls\StepperControl.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
+	</ItemGroup>
+	<ItemGroup>
+	  <Page Update="Views\Settings\PreProcessingSettingsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
 	</ItemGroup>
 
 	<!--

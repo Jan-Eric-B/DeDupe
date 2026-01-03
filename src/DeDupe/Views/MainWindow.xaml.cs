@@ -51,6 +51,11 @@ namespace DeDupe
             ViewModel.NavigateToStepCommand.Execute(stepNumber);
         }
 
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            App.Current.OpenSettingsWindow();
+        }
+
         private void NavigateToPage(int pageIndex)
         {
             Type pageType = pageIndex switch
@@ -77,7 +82,7 @@ namespace DeDupe
         {
             SystemBackdrop = new MicaBackdrop() { Kind = MicaKind.Base };
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(spTitle);
+            SetTitleBar(grdTitleBar);
         }
     }
 }

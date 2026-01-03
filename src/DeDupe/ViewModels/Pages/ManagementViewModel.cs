@@ -5,13 +5,13 @@ using DeDupe.Models.Analysis;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic.FileIO;
 
 namespace DeDupe.ViewModels.Pages
 {

@@ -2,10 +2,10 @@
 <Window
     x:Class="DeDupe.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:DeDupe.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="DeDupe"
     mc:Ignorable="d">
     <Grid x:Name="grdRoot" Padding="5">
@@ -15,24 +15,50 @@
         </Grid.RowDefinitions>
 
         <!--  Title Bar  -->
-        <StackPanel
-            x:Name="spTitle"
+        <Grid
+            x:Name="grdTitleBar"
             Grid.Row="0"
             Padding="10,5"
-            Background="Transparent"
-            Orientation="Horizontal"
-            Spacing="5">
-            <Image
-                Width="16"
-                Height="16"
-                VerticalAlignment="Top"
-                Source="/Assets/Icon/StoreLogo.png" />
-            <TextBlock
-                VerticalAlignment="Top"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="DeDupe" />
-        </StackPanel>
+            Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!--  App Icon and Title  -->
+            <StackPanel
+                x:Name="spTitle"
+                Grid.Column="0"
+                Orientation="Horizontal"
+                Spacing="5">
+                <Image
+                    Width="16"
+                    Height="16"
+                    VerticalAlignment="Center"
+                    Source="/Assets/Icon/StoreLogo.png" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="DeDupe" />
+            </StackPanel>
+
+            <!--  Settings Button  -->
+            <Button
+                x:Name="btnSettings"
+                Grid.Column="2"
+                Width="32"
+                Height="32"
+                Padding="0"
+                VerticalAlignment="Center"
+                Background="Transparent"
+                BorderThickness="0"
+                Click="SettingsButton_Click"
+                ToolTipService.ToolTip="Settings">
+                <FontIcon FontSize="14" Glyph="&#xE713;" />
+            </Button>
+        </Grid>
 
         <!--  Configuration Mode  -->
         <Grid

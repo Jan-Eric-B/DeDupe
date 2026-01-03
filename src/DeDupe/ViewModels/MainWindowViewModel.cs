@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Models.Ui;
 using DeDupe.ViewModels.Pages;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +7,7 @@ using System.Collections.ObjectModel;
 
 namespace DeDupe.ViewModels
 {
-    public partial class MainWindowViewModel : ObservableObject
+    public partial class MainWindowViewModel : ViewModelBase
     {
         private readonly IServiceProvider _serviceProvider;
 

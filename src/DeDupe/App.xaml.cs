@@ -3,6 +3,8 @@ using DeDupe.Services.Analysis;
 using DeDupe.Services.PreProcessing;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;
+using DeDupe.ViewModels.Settings;
+using DeDupe.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -19,6 +21,8 @@ namespace DeDupe
         private readonly IServiceProvider _serviceProvider;
         private readonly IHost _host;
         private ILogger<App>? _logger;
+
+        private SettingsWindow? _settingsWindow;
 
         public App()
         {
@@ -54,6 +58,9 @@ namespace DeDupe
             // MainWindowViewModel
             services.AddSingleton<MainWindowViewModel>();
 
+            // SettingsWindowViewModel
+            services.AddSingleton<SettingsWindowViewModel>();
+
             // App State
             services.AddSingleton<IBundledModelService, BundledModelService>();
             services.AddSingleton<IAppStateService, AppStateService>();
@@ -73,6 +80,11 @@ namespace DeDupe
             services.AddSingleton<PreProcessingViewModel>();
             services.AddSingleton<ManagementViewModel>();
 
+            // Settings Page ViewModels
+            services.AddSingleton<GeneralSettingViewModel>();
+            services.AddSingleton<PreProcessingSettingsViewModel>();
+            services.AddSingleton<ModelSettingsViewModel>();
+
             // Feature Extraction
             services.AddSingleton<IFeatureExtractionService, FeatureExtractionService>();
             services.AddSingleton<ISimilarityAnalysisService, SimilarityAnalysisService>();
@@ -86,6 +98,17 @@ namespace DeDupe
         public T GetService<T>() where T : class
         {
             return _serviceProvider.GetRequiredService<T>();
+        }
+
+        public void OpenSettingsWindow()
+        {
+            if (_settingsWindow is null)
+            {
+                _settingsWindow = new SettingsWindow();
+                _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+            }
+
+            _settingsWindow.Activate();
         }
 
         protected override async void OnLaunched(LaunchActivatedEventArgs args)
