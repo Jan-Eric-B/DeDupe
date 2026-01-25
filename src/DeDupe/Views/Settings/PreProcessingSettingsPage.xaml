@@ -173,16 +173,25 @@
             <!--  File Format  -->
             <controls:SettingsCard Header="File Format" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
                 <ComboBox
-                    x:Name="OutputFormatComboBox"
                     HorizontalAlignment="Stretch"
                     ItemsSource="{x:Bind ViewModel.OutputFormats}"
                     SelectedItem="{x:Bind ViewModel.OutputFormat, Mode=TwoWay}" />
             </controls:SettingsCard>
 
+            <!--  DPI  -->
+            <controls:SettingsCard Header="DPI" HeaderIcon="{ui:FontIcon Glyph=&#xE7F4;}">
+                <NumberBox
+                    HorizontalAlignment="Stretch"
+                    LargeChange="1"
+                    PlaceholderText="96"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Compact"
+                    Value="{x:Bind ViewModel.Dpi, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
             <!--  Color Format  -->
             <controls:SettingsCard Header="Bit Depth" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
                 <ComboBox
-                    x:Name="BitDepthComboBox"
                     HorizontalAlignment="Stretch"
                     ItemsSource="{x:Bind ViewModel.ColorFormats}"
                     SelectedItem="{x:Bind ViewModel.ColorFormat, Mode=TwoWay}" />

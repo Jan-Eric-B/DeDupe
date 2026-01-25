@@ -5,15 +5,15 @@ namespace DeDupe.Enums
     public enum AppBackdrop
     {
         [Description("None")]
-        None = 0,
+        None,
 
         [Description("Mica")]
-        Mica = 1,
+        Mica,
 
         [Description("Mica Alt")]
-        MicaAlt = 2,
+        MicaAlt,
 
         [Description("Acrylic")]
-        Acrylic = 3
+        Acrylic
     }
 }

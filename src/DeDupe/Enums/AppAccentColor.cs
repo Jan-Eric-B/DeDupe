@@ -5,9 +5,9 @@ namespace DeDupe.Enums
     public enum AppAccentColor
     {
         [Description("Purple")]
-        Application = 0,
+        Application,
 
         [Description("Windows Default")]
-        System = 1
+        System
     }
 }

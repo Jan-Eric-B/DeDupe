@@ -20,6 +20,8 @@ namespace DeDupe.ViewModels.Pages
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly ISettingsService _settingsService;
+        private readonly IBundledModelService _bundledModelService;
         private readonly ISimilarityAnalysisService _similarityAnalysisService;
         private readonly IAutoSelectionService _autoSelectionService;
         private readonly ILogger<ManagementViewModel> _logger;
@@ -199,10 +201,10 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                if (string.IsNullOrEmpty(_appStateService.ModelFilePath))
+                if (string.IsNullOrEmpty(_settingsService.UseBundledModel ? _bundledModelService.BundledModelPath : _settingsService.CustomModelFilePath))
                     return "No model";
 
-                return Path.GetFileNameWithoutExtension(_appStateService.ModelFilePath);
+                return Path.GetFileNameWithoutExtension(_settingsService.UseBundledModel ? _bundledModelService.BundledModelPath : _settingsService.CustomModelFilePath);
             }
         }
 
@@ -528,7 +530,7 @@ namespace DeDupe.ViewModels.Pages
 
                     foreach (KeyValuePair<string, List<string>> groupEntry in filesByGroup)
                     {
-                        string? groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
+                        string groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
                         string groupFolder = Path.Combine(rootFolder, groupName);
 
                         // Create group folder if it doesn't exist
@@ -791,9 +793,11 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ManagementViewModel(IAppStateService appStateService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger) : base(3)
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger) : base(3)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _similarityAnalysisService = similarityAnalysisService ?? throw new ArgumentNullException(nameof(similarityAnalysisService));
             _autoSelectionService = autoSelectionService ?? throw new ArgumentNullException(nameof(autoSelectionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

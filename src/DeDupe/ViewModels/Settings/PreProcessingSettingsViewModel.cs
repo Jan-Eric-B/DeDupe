@@ -31,7 +31,7 @@ namespace DeDupe.ViewModels.Settings
         public partial bool EnableResizing { get; set; }
 
         [ObservableProperty]
-        public partial int ResizeSize { get; set; }
+        public partial uint ResizeSize { get; set; }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsPaddingColorVisible))]
@@ -56,6 +56,9 @@ namespace DeDupe.ViewModels.Settings
         // Output Settings
         [ObservableProperty]
         public partial OutputFormat OutputFormat { get; set; }
+
+        [ObservableProperty]
+        public partial uint Dpi { get; set; }
 
         [ObservableProperty]
         public partial ColorFormat ColorFormat { get; set; }
@@ -170,6 +173,7 @@ namespace DeDupe.ViewModels.Settings
 
             // Output
             OutputFormat = _settingsService.OutputFormat;
+            Dpi = _settingsService.Dpi;
             ColorFormat = _settingsService.ColorFormat;
 
             // Temp Folder

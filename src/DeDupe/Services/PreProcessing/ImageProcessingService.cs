@@ -1,5 +1,4 @@
-﻿using DeDupe.Constants;
-using DeDupe.Enums;
+﻿// After
 using DeDupe.Models;
 using System;
 using System.Collections.Generic;
@@ -19,49 +18,24 @@ namespace DeDupe.Services.PreProcessing
         #region Fields
 
         private readonly IAppStateService _appStateService;
+        private readonly ISettingsService _settingsService;
         private readonly IBorderDetectionService _borderDetectionService;
         private readonly IImageFormatService _imageFormatService;
         private readonly IImageResizeService _imageResizeService;
 
         #endregion Fields
 
-        #region Properties
-
-        // Resize settings
-        public bool EnableResizing { get; set; } = ProcessingDefaults.EnableResizing;
-
-        public uint TargetSize { get; set; } = ProcessingDefaults.TargetSize;
-        public ResizeMethod ResizeMethod { get; set; } = ProcessingDefaults.DefaultResizeMethod;
-        public byte[] PaddingColor { get; set; } = ProcessingDefaults.PaddingColorRgba;
-
-        // Border Detection
-        public bool EnableBorderDetection { get; set; } = ProcessingDefaults.EnableBorderDetection;
-
-        public int BorderDetectionTolerance { get; set; } = ProcessingDefaults.BorderDetectionTolerance;
-
-        // Interpolation
-        public InterpolationMethod UpsamplingMethod { get; set; } = ProcessingDefaults.DefaultUpsamplingMethod;
-
-        public InterpolationMethod DownsamplingMethod { get; set; } = ProcessingDefaults.DefaultDownsamplingMethod;
-
-        // Output
-        public OutputFormat OutputFormat { get; set; } = ProcessingDefaults.DefaultOutputFormat;
-
-        public ColorFormat BitDepth { get; set; } = ProcessingDefaults.DefaultColorFormat;
-        public double DpiX { get; set; } = ProcessingDefaults.DpiX;
-        public double DpiY { get; set; } = ProcessingDefaults.DpiY;
-
-        #endregion Properties
-
         #region Constructor
 
         public ImageProcessingService(
             IAppStateService appStateService,
+            ISettingsService settingsService,
             IBorderDetectionService borderDetectionService,
             IImageFormatService imageFormatService,
             IImageResizeService imageResizeService)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
+            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _borderDetectionService = borderDetectionService ?? throw new ArgumentNullException(nameof(borderDetectionService));
             _imageFormatService = imageFormatService ?? throw new ArgumentNullException(nameof(imageFormatService));
             _imageResizeService = imageResizeService ?? throw new ArgumentNullException(nameof(imageResizeService));
@@ -77,7 +51,7 @@ namespace DeDupe.Services.PreProcessing
         {
             try
             {
-                string tempPath = _appStateService.TempFolderPath;
+                string tempPath = _settingsService.TempFolderPath;
 
                 if (Directory.Exists(tempPath))
                 {
@@ -98,7 +72,7 @@ namespace DeDupe.Services.PreProcessing
         {
             try
             {
-                string tempPath = _appStateService.TempFolderPath;
+                string tempPath = _settingsService.TempFolderPath;
 
                 if (Directory.Exists(tempPath))
                 {
@@ -153,7 +127,7 @@ namespace DeDupe.Services.PreProcessing
         /// </summary>
         private async Task<string?> ProcessSingleItemAsync(AnalysisItem item)
         {
-            if (item == null || string.IsNullOrEmpty(_appStateService.TempFolderPath))
+            if (item == null || string.IsNullOrEmpty(_settingsService.TempFolderPath))
             {
                 return null;
             }
@@ -163,9 +137,9 @@ namespace DeDupe.Services.PreProcessing
             string sourcePath = item.IsVideoFrame ? throw new NotImplementedException("Video frame processing not yet implemented") : item.Source.FilePath;
 
             // Create output file
-            string extension = _imageFormatService.GetFileExtension(OutputFormat);
+            string extension = _imageFormatService.GetFileExtension(_settingsService.OutputFormat);
             string processedFileName = $"{Guid.NewGuid()}{extension}";
-            StorageFolder tempFolder = await StorageFolder.GetFolderFromPathAsync(_appStateService.TempFolderPath);
+            StorageFolder tempFolder = await StorageFolder.GetFolderFromPathAsync(_settingsService.TempFolderPath);
             StorageFile outputFile = await tempFolder.CreateFileAsync(processedFileName);
 
             try
@@ -179,9 +153,9 @@ namespace DeDupe.Services.PreProcessing
 
                 using (IRandomAccessStream outputStream = await outputFile.OpenAsync(FileAccessMode.ReadWrite))
                 {
-                    BitmapEncoder encoder = await _imageFormatService.CreateEncoderAsync(outputStream, OutputFormat);
+                    BitmapEncoder encoder = await _imageFormatService.CreateEncoderAsync(outputStream, _settingsService.OutputFormat);
 
-                    BitmapPixelFormat pixelFormat = _imageFormatService.GetPixelFormat(BitDepth);
+                    BitmapPixelFormat pixelFormat = _imageFormatService.GetPixelFormat(_settingsService.ColorFormat);
                     BitmapAlphaMode alphaMode = BitmapAlphaMode.Premultiplied;
 
                     PixelDataProvider pixelData = await decoder.GetPixelDataAsync(pixelFormat, alphaMode, new BitmapTransform(), ExifOrientationMode.RespectExifOrientation, ColorManagementMode.ColorManageToSRgb);
@@ -189,6 +163,7 @@ namespace DeDupe.Services.PreProcessing
                     byte[] pixels = pixelData.DetachPixelData();
                     uint width = decoder.PixelWidth;
                     uint height = decoder.PixelHeight;
+                    uint dpi = _settingsService.Dpi;
 
                     // Step 1 - Convert grayscale to RGB
                     if (isGrayscale)
@@ -197,9 +172,9 @@ namespace DeDupe.Services.PreProcessing
                     }
 
                     // Step 2 - Border/Letterbox Detection and Removal
-                    if (EnableBorderDetection)
+                    if (_settingsService.EnableBorderDetection)
                     {
-                        (byte[] borderRemovedPixels, uint newWidth, uint newHeight) = _borderDetectionService.RemoveBorders(pixels, width, height, BorderDetectionTolerance);
+                        (byte[] borderRemovedPixels, uint newWidth, uint newHeight) = _borderDetectionService.RemoveBorders(pixels, width, height, _settingsService.BorderDetectionTolerance);
 
                         if (newWidth != width || newHeight != height)
                         {
@@ -210,19 +185,19 @@ namespace DeDupe.Services.PreProcessing
                     }
 
                     // Step 3 - Resizing
-                    if (EnableResizing)
+                    if (_settingsService.EnableResizing)
                     {
-                        uint outputWidth = TargetSize;
-                        uint outputHeight = TargetSize;
+                        uint outputWidth = _settingsService.ResizeSize;
+                        uint outputHeight = _settingsService.ResizeSize;
 
-                        byte[] resizedPixels = await _imageResizeService.ResizeImageAsync(pixels, width, height, TargetSize, TargetSize, ResizeMethod, UpsamplingMethod, DownsamplingMethod, PaddingColor, BitDepth, DpiX, DpiY);
+                        byte[] resizedPixels = await _imageResizeService.ResizeImageAsync(pixels, width, height, _settingsService.ResizeSize, _settingsService.ResizeSize, _settingsService.ResizeMethod, _settingsService.UpsamplingMethod, _settingsService.DownsamplingMethod, _settingsService.PaddingColor, _settingsService.ColorFormat, _settingsService.Dpi, _settingsService.Dpi);
 
                         encoder.SetPixelData(
                             pixelFormat,
                             alphaMode,
                             outputWidth,
                             outputHeight,
-                            DpiX, DpiY,
+                            dpi, dpi,
                             resizedPixels);
                     }
                     else
@@ -232,7 +207,7 @@ namespace DeDupe.Services.PreProcessing
                             pixelFormat,
                             alphaMode,
                             width, height,
-                            DpiX, DpiY,
+                            dpi, dpi,
                             pixels);
                     }
 

@@ -70,9 +70,6 @@ namespace DeDupe
             services.AddSingleton<IBundledModelService, BundledModelService>();
             services.AddSingleton<IAppStateService, AppStateService>();
 
-            // Navigation
-            services.AddSingleton<INavigationService, NavigationService>();
-
             // Image Processing
             services.AddTransient<IBorderDetectionService, BorderDetectionService>();
             services.AddTransient<IImageFormatService, ImageFormatService>();
@@ -80,9 +77,7 @@ namespace DeDupe
             services.AddTransient<ImageProcessingService>();
 
             // Page ViewModels
-            services.AddSingleton<FileInputViewModel>();
-            services.AddSingleton<ModelConfigurationViewModel>();
-            services.AddSingleton<PreProcessingViewModel>();
+            services.AddSingleton<ConfigurationViewModel>();
             services.AddSingleton<ManagementViewModel>();
 
             // Settings Page ViewModels

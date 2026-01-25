@@ -74,8 +74,6 @@
 		<None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
 		<None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
 		<None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
-		<None Remove="Controls\StepperControl.xaml" />
-		<None Remove="Views\Pages\FileInputPage.xaml" />
 		<None Remove="Views\Pages\ManagementPage.xaml" />
 		<None Remove="Views\Settings\PreProcessingSettingsPage.xaml" />
 	</ItemGroup>
@@ -94,11 +92,11 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.250402" />
-		<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
-		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.250402" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.251219" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+		<PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.23.2" />
 		<PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.23.2" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1-RTM" />
@@ -131,22 +129,7 @@
 		</Page>
 	</ItemGroup>
 	<ItemGroup>
-		<Page Update="Views\Pages\PreProcessingPage.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Views\Pages\ModelConfigurationPage.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Views\Pages\FileInputPage.xaml">
-			<Generator>MSBuild:Compile</Generator>
-		</Page>
-	</ItemGroup>
-	<ItemGroup>
-		<Page Update="Controls\StepperControl.xaml">
+		<Page Update="Views\Pages\ConfigurationPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>

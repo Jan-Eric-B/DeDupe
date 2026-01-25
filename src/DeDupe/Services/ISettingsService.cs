@@ -15,7 +15,7 @@ namespace DeDupe.Services
         // Pre-Processing
         bool EnableResizing { get; set; }
 
-        int ResizeSize { get; set; }
+        uint ResizeSize { get; set; }
         ResizeMethod ResizeMethod { get; set; }
         Color PaddingColor { get; set; }
         InterpolationMethod DownsamplingMethod { get; set; }
@@ -23,6 +23,7 @@ namespace DeDupe.Services
         bool EnableBorderDetection { get; set; }
         int BorderDetectionTolerance { get; set; }
         OutputFormat OutputFormat { get; set; }
+        uint Dpi { get; set; }
         ColorFormat ColorFormat { get; set; }
         bool UseCustomTempFolder { get; set; }
         string CustomTempFolderPath { get; set; }
@@ -50,7 +51,7 @@ namespace DeDupe.Services
 
         event EventHandler<bool>? EnableResizingChanged;
 
-        event EventHandler<int>? ResizeSizeChanged;
+        event EventHandler<uint>? ResizeSizeChanged;
 
         event EventHandler<ResizeMethod>? ResizeMethodChanged;
 
@@ -65,6 +66,8 @@ namespace DeDupe.Services
         event EventHandler<int>? BorderDetectionToleranceChanged;
 
         event EventHandler<OutputFormat>? OutputFormatChanged;
+
+        event EventHandler<uint>? DpiChanged;
 
         event EventHandler<ColorFormat>? ColorFormatChanged;
 

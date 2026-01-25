@@ -14,10 +14,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform hierarchical clustering on analysis items using cosine similarity.
         /// </summary>
-        Task<SimilarityResult> ClusterAsync(
-            IEnumerable<AnalysisItem> items,
-            double similarityThreshold,
-            CancellationToken cancellationToken = default);
+        Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Calculate cosine similarity between two feature vectors.

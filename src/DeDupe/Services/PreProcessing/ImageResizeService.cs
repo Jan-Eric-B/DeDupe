@@ -1,8 +1,10 @@
-﻿using DeDupe.Enums;
+﻿// After
+using DeDupe.Enums;
 using System;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using Windows.UI;
 
 namespace DeDupe.Services.PreProcessing
 {
@@ -19,10 +21,10 @@ namespace DeDupe.Services.PreProcessing
             ResizeMethod resizeMethod,
             InterpolationMethod upsamplingMethod,
             InterpolationMethod downsamplingMethod,
-            byte[] paddingColor,
+            Color paddingColor,
             ColorFormat bitDepth,
-            double dpiX,
-            double dpiY)
+            uint dpiX,
+            uint dpiY)
         {
             // Step 1 - Calculate intermediate dimensions
             uint intermediateWidth, intermediateHeight;
@@ -283,17 +285,17 @@ namespace DeDupe.Services.PreProcessing
             return target;
         }
 
-        private static byte[] AddPadding(byte[] source, uint sourceWidth, uint sourceHeight, uint targetWidth, uint targetHeight, uint offsetX, uint offsetY, byte[] paddingColor)
+        private static byte[] AddPadding(byte[] source, uint sourceWidth, uint sourceHeight, uint targetWidth, uint targetHeight, uint offsetX, uint offsetY, Color paddingColor)
         {
             byte[] target = new byte[targetWidth * targetHeight * 4];
 
             // Fill with padding color
             for (int i = 0; i < target.Length; i += 4)
             {
-                target[i] = paddingColor[0];     // R
-                target[i + 1] = paddingColor[1]; // G
-                target[i + 2] = paddingColor[2]; // B
-                target[i + 3] = paddingColor[3]; // A
+                target[i] = paddingColor.R;
+                target[i + 1] = paddingColor.G;
+                target[i + 2] = paddingColor.B;
+                target[i + 3] = paddingColor.A;
             }
 
             // Copy source pixels

@@ -110,7 +110,9 @@ namespace DeDupe.ViewModels.Settings
             {
                 if (UseBundledModel)
                 {
-                    return string.IsNullOrWhiteSpace(BundledModelName) ? BundledModelName : "Bundled model not found";
+                    return !string.IsNullOrWhiteSpace(BundledModelName)
+                        ? BundledModelName
+                        : "Bundled model not found";
                 }
                 return !string.IsNullOrEmpty(CustomModelFilePath)
                     ? Path.GetFileName(CustomModelFilePath)

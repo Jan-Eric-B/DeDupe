@@ -5,12 +5,12 @@ namespace DeDupe.Enums
     public enum AppTheme
     {
         [Description("System Default")]
-        System = 0,
+        System,
 
         [Description("Light")]
-        Light = 1,
+        Light,
 
         [Description("Dark")]
-        Dark = 2
+        Dark
     }
 }

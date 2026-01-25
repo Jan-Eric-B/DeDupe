@@ -2,7 +2,6 @@ using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Pages;
 using Microsoft.UI.Xaml;
-using System;
 using System.ComponentModel;
 
 namespace DeDupe
@@ -36,7 +35,9 @@ namespace DeDupe
             ViewModel = App.Current.GetService<MainWindowViewModel>();
             grdRoot.DataContext = ViewModel;
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-            NavigateToPage(ViewModel.SelectedStepIndex);
+
+            // Navigate to ConfigurationPage initially
+            frMain.Navigate(typeof(ConfigurationPage));
         }
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
@@ -50,46 +51,20 @@ namespace DeDupe
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.SelectedStepIndex))
+            if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode))
             {
-                NavigateToPage(ViewModel.SelectedStepIndex);
+                if (ViewModel.IsInManagementMode)
+                {
+                    // Navigate to ManagementPage when entering management mode
+                    frManagement.Navigate(typeof(ManagementPage));
+                }
+                // When returning to configuration mode, ConfigurationPage is already loaded in frMain
             }
-            else if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode) && ViewModel.IsInManagementMode)
-            {
-                frManagement.Navigate(typeof(ManagementPage));
-            }
-        }
-
-        private void StepperControl_StepClicked(object sender, int stepNumber)
-        {
-            ViewModel.NavigateToStepCommand.Execute(stepNumber);
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             App.Current.OpenSettingsWindow();
-        }
-
-        private void NavigateToPage(int pageIndex)
-        {
-            Type pageType = pageIndex switch
-            {
-                0 => typeof(FileInputPage),
-                1 => typeof(PreProcessingPage),
-                2 => typeof(ModelConfigurationPage),
-                _ => typeof(FileInputPage)
-            };
-
-            bool isForward = pageIndex > _previousStepIndex;
-            Microsoft.UI.Xaml.Media.Animation.SlideNavigationTransitionInfo? slideTransition = new()
-            {
-                Effect = isForward
-                    ? Microsoft.UI.Xaml.Media.Animation.SlideNavigationTransitionEffect.FromRight
-                    : Microsoft.UI.Xaml.Media.Animation.SlideNavigationTransitionEffect.FromLeft
-            };
-
-            frMain.Navigate(pageType, null, slideTransition);
-            _previousStepIndex = pageIndex;
         }
     }
 }

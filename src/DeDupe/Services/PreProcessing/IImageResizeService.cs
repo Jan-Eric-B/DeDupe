@@ -1,5 +1,6 @@
 ﻿using DeDupe.Enums;
 using System.Threading.Tasks;
+using Windows.UI;
 
 namespace DeDupe.Services.PreProcessing
 {
@@ -14,9 +15,9 @@ namespace DeDupe.Services.PreProcessing
             ResizeMethod resizeMethod,
             InterpolationMethod upsamplingMethod,
             InterpolationMethod downsamplingMethod,
-            byte[] paddingColor,
+            Color paddingColor,
             ColorFormat bitDepth,
-            double dpiX,
-            double dpiY);
+            uint dpiX,
+            uint dpiY);
     }
 }

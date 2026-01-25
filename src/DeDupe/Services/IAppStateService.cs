@@ -102,60 +102,6 @@ namespace DeDupe.Services
 
         #endregion Pipeline State
 
-        #region Temp Folder
-
-        /// <summary>
-        /// Path to temporary folder for processed images.
-        /// </summary>
-        string TempFolderPath { get; set; }
-
-        #endregion Temp Folder
-
-        #region Model Configuration
-
-        /// <summary>
-        /// Whether to use bundled model.
-        /// </summary>
-        bool UseBundledModel { get; set; }
-
-        /// <summary>
-        /// Custom model file path.
-        /// </summary>
-        string CustomModelFilePath { get; set; }
-
-        /// <summary>
-        /// Current model path.
-        /// </summary>
-        string ModelPath { get; }
-
-        /// <summary>
-        /// Model file path with setter logic.
-        /// </summary>
-        string ModelFilePath { get; set; }
-
-        #endregion Model Configuration
-
-        #region Normalization
-
-        double MeanR { get; set; }
-        double MeanG { get; set; }
-        double MeanB { get; set; }
-        double StdR { get; set; }
-        double StdG { get; set; }
-        double StdB { get; set; }
-
-        /// <summary>
-        /// Get all normalization parameters.
-        /// </summary>
-        (double, double, double, double, double, double) GetNormalization();
-
-        /// <summary>
-        /// Reset normalization to ImageNet defaults.
-        /// </summary>
-        void ResetNormalization();
-
-        #endregion Normalization
-
         #region Events
 
         /// <summary>
@@ -172,21 +118,6 @@ namespace DeDupe.Services
         /// Raised when processing state changes.
         /// </summary>
         event EventHandler? ProcessingStateChanged;
-
-        /// <summary>
-        /// Raised when temp folder path changes.
-        /// </summary>
-        event EventHandler? TempFolderPathChanged;
-
-        /// <summary>
-        /// Raised when model configuration changes.
-        /// </summary>
-        event EventHandler? ModelConfigurationSettingsChanged;
-
-        /// <summary>
-        /// Raised when model source changes.
-        /// </summary>
-        event EventHandler? ModelSourceChanged;
 
         /// <summary>
         /// Raised when extracted features change.

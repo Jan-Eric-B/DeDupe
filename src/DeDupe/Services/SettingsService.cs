@@ -36,6 +36,7 @@ namespace DeDupe.Services
         private const string BorderDetectionToleranceKey = "BorderDetectionTolerance";
 
         private const string OutputFormatKey = "OutputFormat";
+        private const string DpiKey = "Dpi";
         private const string ColorFormatKey = "ColorFormat";
 
         private const string UseCustomTempFolderKey = "UseCustomTempFolder";
@@ -123,9 +124,9 @@ namespace DeDupe.Services
             }
         }
 
-        public int ResizeSize
+        public uint ResizeSize
         {
-            get => GetValue(ResizeSizeKey, 224);
+            get => GetValue(ResizeSizeKey, 224u);
             set
             {
                 if (ResizeSize != value)
@@ -138,7 +139,7 @@ namespace DeDupe.Services
 
         public ResizeMethod ResizeMethod
         {
-            get => (ResizeMethod)GetValue(ResizeMethodKey, 0);
+            get => (ResizeMethod)GetValue(ResizeMethodKey, (int)ResizeMethod.Padding);
             set
             {
                 if (ResizeMethod != value)
@@ -151,7 +152,7 @@ namespace DeDupe.Services
 
         public Color PaddingColor
         {
-            get => UIntToColor(GetValue<uint>(PaddingColorKey, 0xFF000000));
+            get => UIntToColor(GetValue<uint>(PaddingColorKey, 0xFFFFFFFF));
             set
             {
                 if (PaddingColor != value)
@@ -164,7 +165,7 @@ namespace DeDupe.Services
 
         public InterpolationMethod DownsamplingMethod
         {
-            get => (InterpolationMethod)GetValue(DownsamplingMethodKey, 0);
+            get => (InterpolationMethod)GetValue(DownsamplingMethodKey, (int)InterpolationMethod.Lanczos);
             set
             {
                 if (DownsamplingMethod != value)
@@ -177,7 +178,7 @@ namespace DeDupe.Services
 
         public InterpolationMethod UpsamplingMethod
         {
-            get => (InterpolationMethod)GetValue(UpsamplingMethodKey, 0);
+            get => (InterpolationMethod)GetValue(UpsamplingMethodKey, (int)InterpolationMethod.Lanczos);
             set
             {
                 if (UpsamplingMethod != value)
@@ -216,7 +217,7 @@ namespace DeDupe.Services
 
         public OutputFormat OutputFormat
         {
-            get => (OutputFormat)GetValue(OutputFormatKey, 1);
+            get => (OutputFormat)GetValue(OutputFormatKey, (int)OutputFormat.JPEG);
             set
             {
                 if (OutputFormat != value)
@@ -227,9 +228,22 @@ namespace DeDupe.Services
             }
         }
 
+        public uint Dpi
+        {
+            get => GetValue(DpiKey, 96u);
+            set
+            {
+                if (Dpi != value)
+                {
+                    SetValue(DpiKey, value);
+                    DpiChanged?.Invoke(this, value);
+                }
+            }
+        }
+
         public ColorFormat ColorFormat
         {
-            get => (ColorFormat)GetValue(ColorFormatKey, 0);
+            get => (ColorFormat)GetValue(ColorFormatKey, ColorFormat.RGB8);
             set
             {
                 if (ColorFormat != value)
@@ -401,7 +415,7 @@ namespace DeDupe.Services
         // Pre-Processing
         public event EventHandler<bool>? EnableResizingChanged;
 
-        public event EventHandler<int>? ResizeSizeChanged;
+        public event EventHandler<uint>? ResizeSizeChanged;
 
         public event EventHandler<ResizeMethod>? ResizeMethodChanged;
 
@@ -416,6 +430,8 @@ namespace DeDupe.Services
         public event EventHandler<int>? BorderDetectionToleranceChanged;
 
         public event EventHandler<OutputFormat>? OutputFormatChanged;
+
+        public event EventHandler<uint>? DpiChanged;
 
         public event EventHandler<ColorFormat>? ColorFormatChanged;
 

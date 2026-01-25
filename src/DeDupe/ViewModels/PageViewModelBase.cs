@@ -1,15 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Input;
-using DeDupe.Services;
 using System;
 
 namespace DeDupe.ViewModels
 {
     public partial class PageViewModelBase : ViewModelBase, IDisposable
     {
-        private readonly INavigationService _navigationService;
         private bool _disposed = false;
-
-        protected int StepIndex { get; set; }
 
         private bool _isComplete;
 
@@ -27,32 +23,21 @@ namespace DeDupe.ViewModels
         }
 
         public virtual bool CanNavigateToNext => IsComplete;
-        public virtual bool CanNavigateToPrevious => StepIndex > 0;
-
         public RelayCommand NavigateToNextCommand { get; }
-        public RelayCommand NavigateToPreviousCommand { get; }
 
         public PageViewModelBase(int stepIndex = 0)
         {
-            _navigationService = App.Current.GetService<INavigationService>();
-            StepIndex = stepIndex;
-
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);
-            NavigateToPreviousCommand = new RelayCommand(NavigateToPrevious, () => CanNavigateToPrevious);
 
             _isComplete = false;
         }
 
         #region Navigation
 
-        private void NavigateToNext()
+        protected virtual void NavigateToNext()
         {
-            _navigationService.NavigateToStep(StepIndex + 1);
-        }
-
-        private void NavigateToPrevious()
-        {
-            _navigationService.NavigateToStep(StepIndex - 1);
+            MainWindowViewModel mainViewModel = App.Current.GetService<MainWindowViewModel>();
+            mainViewModel?.StartManagementModeCommand.Execute(null);
         }
 
         #endregion Navigation
