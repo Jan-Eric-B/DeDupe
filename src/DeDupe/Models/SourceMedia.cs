@@ -1,6 +1,7 @@
 ﻿using DeDupe.Constants;
 using DeDupe.Enums;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace DeDupe.Models
@@ -23,6 +24,21 @@ namespace DeDupe.Models
         public string FilePath { get; }
 
         /// <summary>
+        /// File name without path.
+        /// </summary>
+        public string FileName { get; }
+
+        /// <summary>
+        /// File size in bytes.
+        /// </summary>
+        public long FileSize { get; private set; }
+
+        /// <summary>
+        /// Last modified date.
+        /// </summary>
+        public DateTime LastModified { get; private set; }
+
+        /// <summary>
         /// Metadata for media file.
         /// </summary>
         public MediaMetadata Metadata { get; private set; }
@@ -33,9 +49,14 @@ namespace DeDupe.Models
         public MediaType MediaType { get; }
 
         /// <summary>
-        /// Metadata fully loaded.
+        /// Whether dimensions have been loaded.
         /// </summary>
-        public bool IsMetadataLoaded { get; private set; }
+        public bool AreDimensionsLoaded { get; private set; }
+
+        /// <summary>
+        /// Whether full metadata has been loaded.
+        /// </summary>
+        public bool IsFullMetadataLoaded { get; private set; }
 
         #endregion Properties
 
@@ -71,6 +92,7 @@ namespace DeDupe.Models
                 throw new ArgumentNullException(nameof(filePath));
 
             FilePath = filePath;
+            FileName = Path.GetFileName(filePath);
             MediaType = mediaType;
             Metadata = null!; // Set by create method
         }
@@ -78,6 +100,61 @@ namespace DeDupe.Models
         #endregion Constructors
 
         #region Methods
+
+        /// <summary>
+        /// Create SourceMedia with basic file info.
+        /// </summary>
+        public static SourceMedia CreateLightweight(string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                throw new ArgumentNullException(nameof(filePath));
+            }
+
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+            MediaType mediaType;
+
+            if (SupportedFileExtensions.IsImageFile(extension))
+            {
+                mediaType = MediaType.Image;
+            }
+            else if (SupportedFileExtensions.IsVideoFile(extension))
+            {
+                mediaType = MediaType.Video;
+            }
+            else
+            {
+                throw new ArgumentException($"Unsupported file type: {extension}", nameof(filePath));
+            }
+
+            SourceMedia source = new(filePath, mediaType);
+
+            // Load file system info
+            try
+            {
+                FileInfo info = new(filePath);
+                source.FileSize = info.Length;
+                source.LastModified = info.LastWriteTime;
+            }
+            catch
+            {
+                // Not exist or inaccessible
+                source.FileSize = 0;
+                source.LastModified = DateTime.MinValue;
+            }
+
+            // Create metadata shell
+            if (mediaType == MediaType.Image)
+            {
+                source.Metadata = new ImageMetadata(filePath, mediaType);
+            }
+            else
+            {
+                source.Metadata = new VideoMetadata(filePath, mediaType);
+            }
+
+            return source;
+        }
 
         /// <summary>
         /// Create SourceMedia for image file.
@@ -89,14 +166,17 @@ namespace DeDupe.Models
             ImageMetadata metadata = new(filePath, MediaType.Image);
             metadata.LoadBasicFileInfo();
 
+            source.FileSize = metadata.FileSize;
+            source.LastModified = metadata.LastModifiedDate;
+
             if (loadFullMetadata)
             {
                 await metadata.LoadMetadataAsync();
+                source.AreDimensionsLoaded = true;
+                source.IsFullMetadataLoaded = true;
             }
 
             source.Metadata = metadata;
-            source.IsMetadataLoaded = loadFullMetadata;
-
             return source;
         }
 
@@ -110,14 +190,17 @@ namespace DeDupe.Models
             VideoMetadata metadata = new(filePath, MediaType.Video);
             metadata.LoadBasicFileInfo();
 
+            source.FileSize = metadata.FileSize;
+            source.LastModified = metadata.LastModifiedDate;
+
             if (loadFullMetadata)
             {
                 await metadata.LoadMetadataAsync();
+                source.AreDimensionsLoaded = true;
+                source.IsFullMetadataLoaded = true;
             }
 
             source.Metadata = metadata;
-            source.IsMetadataLoaded = loadFullMetadata;
-
             return source;
         }
 
@@ -131,7 +214,7 @@ namespace DeDupe.Models
                 return null;
             }
 
-            string extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
             if (SupportedFileExtensions.IsImageFile(extension))
             {
@@ -146,30 +229,65 @@ namespace DeDupe.Models
         }
 
         /// <summary>
-        /// Load metadata.
+        /// Load dimensions.
         /// </summary>
-        public async Task EnsureMetadataLoadedAsync()
+        public async Task EnsureDimensionsLoadedAsync()
         {
-            if (IsMetadataLoaded)
+            if (AreDimensionsLoaded)
+                return;
+
+            try
+            {
+                if (Metadata is ImageMetadata imageMetadata)
+                {
+                    await imageMetadata.LoadDimensionsOnlyAsync();
+                }
+                else if (Metadata is VideoMetadata videoMetadata)
+                {
+                    await videoMetadata.LoadDimensionsOnlyAsync();
+                }
+
+                AreDimensionsLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load dimensions for {FilePath}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Load full metadata.
+        /// </summary>
+        public async Task EnsureFullMetadataLoadedAsync()
+        {
+            if (IsFullMetadataLoaded)
             {
                 return;
             }
 
-            if (Metadata is ImageMetadata imageMetadata)
+            try
             {
-                await imageMetadata.LoadMetadataAsync();
-            }
-            else if (Metadata is VideoMetadata videoMetadata)
-            {
-                await videoMetadata.LoadMetadataAsync();
-            }
+                if (Metadata is ImageMetadata imageMetadata)
+                {
+                    await imageMetadata.LoadMetadataAsync();
+                }
+                else if (Metadata is VideoMetadata videoMetadata)
+                {
+                    await videoMetadata.LoadMetadataAsync();
+                }
 
-            IsMetadataLoaded = true;
+                AreDimensionsLoaded = true;
+                IsFullMetadataLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load metadata for {FilePath}: {ex.Message}");
+            }
         }
 
         public override string ToString()
         {
-            return $"{MediaType}: {Metadata.FileName}";
+            return $"{MediaType}: {FileName}";
         }
 
         #endregion Methods

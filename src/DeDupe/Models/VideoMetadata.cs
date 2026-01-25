@@ -1,6 +1,7 @@
 ﻿using DeDupe.Enums;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -12,6 +13,20 @@ namespace DeDupe.Models
     /// </summary>
     public partial class VideoMetadata : MediaMetadata
     {
+        #region Loading State
+
+        /// <summary>
+        /// Whether dimensions have been loaded.
+        /// </summary>
+        public bool AreDimensionsLoaded { get; private set; }
+
+        /// <summary>
+        /// Whether full metadata has been loaded.
+        /// </summary>
+        public bool IsFullMetadataLoaded { get; private set; }
+
+        #endregion Loading State
+
         #region Video Properties
 
         /// <summary>
@@ -211,12 +226,46 @@ namespace DeDupe.Models
         #region Methods
 
         /// <summary>
+        /// Load only dimensions & duration.
+        /// </summary>
+        public async Task LoadDimensionsOnlyAsync()
+        {
+            if (AreDimensionsLoaded)
+                return;
+
+            try
+            {
+                StorageFile file = await StorageFile.GetFileFromPathAsync(FilePath);
+                VideoProperties videoProps = await file.Properties.GetVideoPropertiesAsync();
+
+                // Dimensions
+                Width = (int)videoProps.Width;
+                Height = (int)videoProps.Height;
+
+                // Duration
+                Duration = videoProps.Duration;
+
+                AreDimensionsLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"VideoMetadata.LoadDimensionsOnlyAsync error for {FilePath}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Load all video metadata
         /// </summary>
         public async Task LoadMetadataAsync()
         {
+            if (IsFullMetadataLoaded)
+                return;
+
             LoadBasicFileInfo();
             await LoadVideoPropertiesAsync();
+
+            AreDimensionsLoaded = true;
+            IsFullMetadataLoaded = true;
         }
 
         /// <summary>
@@ -254,7 +303,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"VideoMetadata.LoadVideoPropertiesAsync error: {ex.Message}");
+                Debug.WriteLine($"VideoMetadata.LoadVideoPropertiesAsync error: {ex.Message}");
             }
         }
 
@@ -324,7 +373,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"VideoMetadata.LoadExtendedVideoPropertiesAsync warning: {ex.Message}");
+                Debug.WriteLine($"VideoMetadata.LoadExtendedVideoPropertiesAsync warning: {ex.Message}");
             }
         }
 

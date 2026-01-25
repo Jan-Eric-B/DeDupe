@@ -12,6 +12,7 @@
     mc:Ignorable="d">
     <Page.Resources>
         <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
     <Grid RowSpacing="10">
         <Grid.RowDefinitions>
@@ -135,19 +136,39 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <!--  Status Text  -->
-            <TextBlock
+            <!--  Status Text with Progress Indicator  -->
+            <StackPanel
                 Grid.Column="0"
                 VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.Status, Mode=OneWay}"
-                TextTrimming="CharacterEllipsis" />
+                Orientation="Horizontal"
+                Spacing="8">
+
+                <!--  Progress Ring  -->
+                <ProgressRing
+                    Width="16"
+                    Height="16"
+                    IsActive="{x:Bind ViewModel.IsScanning, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.Status, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis" />
+            </StackPanel>
 
             <!--  Action Buttons  -->
             <StackPanel
                 Grid.Column="1"
                 Orientation="Horizontal"
                 Spacing="8">
+
+                <!--  Cancel Scan Button  -->
+                <Button
+                    Command="{x:Bind ViewModel.CancelScanCommand}"
+                    Content="Cancel"
+                    ToolTipService.ToolTip="Cancel folder scanning"
+                    Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!--  File Input Buttons  -->
                 <Button

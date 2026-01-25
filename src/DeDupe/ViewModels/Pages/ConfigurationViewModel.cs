@@ -14,10 +14,10 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Search;
 using Windows.System;
 using WinRT.Interop;
 
@@ -47,6 +47,11 @@ namespace DeDupe.ViewModels.Pages
 
         // Loaded SourceMedia objects
         private readonly Dictionary<string, SourceMedia> _loadedSourceMedia = new(StringComparer.OrdinalIgnoreCase);
+
+        private CancellationTokenSource? _scanCts;
+
+        private static readonly HashSet<string> SupportedImageExtensionsSet = new(SupportedFileExtensions.SupportedImageExtensions, StringComparer.OrdinalIgnoreCase);
+        //private static readonly HashSet<string> SupportedVideoExtensionsSet = new(SupportedFileExtensions.SupportedVideoExtensions, StringComparer.OrdinalIgnoreCase);
 
         #endregion Fields
 
@@ -81,15 +86,29 @@ namespace DeDupe.ViewModels.Pages
 
         public Visibility IsMediaListEmpty => InputListItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
+        private bool _isScanning;
+
+        public bool IsScanning
+        {
+            get => _isScanning;
+            set
+            {
+                if (SetProperty(ref _isScanning, value))
+                {
+                    OnPropertyChanged(nameof(CanCancelScan));
+                    CancelScanCommand.NotifyCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool CanCancelScan => IsScanning;
+
         public int ProcessingProgress
         {
             get => _processingProgress;
             set => SetProperty(ref _processingProgress, value);
         }
 
-        /// <summary>
-        /// Whether preprocessing has completed.
-        /// </summary>
         public bool HasProcessedItems
         {
             get => _hasProcessedItems;
@@ -103,10 +122,6 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        /// <summary>
-        /// Whether the Process button can be clicked.
-        /// Requires: not busy, has source files, and model is available.
-        /// </summary>
         public bool CanStartProcessing
         {
             get
@@ -122,8 +137,7 @@ namespace DeDupe.ViewModels.Pages
                     return _bundledModelService.IsBundledModelAvailable;
                 }
 
-                return !string.IsNullOrEmpty(_settingsService.CustomModelFilePath)
-                    && File.Exists(_settingsService.CustomModelFilePath);
+                return !string.IsNullOrEmpty(_settingsService.CustomModelFilePath) && File.Exists(_settingsService.CustomModelFilePath);
             }
         }
 
@@ -136,22 +150,10 @@ namespace DeDupe.ViewModels.Pages
         public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
         public IEnumerable<ColorFormat> BitDepths => Enum.GetValues<ColorFormat>();
 
-        #region Model Selection Properties
-
-        /// <summary>
-        /// Gets model file path (bundled or custom).
-        /// </summary>
         public string ModelFilePath => _settingsService.UseBundledModel
             ? _bundledModelService.BundledModelPath
             : _settingsService.CustomModelFilePath;
 
-        #endregion Model Selection Properties
-
-        #region Processing State Properties
-
-        /// <summary>
-        /// Whether processing (preprocess + extraction) is in progress.
-        /// </summary>
         public bool IsProcessing
         {
             get => _isProcessing;
@@ -191,11 +193,6 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        #endregion Processing State Properties
-
-        /// <summary>
-        /// Can navigate to management page only when features have been extracted.
-        /// </summary>
         public override bool CanNavigateToNext => HasExtractedFeatures;
 
         #endregion Properties
@@ -229,8 +226,6 @@ namespace DeDupe.ViewModels.Pages
 
             _settingsService.ModelConfigurationChanged += OnModelConfigurationChanged;
             _appStateService.SourceMediaChanged += OnSourceMediaChanged;
-
-            // Subscribe to own property changes to update CanStartProcessing when IsBusy changes
             PropertyChanged += OnOwnPropertyChanged;
         }
 
@@ -238,9 +233,6 @@ namespace DeDupe.ViewModels.Pages
 
         #region Event Handlers
 
-        /// <summary>
-        /// Handle own property changes to update dependent properties.
-        /// </summary>
         private void OnOwnPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(IsBusy))
@@ -320,8 +312,15 @@ namespace DeDupe.ViewModels.Pages
             if (folder != null && !InputListItems.Any(item => string.Equals(item.Path, folder.Path, StringComparison.OrdinalIgnoreCase)))
             {
                 // Folder has subdirectories
-                IReadOnlyList<StorageFolder> subfolders = await folder.GetFoldersAsync();
-                bool hasSubdirectories = subfolders.Count > 0;
+                bool hasSubdirectories = false;
+                try
+                {
+                    hasSubdirectories = Directory.EnumerateDirectories(folder.Path).Any();
+                }
+                catch
+                {
+                    // Ignore access errors
+                }
 
                 // Create new input list item for folder
                 InputListItem inputListItem = new()
@@ -333,7 +332,6 @@ namespace DeDupe.ViewModels.Pages
                 };
 
                 InputListItems.Add(inputListItem);
-
                 await ProcessFolderAsync(inputListItem);
             }
         }
@@ -361,10 +359,12 @@ namespace DeDupe.ViewModels.Pages
             if (files != null && files.Count > 0)
             {
                 IsBusy = true;
-                UpdateStatus();
+                Status = $"Adding {files.Count} files...";
 
                 try
                 {
+                    List<SourceMedia> newSources = [];
+
                     foreach (StorageFile file in files)
                     {
                         if (IsImageFile(file.FileType) && !InputListItems.Any(item => string.Equals(item.Path, file.Path, StringComparison.OrdinalIgnoreCase)))
@@ -380,8 +380,16 @@ namespace DeDupe.ViewModels.Pages
                             InputListItems.Add(inputListItem);
 
                             // Add to unique file paths
-                            await AddFileAsync(file.Path, file.Path);
+                            SourceMedia source = SourceMedia.CreateLightweight(file.Path);
+                            AddSourceToTracking(file.Path, file.Path, source);
+                            newSources.Add(source);
                         }
+                    }
+
+                    // Batch update AppState
+                    if (newSources.Count > 0)
+                    {
+                        UpdateAppStateSourceMedia();
                     }
                 }
                 finally
@@ -402,6 +410,13 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
+        [RelayCommand(CanExecute = nameof(CanCancelScan))]
+        private void CancelScan()
+        {
+            _scanCts?.Cancel();
+            Status = "Cancelling scan...";
+        }
+
         [RelayCommand(CanExecute = nameof(CanOpenTempFolder))]
         private async Task OpenTempFolderAsync()
         {
@@ -418,9 +433,6 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        /// <summary>
-        /// Combined command that preprocesses images and extracts features in one operation.
-        /// </summary>
         [RelayCommand(CanExecute = nameof(CanStartProcessing))]
         private async Task ProcessAsync()
         {
@@ -435,7 +447,7 @@ namespace DeDupe.ViewModels.Pages
                 HasExtractedFeatures = false;
                 ExtractedFeaturesCount = 0;
 
-                // ===== STEP 1: PREPROCESSING =====
+                // Step 1 - Preprocessing
                 IReadOnlyCollection<AnalysisItem> analysisItems = _appStateService.AnalysisItems;
 
                 if (analysisItems.Count == 0)
@@ -445,7 +457,6 @@ namespace DeDupe.ViewModels.Pages
                 }
 
                 Status = $"Preprocessing {analysisItems.Count} items...";
-
                 await _imageProcessingService.ProcessItemsAsync(analysisItems);
 
                 if (_appStateService.ProcessedItemCount == 0)
@@ -457,7 +468,7 @@ namespace DeDupe.ViewModels.Pages
                 HasProcessedItems = true;
                 Status = $"Preprocessed {_appStateService.ProcessedItemCount} items. Extracting features...";
 
-                // ===== STEP 2: FEATURE EXTRACTION =====
+                // Step 2 - Feature Extraction
 
                 // Initialize model if needed
                 if (!_featureExtractionService.IsInitialized)
@@ -495,8 +506,6 @@ namespace DeDupe.ViewModels.Pages
 
                 // Extract features
                 await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization);
-
-                // Notify state service
                 _appStateService.NotifyFeaturesExtracted();
 
                 // Update results
@@ -506,14 +515,6 @@ namespace DeDupe.ViewModels.Pages
                 {
                     HasExtractedFeatures = true;
                     Status = $"Ready! Extracted {ExtractedFeaturesCount} feature vectors. Click 'Find Duplicates' to continue.";
-
-                    // Log feature info for debugging
-                    AnalysisItem? firstItem = _appStateService.ItemsWithFeatures.FirstOrDefault();
-                    if (firstItem != null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Feature vector size: {firstItem.FeatureCount}");
-                        System.Diagnostics.Debug.WriteLine($"Feature dimensions: [{string.Join(", ", firstItem.FeatureDimensions ?? [])}]");
-                    }
                 }
                 else
                 {
@@ -539,12 +540,12 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateStatus()
         {
-            if (IsBusy)
+            if (IsBusy || IsScanning)
             {
-                // Don't override status while busy - let the operation set it
                 return;
             }
-            else if (TotalFileCount == 0)
+
+            if (TotalFileCount == 0)
             {
                 Status = "No files added";
             }
@@ -562,9 +563,111 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        /// <summary>
-        /// Add file and load its SourceMedia asynchronously.
-        /// </summary>
+        public async Task ProcessFolderAsync(InputListItem folderItem)
+        {
+            if (!folderItem.IsFolder)
+            {
+                return;
+            }
+
+            // Cancel existing scan
+            _scanCts?.Cancel();
+            _scanCts = new CancellationTokenSource();
+            CancellationToken ct = _scanCts.Token;
+
+            IsBusy = true;
+            IsScanning = true;
+            Status = "Scanning folder...";
+
+            try
+            {
+                // Remove existing files from this folder source
+                RemoveSource(folderItem.Path);
+
+                SearchOption searchOption = folderItem.IncludeSubdirectories ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                int count = 0;
+                int batchSize = 100;
+
+                await Task.Run(() =>
+                {
+                    IEnumerable<string> files;
+                    try
+                    {
+                        files = Directory.EnumerateFiles(folderItem.Path, "*.*", searchOption)
+                            .Where(f => SupportedImageExtensionsSet.Contains(Path.GetExtension(f)));
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        files = Directory.EnumerateFiles(folderItem.Path, "*.*", SearchOption.TopDirectoryOnly)
+                            .Where(f => SupportedImageExtensionsSet.Contains(Path.GetExtension(f)));
+                    }
+
+                    foreach (string filePath in files)
+                    {
+                        ct.ThrowIfCancellationRequested();
+
+                        string normalizedPath = filePath.ToLowerInvariant();
+
+                        if (_loadedSourceMedia.ContainsKey(normalizedPath))
+                        {
+                            if (!_filePathToSourcesMap.TryGetValue(normalizedPath, out HashSet<string>? sources))
+                            {
+                                sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                _filePathToSourcesMap[normalizedPath] = sources;
+                            }
+                            sources.Add(folderItem.Path);
+                            continue;
+                        }
+
+                        try
+                        {
+                            SourceMedia source = SourceMedia.CreateLightweight(filePath);
+                            AddSourceToTrackingInternal(normalizedPath, folderItem.Path, source);
+                            count++;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to create source for {filePath}: {ex.Message}");
+                            continue;
+                        }
+
+                        if (count % batchSize == 0)
+                        {
+                            App.Window.DispatcherQueue.TryEnqueue(() =>
+                            {
+                                Status = $"Found {count:N0} images...";
+                            });
+                        }
+                    }
+                }, ct);
+
+                // Scan completed successfully
+                UpdateAppStateSourceMedia();
+                Status = $"Found {count:N0} images";
+            }
+            catch (OperationCanceledException)
+            {
+                RemoveSource(folderItem.Path);
+                InputListItems.Remove(folderItem);
+
+                UpdateAppStateSourceMedia();
+
+                Status = "Scan cancelled";
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error scanning folder: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+                IsScanning = false;
+                UpdateStatus();
+            }
+        }
+
         public async Task AddFileAsync(string filePath, string sourcePath)
         {
             string normalizedPath = filePath.ToLowerInvariant();
@@ -582,11 +685,8 @@ namespace DeDupe.ViewModels.Pages
             {
                 try
                 {
-                    SourceMedia? sourceMedia = await SourceMedia.CreateAsync(filePath, loadFullMetadata: true);
-                    if (sourceMedia != null)
-                    {
-                        _loadedSourceMedia[normalizedPath] = sourceMedia;
-                    }
+                    SourceMedia source = SourceMedia.CreateLightweight(filePath);
+                    _loadedSourceMedia[normalizedPath] = source;
                 }
                 catch (Exception ex)
                 {
@@ -595,52 +695,29 @@ namespace DeDupe.ViewModels.Pages
             }
 
             UpdateAppStateSourceMedia();
+            await Task.CompletedTask;
+        }
+
+        private void AddSourceToTracking(string filePath, string sourcePath, SourceMedia source)
+        {
+            string normalizedPath = filePath.ToLowerInvariant();
+            AddSourceToTrackingInternal(normalizedPath, sourcePath, source);
+        }
+
+        private void AddSourceToTrackingInternal(string normalizedPath, string sourcePath, SourceMedia source)
+        {
+            if (!_filePathToSourcesMap.TryGetValue(normalizedPath, out HashSet<string>? sources))
+            {
+                sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                _filePathToSourcesMap[normalizedPath] = sources;
+            }
+            sources.Add(sourcePath);
+            _loadedSourceMedia[normalizedPath] = source;
         }
 
         public static bool IsImageFile(string extension)
         {
             return SupportedFileExtensions.IsImageFile(extension);
-        }
-
-        public async Task ProcessFolderAsync(InputListItem folderItem)
-        {
-            if (!folderItem.IsFolder)
-                return;
-
-            IsBusy = true;
-            Status = "Scanning folder...";
-
-            try
-            {
-                // Remove existing files from folder source
-                RemoveSource(folderItem.Path);
-
-                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderItem.Path);
-                if (folder != null)
-                {
-                    QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, SupportedFileExtensions.SupportedImageExtensions)
-                    {
-                        FolderDepth = folderItem.IncludeSubdirectories ? FolderDepth.Deep : FolderDepth.Shallow
-                    };
-
-                    StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
-                    IReadOnlyList<StorageFile> files = await query.GetFilesAsync();
-
-                    foreach (StorageFile file in files)
-                    {
-                        await AddFileAsync(file.Path, folderItem.Path);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
-                UpdateStatus();
-            }
         }
 
         private void RemoveSource(string sourcePath)
@@ -665,9 +742,6 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        /// <summary>
-        /// Update AppStateService with current SourceMedia collection.
-        /// </summary>
         private void UpdateAppStateSourceMedia()
         {
             List<SourceMedia> allSources = [];
@@ -729,6 +803,9 @@ namespace DeDupe.ViewModels.Pages
         {
             if (disposing)
             {
+                _scanCts?.Cancel();
+                _scanCts?.Dispose();
+
                 PropertyChanged -= OnOwnPropertyChanged;
                 _appStateService.SourceMediaChanged -= OnSourceMediaChanged;
                 InputListItems.CollectionChanged -= MediaPathItems_CollectionChanged;
