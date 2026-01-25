@@ -24,41 +24,55 @@ namespace DeDupe.Models
         public string FilePath { get; }
 
         /// <summary>
-        /// File name without path.
-        /// </summary>
-        public string FileName { get; }
-
-        /// <summary>
-        /// File size in bytes.
-        /// </summary>
-        public long FileSize { get; private set; }
-
-        /// <summary>
-        /// Last modified date.
-        /// </summary>
-        public DateTime LastModified { get; private set; }
-
-        /// <summary>
-        /// Metadata for media file.
-        /// </summary>
-        public MediaMetadata Metadata { get; private set; }
-
-        /// <summary>
         /// Type of media (Image or Video).
         /// </summary>
         public MediaType MediaType { get; }
 
         /// <summary>
+        /// Metadata for media file (owns all file/media data).
+        /// </summary>
+        public MediaMetadata Metadata { get; }
+
+        /// <summary>
+        /// File name without path.
+        /// </summary>
+        public string FileName => Metadata.FileName;
+
+        /// <summary>
+        /// File size in bytes.
+        /// </summary>
+        public long FileSize => Metadata.FileSize;
+
+        /// <summary>
+        /// Last modified date.
+        /// </summary>
+        public DateTime LastModified => Metadata.LastModifiedDate;
+
+        #endregion Properties
+
+        #region Loading State (delegated to typed metadata)
+
+        /// <summary>
         /// Whether dimensions have been loaded.
         /// </summary>
-        public bool AreDimensionsLoaded { get; private set; }
+        public bool AreDimensionsLoaded => Metadata switch
+        {
+            ImageMetadata img => img.AreDimensionsLoaded,
+            VideoMetadata vid => vid.AreDimensionsLoaded,
+            _ => false
+        };
 
         /// <summary>
         /// Whether full metadata has been loaded.
         /// </summary>
-        public bool IsFullMetadataLoaded { get; private set; }
+        public bool IsFullMetadataLoaded => Metadata switch
+        {
+            ImageMetadata img => img.IsFullMetadataLoaded,
+            VideoMetadata vid => vid.IsFullMetadataLoaded,
+            _ => false
+        };
 
-        #endregion Properties
+        #endregion Loading State
 
         #region Type-Specific Access
 
@@ -86,20 +100,19 @@ namespace DeDupe.Models
 
         #region Constructors
 
-        private SourceMedia(string filePath, MediaType mediaType)
+        private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentNullException(nameof(filePath));
 
             FilePath = filePath;
-            FileName = Path.GetFileName(filePath);
             MediaType = mediaType;
-            Metadata = null!; // Set by create method
+            Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         }
 
         #endregion Constructors
 
-        #region Methods
+        #region Factory Methods
 
         /// <summary>
         /// Create SourceMedia with basic file info.
@@ -113,47 +126,27 @@ namespace DeDupe.Models
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
             MediaType mediaType;
+            MediaMetadata metadata;
 
             if (SupportedFileExtensions.IsImageFile(extension))
             {
                 mediaType = MediaType.Image;
+                metadata = new ImageMetadata(filePath, mediaType);
             }
             else if (SupportedFileExtensions.IsVideoFile(extension))
             {
                 mediaType = MediaType.Video;
+                metadata = new VideoMetadata(filePath, mediaType);
             }
             else
             {
                 throw new ArgumentException($"Unsupported file type: {extension}", nameof(filePath));
             }
 
-            SourceMedia source = new(filePath, mediaType);
+            // Load basic file system info
+            metadata.LoadBasicFileInfo();
 
-            // Load file system info
-            try
-            {
-                FileInfo info = new(filePath);
-                source.FileSize = info.Length;
-                source.LastModified = info.LastWriteTime;
-            }
-            catch
-            {
-                // Not exist or inaccessible
-                source.FileSize = 0;
-                source.LastModified = DateTime.MinValue;
-            }
-
-            // Create metadata shell
-            if (mediaType == MediaType.Image)
-            {
-                source.Metadata = new ImageMetadata(filePath, mediaType);
-            }
-            else
-            {
-                source.Metadata = new VideoMetadata(filePath, mediaType);
-            }
-
-            return source;
+            return new SourceMedia(filePath, mediaType, metadata);
         }
 
         /// <summary>
@@ -161,23 +154,15 @@ namespace DeDupe.Models
         /// </summary>
         public static async Task<SourceMedia> CreateImageAsync(string filePath, bool loadFullMetadata = true)
         {
-            SourceMedia source = new(filePath, MediaType.Image);
-
             ImageMetadata metadata = new(filePath, MediaType.Image);
             metadata.LoadBasicFileInfo();
-
-            source.FileSize = metadata.FileSize;
-            source.LastModified = metadata.LastModifiedDate;
 
             if (loadFullMetadata)
             {
                 await metadata.LoadMetadataAsync();
-                source.AreDimensionsLoaded = true;
-                source.IsFullMetadataLoaded = true;
             }
 
-            source.Metadata = metadata;
-            return source;
+            return new SourceMedia(filePath, MediaType.Image, metadata);
         }
 
         /// <summary>
@@ -185,23 +170,15 @@ namespace DeDupe.Models
         /// </summary>
         public static async Task<SourceMedia> CreateVideoAsync(string filePath, bool loadFullMetadata = true)
         {
-            SourceMedia source = new(filePath, MediaType.Video);
-
             VideoMetadata metadata = new(filePath, MediaType.Video);
             metadata.LoadBasicFileInfo();
-
-            source.FileSize = metadata.FileSize;
-            source.LastModified = metadata.LastModifiedDate;
 
             if (loadFullMetadata)
             {
                 await metadata.LoadMetadataAsync();
-                source.AreDimensionsLoaded = true;
-                source.IsFullMetadataLoaded = true;
             }
 
-            source.Metadata = metadata;
-            return source;
+            return new SourceMedia(filePath, MediaType.Video, metadata);
         }
 
         /// <summary>
@@ -246,8 +223,6 @@ namespace DeDupe.Models
                 {
                     await videoMetadata.LoadDimensionsOnlyAsync();
                 }
-
-                AreDimensionsLoaded = true;
             }
             catch (Exception ex)
             {
@@ -275,9 +250,6 @@ namespace DeDupe.Models
                 {
                     await videoMetadata.LoadMetadataAsync();
                 }
-
-                AreDimensionsLoaded = true;
-                IsFullMetadataLoaded = true;
             }
             catch (Exception ex)
             {
