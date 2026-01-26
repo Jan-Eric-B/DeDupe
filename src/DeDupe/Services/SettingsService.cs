@@ -23,7 +23,7 @@ namespace DeDupe.Services
         private const string BackdropKey = "AppBackdrop";
         private const string AccentColorKey = "AppAccentColor";
 
-        // Pre-Processing
+        // Processing
         private const string EnableResizingKey = "EnableResizing";
 
         private const string ResizeSizeKey = "ResizeSize";
@@ -41,6 +41,8 @@ namespace DeDupe.Services
 
         private const string UseCustomTempFolderKey = "UseCustomTempFolder";
         private const string CustomTempFolderPathKey = "CustomTempFolderPath";
+
+        private const string ParallelProcessingCoresKey = "ParallelProcessingCores";
 
         // Model Configuration
         private const string UseBundledModelKey = "UseBundledModel";
@@ -110,7 +112,7 @@ namespace DeDupe.Services
             }
         }
 
-        // Pre-Processing
+        // Processing
         public bool EnableResizing
         {
             get => GetValue(EnableResizingKey, true);
@@ -285,6 +287,20 @@ namespace DeDupe.Services
 
         public string TempFolderPath => UseCustomTempFolder && !string.IsNullOrEmpty(CustomTempFolderPath) ? CustomTempFolderPath : _defaultTempFolderPath;
 
+        public int ParallelProcessingCores
+        {
+            get => GetValue(ParallelProcessingCoresKey, 4);
+            set
+            {
+                int clamped = Math.Clamp(value, 1, Environment.ProcessorCount);
+                if (ParallelProcessingCores != clamped)
+                {
+                    SetValue(ParallelProcessingCoresKey, clamped);
+                    ParallelProcessingCoresChanged?.Invoke(this, clamped);
+                }
+            }
+        }
+
         // Model Configuration
         public bool UseBundledModel
         {
@@ -412,7 +428,7 @@ namespace DeDupe.Services
 
         public event EventHandler<AppAccentColor>? AccentColorChanged;
 
-        // Pre-Processing
+        // Processing
         public event EventHandler<bool>? EnableResizingChanged;
 
         public event EventHandler<uint>? ResizeSizeChanged;
@@ -436,6 +452,8 @@ namespace DeDupe.Services
         public event EventHandler<ColorFormat>? ColorFormatChanged;
 
         public event EventHandler? TempFolderPathChanged;
+
+        public event EventHandler<int>? ParallelProcessingCoresChanged;
 
         // Model Configuration
         public event EventHandler<bool>? UseBundledModelChanged;

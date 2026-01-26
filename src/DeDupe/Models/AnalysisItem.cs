@@ -53,10 +53,10 @@ namespace DeDupe.Models
 
         #endregion Frame Properties
 
-        #region Preprocessing Properties
+        #region Processing Properties
 
         /// <summary>
-        /// Preprocessed image file Path.
+        /// Processed image file Path.
         /// </summary>
         public string? ProcessedFilePath
         {
@@ -73,11 +73,11 @@ namespace DeDupe.Models
         }
 
         /// <summary>
-        /// Preprocessing has been completed.
+        /// Processing has been completed.
         /// </summary>
         public bool IsProcessed => !string.IsNullOrEmpty(ProcessedFilePath);
 
-        #endregion Preprocessing Properties
+        #endregion Processing Properties
 
         #region Feature Extraction Properties
 
@@ -160,7 +160,7 @@ namespace DeDupe.Models
         #region Methods
 
         /// <summary>
-        /// Set preprocessing result.
+        /// Set processing result.
         /// </summary>
         public void SetProcessed(string processedFilePath)
         {
@@ -177,7 +177,7 @@ namespace DeDupe.Models
         }
 
         /// <summary>
-        /// Clear preprocessing and feature data.
+        /// Clear processing and feature data.
         /// </summary>
         public void ResetPipelineState()
         {

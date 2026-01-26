@@ -72,7 +72,7 @@ namespace DeDupe.Models
             _ => false
         };
 
-        #endregion Loading State
+        #endregion Loading State (delegated to typed metadata)
 
         #region Type-Specific Access
 
@@ -262,6 +262,6 @@ namespace DeDupe.Models
             return $"{MediaType}: {FileName}";
         }
 
-        #endregion Methods
+        #endregion Factory Methods
     }
 }

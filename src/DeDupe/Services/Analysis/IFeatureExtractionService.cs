@@ -1,6 +1,7 @@
 ﻿using DeDupe.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DeDupe.Services.Analysis
@@ -28,6 +29,6 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Extract features from all processed analysis items.
         /// </summary>
-        Task ExtractFeaturesAsync(IEnumerable<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization);
+        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken cancellationToken = default);
     }
 }

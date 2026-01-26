@@ -5,8 +5,9 @@ using DeDupe.Models;
 using DeDupe.Models.Input;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
-using DeDupe.Services.PreProcessing;
+using DeDupe.Services.Processing;
 using Microsoft.UI.Xaml;
+using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -49,6 +50,7 @@ namespace DeDupe.ViewModels.Pages
         private readonly Dictionary<string, SourceMedia> _loadedSourceMedia = new(StringComparer.OrdinalIgnoreCase);
 
         private CancellationTokenSource? _scanCts;
+        private CancellationTokenSource? _processingCts;
 
         private static readonly HashSet<string> SupportedImageExtensionsSet = new(SupportedFileExtensions.SupportedImageExtensions, StringComparer.OrdinalIgnoreCase);
         //private static readonly HashSet<string> SupportedVideoExtensionsSet = new(SupportedFileExtensions.SupportedVideoExtensions, StringComparer.OrdinalIgnoreCase);
@@ -95,13 +97,13 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (SetProperty(ref _isScanning, value))
                 {
-                    OnPropertyChanged(nameof(CanCancelScan));
-                    CancelScanCommand.NotifyCanExecuteChanged();
+                    OnPropertyChanged(nameof(IsCancellable));
+                    CancelOperationCommand.NotifyCanExecuteChanged();
                 }
             }
         }
 
-        public bool CanCancelScan => IsScanning;
+        public bool IsCancellable => IsScanning || IsProcessing;
 
         public int ProcessingProgress
         {
@@ -162,7 +164,9 @@ namespace DeDupe.ViewModels.Pages
                 if (SetProperty(ref _isProcessing, value))
                 {
                     OnPropertyChanged(nameof(CanStartProcessing));
+                    OnPropertyChanged(nameof(IsCancellable));
                     ProcessCommand.NotifyCanExecuteChanged();
+                    CancelOperationCommand.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -199,25 +203,13 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ConfigurationViewModel(
-            IAppStateService appStateService,
-            ISettingsService settingsService,
-            IBundledModelService bundledModelService,
-            IFeatureExtractionService featureExtractionService,
-            IBorderDetectionService borderDetectionService,
-            IImageFormatService imageFormatService,
-            IImageResizeService imageResizeService) : base(0)
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IBorderDetectionService borderDetectionService) : base(0)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
-            _imageProcessingService = new ImageProcessingService(
-                _appStateService,
-                _settingsService,
-                borderDetectionService,
-                imageFormatService,
-                imageResizeService);
+            _imageProcessingService = new ImageProcessingService(_appStateService, _settingsService, borderDetectionService);
 
             Title = "File Input";
             Status = "No files added";
@@ -410,11 +402,19 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        [RelayCommand(CanExecute = nameof(CanCancelScan))]
-        private void CancelScan()
+        [RelayCommand(CanExecute = nameof(IsCancellable))]
+        private void CancelOperation()
         {
-            _scanCts?.Cancel();
-            Status = "Cancelling scan...";
+            if (IsScanning)
+            {
+                _scanCts?.Cancel();
+                Status = "Cancelling scan...";
+            }
+            else if (IsProcessing)
+            {
+                _processingCts?.Cancel();
+                Status = "Cancelling processing...";
+            }
         }
 
         [RelayCommand(CanExecute = nameof(CanOpenTempFolder))]
@@ -436,6 +436,11 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand(CanExecute = nameof(CanStartProcessing))]
         private async Task ProcessAsync()
         {
+            // Cancel any existing processing
+            await _processingCts?.CancelAsync();
+            _processingCts = new CancellationTokenSource();
+            CancellationToken ct = _processingCts.Token;
+
             try
             {
                 IsBusy = true;
@@ -447,7 +452,7 @@ namespace DeDupe.ViewModels.Pages
                 HasExtractedFeatures = false;
                 ExtractedFeaturesCount = 0;
 
-                // Step 1 - Preprocessing
+                // Step 1 - Processing
                 IReadOnlyCollection<AnalysisItem> analysisItems = _appStateService.AnalysisItems;
 
                 if (analysisItems.Count == 0)
@@ -456,12 +461,15 @@ namespace DeDupe.ViewModels.Pages
                     return;
                 }
 
-                Status = $"Preprocessing {analysisItems.Count} items...";
-                await _imageProcessingService.ProcessItemsAsync(analysisItems);
+                Status = $"Processing {analysisItems.Count} items...";
+
+                await _imageProcessingService.ProcessItemsAsync(analysisItems, ct);
+
+                ct.ThrowIfCancellationRequested();
 
                 if (_appStateService.ProcessedItemCount == 0)
                 {
-                    Status = "Preprocessing failed: No items were processed.";
+                    Status = "Processing failed: No items were processed.";
                     return;
                 }
 
@@ -482,6 +490,8 @@ namespace DeDupe.ViewModels.Pages
                         return;
                     }
                 }
+
+                ct.ThrowIfCancellationRequested();
 
                 // Get processed items for feature extraction
                 IReadOnlyCollection<AnalysisItem> processedItems = _appStateService.ProcessedItems;
@@ -505,8 +515,11 @@ namespace DeDupe.ViewModels.Pages
                 );
 
                 // Extract features
-                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization);
+                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization, ct);
                 _appStateService.NotifyFeaturesExtracted();
+
+                /// Release ImageSharp's pooled memory.
+                Configuration.Default.MemoryAllocator.ReleaseRetainedResources();
 
                 // Update results
                 ExtractedFeaturesCount = _appStateService.ExtractedFeaturesCount;
@@ -520,6 +533,10 @@ namespace DeDupe.ViewModels.Pages
                 {
                     Status = "Feature extraction failed: No features were extracted.";
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                Status = "Processing cancelled";
             }
             catch (Exception ex)
             {
@@ -571,7 +588,7 @@ namespace DeDupe.ViewModels.Pages
             }
 
             // Cancel existing scan
-            _scanCts?.Cancel();
+            await _scanCts?.CancelAsync();
             _scanCts = new CancellationTokenSource();
             CancellationToken ct = _scanCts.Token;
 
@@ -805,6 +822,9 @@ namespace DeDupe.ViewModels.Pages
             {
                 _scanCts?.Cancel();
                 _scanCts?.Dispose();
+
+                _processingCts?.Cancel();
+                _processingCts?.Dispose();
 
                 PropertyChanged -= OnOwnPropertyChanged;
                 _appStateService.SourceMediaChanged -= OnSourceMediaChanged;

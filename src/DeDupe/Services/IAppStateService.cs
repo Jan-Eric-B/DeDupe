@@ -81,7 +81,7 @@ namespace DeDupe.Services
         #region Pipeline State
 
         /// <summary>
-        /// Clear preprocessing state for all items.
+        /// Clear processing state for all items.
         /// </summary>
         void ClearProcessedState();
 

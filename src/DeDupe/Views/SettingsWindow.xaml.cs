@@ -55,7 +55,7 @@ namespace DeDupe.Views
                 Type? pageType = tag switch
                 {
                     "General" => typeof(GeneralSettingsPage),
-                    "PreProcessing" => typeof(PreProcessingSettingsPage),
+                    "ImageProcessing" => typeof(ImageProcessingSettingsPage),
                     "ModelConfiguration" => typeof(ModelSettingsPage),
                     _ => null
                 };

@@ -93,7 +93,7 @@ namespace DeDupe.Services.Analysis
         #region Feature Extraction
 
         /// <inheritdoc />
-        public async Task ExtractFeaturesAsync(IEnumerable<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization)
+        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized)
             {
@@ -114,14 +114,19 @@ namespace DeDupe.Services.Analysis
             await Parallel.ForEachAsync(itemList, new ParallelOptions
             {
                 MaxDegreeOfParallelism = Environment.ProcessorCount,
-                CancellationToken = CancellationToken.None
+                CancellationToken = cancellationToken
             },
             async (item, ct) =>
             {
                 await semaphore.WaitAsync(ct);
                 try
                 {
-                    await ExtractFeaturesFromItemAsync(item, normalization);
+                    ct.ThrowIfCancellationRequested();
+                    await ExtractFeaturesFromItemAsync(item, normalization, ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -134,7 +139,7 @@ namespace DeDupe.Services.Analysis
             });
         }
 
-        private async Task ExtractFeaturesFromItemAsync(AnalysisItem item, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization)
+        private async Task ExtractFeaturesFromItemAsync(AnalysisItem item, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken cancellationToken)
         {
             if (_session == null || _inputName == null || _outputName == null || _inputDimensions == null)
             {
@@ -148,8 +153,12 @@ namespace DeDupe.Services.Analysis
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 // Load and preprocess image
-                using Image<Rgb24> image = await Image.LoadAsync<Rgb24>(item.ProcessedFilePath);
+                using Image<Rgb24> image = await Image.LoadAsync<Rgb24>(item.ProcessedFilePath, cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // Get expected input dimensions from model
                 int batchSize = _inputDimensions[0] == -1 ? 1 : _inputDimensions[0];
@@ -174,6 +183,10 @@ namespace DeDupe.Services.Analysis
                 int[] featureDimensions = output.Dimensions.ToArray();
 
                 item.SetFeatures(featureVector, featureDimensions);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {

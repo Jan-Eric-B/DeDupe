@@ -75,7 +75,6 @@
 		<None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
 		<None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
 		<None Remove="Views\Pages\ManagementPage.xaml" />
-		<None Remove="Views\Settings\PreProcessingSettingsPage.xaml" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -134,7 +133,7 @@
 		</Page>
 	</ItemGroup>
 	<ItemGroup>
-	  <Page Update="Views\Settings\PreProcessingSettingsPage.xaml">
+	  <Page Update="Views\Settings\ImageProcessingSettingsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

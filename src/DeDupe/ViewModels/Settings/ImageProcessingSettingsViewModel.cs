@@ -15,7 +15,7 @@ using Windows.UI;
 
 namespace DeDupe.ViewModels.Settings
 {
-    public partial class PreProcessingSettingsViewModel : SettingsPageViewModelBase
+    public partial class ImageProcessingSettingsViewModel : SettingsPageViewModelBase
     {
         #region Fields
 
@@ -48,9 +48,11 @@ namespace DeDupe.ViewModels.Settings
 
         // Border Detection
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsBorderDetectionEnabled))]
         public partial bool EnableBorderDetection { get; set; }
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(BorderDetectionAggressivenessLabel))]
         public partial int BorderDetectionTolerance { get; set; }
 
         // Output Settings
@@ -71,6 +73,11 @@ namespace DeDupe.ViewModels.Settings
         [ObservableProperty]
         public partial string CustomTempFolderPath { get; set; } = string.Empty;
 
+        // Performance Settings
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ParallelCoresDisplayText))]
+        public partial int ParallelProcessingCores { get; set; }
+
         #endregion Observable Properties
 
         #region Properties
@@ -80,8 +87,34 @@ namespace DeDupe.ViewModels.Settings
 
         public bool IsPaddingColorVisible => ResizeMethod == ResizeMethod.Padding;
 
+        // Border Detection
+        public bool IsBorderDetectionEnabled => EnableBorderDetection;
+
+        /// <summary>
+        /// Human-readable label for aggressiveness level.
+        /// </summary>
+        public string BorderDetectionAggressivenessLabel => BorderDetectionTolerance switch
+        {
+            < 20 => "Very Conservative",
+            < 50 => "Conservative",
+            < 100 => "Balanced",
+            < 150 => "Aggressive",
+            _ => "Very Aggressive"
+        };
+
         // Temp Folder
         public bool IsCustomTempFolderEnabled => UseCustomTempFolder;
+
+        // Performance
+        /// <summary>
+        /// Maximum number of CPU cores available on this system.
+        /// </summary>
+        public int MaxParallelCores => Environment.ProcessorCount;
+
+        /// <summary>
+        /// Display text for parallel cores slider.
+        /// </summary>
+        public string ParallelCoresDisplayText => ParallelProcessingCores.ToString();
 
         // ComboBox Enums
         public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
@@ -94,10 +127,10 @@ namespace DeDupe.ViewModels.Settings
 
         #region Constructor
 
-        public PreProcessingSettingsViewModel(ISettingsService settingsService)
+        public ImageProcessingSettingsViewModel(ISettingsService settingsService)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            Title = "Pre-Processing";
+            Title = "Image Processing";
 
             LoadSettings();
         }
@@ -179,17 +212,84 @@ namespace DeDupe.ViewModels.Settings
             // Temp Folder
             UseCustomTempFolder = _settingsService.UseCustomTempFolder;
             CustomTempFolderPath = _settingsService.CustomTempFolderPath;
+
+            // Performance
+            ParallelProcessingCores = _settingsService.ParallelProcessingCores;
         }
 
         // Temp Folder
-        partial void OnUseCustomTempFolderChanged(bool value)
+        private void OnUseCustomTempFolderChanged(bool value)
         {
             _settingsService.UseCustomTempFolder = value;
         }
 
-        partial void OnCustomTempFolderPathChanged(string value)
+        private void OnCustomTempFolderPathChanged(string value)
         {
             _settingsService.CustomTempFolderPath = value;
+        }
+
+        // Resize Settings
+        private void OnEnableResizingChanged(bool value)
+        {
+            _settingsService.EnableResizing = value;
+        }
+
+        private void OnResizeSizeChanged(uint value)
+        {
+            _settingsService.ResizeSize = value;
+        }
+
+        private void OnResizeMethodChanged(ResizeMethod value)
+        {
+            _settingsService.ResizeMethod = value;
+        }
+
+        private void OnPaddingColorChanged(Color value)
+        {
+            _settingsService.PaddingColor = value;
+        }
+
+        private void OnDownsamplingMethodChanged(InterpolationMethod value)
+        {
+            _settingsService.DownsamplingMethod = value;
+        }
+
+        private void OnUpsamplingMethodChanged(InterpolationMethod value)
+        {
+            _settingsService.UpsamplingMethod = value;
+        }
+
+        // Border Detection
+        private void OnEnableBorderDetectionChanged(bool value)
+        {
+            _settingsService.EnableBorderDetection = value;
+        }
+
+        private void OnBorderDetectionToleranceChanged(int value)
+        {
+            _settingsService.BorderDetectionTolerance = value;
+        }
+
+        // Output Settings
+        private void OnOutputFormatChanged(OutputFormat value)
+        {
+            _settingsService.OutputFormat = value;
+        }
+
+        private void OnDpiChanged(uint value)
+        {
+            _settingsService.Dpi = value;
+        }
+
+        private void OnColorFormatChanged(ColorFormat value)
+        {
+            _settingsService.ColorFormat = value;
+        }
+
+        // Performance Settings
+        private void OnParallelProcessingCoresChanged(int value)
+        {
+            _settingsService.ParallelProcessingCores = value;
         }
 
         public override void OnNavigatedTo()

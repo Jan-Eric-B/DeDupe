@@ -147,8 +147,8 @@
                 <ProgressRing
                     Width="16"
                     Height="16"
-                    IsActive="{x:Bind ViewModel.IsScanning, Mode=OneWay}"
-                    Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    IsActive="{x:Bind ViewModel.IsCancellable, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsCancellable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <TextBlock
                     VerticalAlignment="Center"
@@ -163,12 +163,12 @@
                 Orientation="Horizontal"
                 Spacing="8">
 
-                <!--  Cancel Scan Button  -->
+                <!--  Cancel Button  -->
                 <Button
-                    Command="{x:Bind ViewModel.CancelScanCommand}"
+                    Command="{x:Bind ViewModel.CancelOperationCommand}"
                     Content="Cancel"
-                    ToolTipService.ToolTip="Cancel folder scanning"
-                    Visibility="{x:Bind ViewModel.IsScanning, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    ToolTipService.ToolTip="Cancel current operation"
+                    Visibility="{x:Bind ViewModel.IsCancellable, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <!--  File Input Buttons  -->
                 <Button
@@ -186,7 +186,7 @@
                     Margin="4,4"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <!--  Combined Process Button (Preprocess + Extract Features)  -->
+                <!--  Process Button  -->
                 <Button
                     Command="{x:Bind ViewModel.ProcessCommand}"
                     Content="Process"

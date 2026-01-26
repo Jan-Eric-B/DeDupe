@@ -1,6 +1,6 @@
 ﻿using DeDupe.Services;
 using DeDupe.Services.Analysis;
-using DeDupe.Services.PreProcessing;
+using DeDupe.Services.Processing;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;
 using DeDupe.ViewModels.Settings;
@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Memory;
 using System;
 using System.Diagnostics;
 
@@ -28,6 +30,8 @@ namespace DeDupe
         public App()
         {
             InitializeComponent();
+
+            ConfigureImageSharp();
 
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices(ConfigureServices)
@@ -72,8 +76,6 @@ namespace DeDupe
 
             // Image Processing
             services.AddTransient<IBorderDetectionService, BorderDetectionService>();
-            services.AddTransient<IImageFormatService, ImageFormatService>();
-            services.AddTransient<IImageResizeService, ImageResizeService>();
             services.AddTransient<ImageProcessingService>();
 
             // Page ViewModels
@@ -82,7 +84,7 @@ namespace DeDupe
 
             // Settings Page ViewModels
             services.AddSingleton<GeneralSettingViewModel>();
-            services.AddSingleton<PreProcessingSettingsViewModel>();
+            services.AddSingleton<ImageProcessingSettingsViewModel>();
             services.AddSingleton<ModelSettingsViewModel>();
 
             // Feature Extraction
@@ -93,6 +95,31 @@ namespace DeDupe
 
             // Logging
             services.AddLogging();
+        }
+
+        /// <summary>
+        /// Configure ImageSharp memory pool and concurrent operations.
+        /// </summary>
+        private static void ConfigureImageSharp(int maxPoolSizeMegabytes = 128)
+        {
+            try
+            {
+                Configuration.Default.MemoryAllocator = MemoryAllocator.Create(
+                    new MemoryAllocatorOptions
+                    {
+                        MaximumPoolSizeMegabytes = maxPoolSizeMegabytes
+                    });
+
+                // TODO Use settings value for parallelism
+                // Set maximum concurrent operations (Match ParallelProcessingCores constant)
+                Configuration.Default.MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 4);
+
+                Debug.WriteLine($"ImageSharp configured: {maxPoolSizeMegabytes}MB pool, " + $"{Configuration.Default.MaxDegreeOfParallelism} max parallelism");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Warning: Failed to configure ImageSharp memory settings: {ex.Message}");
+            }
         }
 
         public T GetService<T>() where T : class

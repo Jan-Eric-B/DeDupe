@@ -236,43 +236,43 @@ namespace DeDupe.ViewModels.Settings
         }
 
         // Model Selection Change Handlers
-        partial void OnUseBundledModelChanged(bool value)
+        private void OnUseBundledModelChanged(bool value)
         {
             _settingsService.UseBundledModel = value;
         }
 
-        partial void OnCustomModelFilePathChanged(string value)
+        private void OnCustomModelFilePathChanged(string value)
         {
             _settingsService.CustomModelFilePath = value;
         }
 
         // Normalization Change Handlers
-        partial void OnMeanRChanged(double value)
+        private void OnMeanRChanged(double value)
         {
             _settingsService.MeanR = value;
         }
 
-        partial void OnMeanGChanged(double value)
+        private void OnMeanGChanged(double value)
         {
             _settingsService.MeanG = value;
         }
 
-        partial void OnMeanBChanged(double value)
+        private void OnMeanBChanged(double value)
         {
             _settingsService.MeanB = value;
         }
 
-        partial void OnStdRChanged(double value)
+        private void OnStdRChanged(double value)
         {
             _settingsService.StdR = value;
         }
 
-        partial void OnStdGChanged(double value)
+        private void OnStdGChanged(double value)
         {
             _settingsService.StdG = value;
         }
 
-        partial void OnStdBChanged(double value)
+        private void OnStdBChanged(double value)
         {
             _settingsService.StdB = value;
         }

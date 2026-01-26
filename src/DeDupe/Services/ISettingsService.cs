@@ -12,7 +12,7 @@ namespace DeDupe.Services
         AppBackdrop Backdrop { get; set; }
         AppAccentColor AccentColor { get; set; }
 
-        // Pre-Processing
+        // Processing
         bool EnableResizing { get; set; }
 
         uint ResizeSize { get; set; }
@@ -28,6 +28,7 @@ namespace DeDupe.Services
         bool UseCustomTempFolder { get; set; }
         string CustomTempFolderPath { get; set; }
         string TempFolderPath { get; }
+        int ParallelProcessingCores { get; set; }
 
         // Model Configuration
         bool UseBundledModel { get; set; }
@@ -70,6 +71,8 @@ namespace DeDupe.Services
         event EventHandler<uint>? DpiChanged;
 
         event EventHandler<ColorFormat>? ColorFormatChanged;
+
+        event EventHandler<int>? ParallelProcessingCoresChanged;
 
         event EventHandler<bool>? UseBundledModelChanged;
 

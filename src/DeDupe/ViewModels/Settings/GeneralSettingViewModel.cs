@@ -52,17 +52,17 @@ namespace DeDupe.ViewModels.Settings
 
         #region Methods
 
-        partial void OnSelectedThemeIndexChanged(int value)
+        private void OnSelectedThemeIndexChanged(int value)
         {
             _settingsService.Theme = (AppTheme)value;
         }
 
-        partial void OnSelectedBackdropIndexChanged(int value)
+        private void OnSelectedBackdropIndexChanged(int value)
         {
             _settingsService.Backdrop = (AppBackdrop)value;
         }
 
-        partial void OnSelectedAccentColorIndexChanged(int value)
+        private void OnSelectedAccentColorIndexChanged(int value)
         {
             _settingsService.AccentColor = (AppAccentColor)value;
         }

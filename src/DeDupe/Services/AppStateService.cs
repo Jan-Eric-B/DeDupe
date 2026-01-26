@@ -160,7 +160,7 @@ namespace DeDupe.Services
         #region State Methods
 
         /// <summary>
-        /// Reset preprocessing state for all items.
+        /// Reset processing state for all items.
         /// </summary>
         public void ClearProcessedState()
         {

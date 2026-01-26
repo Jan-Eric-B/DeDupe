@@ -19,7 +19,7 @@ namespace DeDupe.Controls
     {
         #region Properties
 
-        public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register( nameof(SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
+        public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register(nameof(SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
 
         public SelectableItem? SelectableItem
         {

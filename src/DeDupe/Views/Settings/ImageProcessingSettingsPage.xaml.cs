@@ -4,14 +4,14 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace DeDupe.Views.Settings
 {
-    public sealed partial class PreProcessingSettingsPage : Page
+    public sealed partial class ImageProcessingSettingsPage : Page
     {
-        public PreProcessingSettingsViewModel ViewModel { get; }
+        public ImageProcessingSettingsViewModel ViewModel { get; }
 
-        public PreProcessingSettingsPage()
+        public ImageProcessingSettingsPage()
         {
             InitializeComponent();
-            ViewModel = App.Current.GetService<PreProcessingSettingsViewModel>();
+            ViewModel = App.Current.GetService<ImageProcessingSettingsViewModel>();
             DataContext = ViewModel;
         }
 
