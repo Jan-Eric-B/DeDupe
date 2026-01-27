@@ -1,4 +1,5 @@
-﻿using DeDupe.Models.Results;
+﻿using DeDupe.Models;
+using DeDupe.Models.Results;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -7,9 +8,9 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <summary>
-    /// Interface for feature extraction from preprocessed images.
+    /// Interface for feature extraction service.
     /// </summary>
-    public interface IFeatureExtractionService : IDisposable
+    public interface IFeatureExtractionService
     {
         /// <summary>
         /// Path to loaded model.
@@ -17,7 +18,7 @@ namespace DeDupe.Services.Analysis
         string ModelPath { get; }
 
         /// <summary>
-        /// Service has been initialized with model.
+        /// Service is initialized with model.
         /// </summary>
         bool IsInitialized { get; }
 
@@ -27,12 +28,12 @@ namespace DeDupe.Services.Analysis
         bool IsGpuEnabled { get; }
 
         /// <summary>
-        /// Current batch size for inference.
+        /// Batch size for inference.
         /// </summary>
         int BatchSize { get; }
 
         /// <summary>
-        /// Expected input dimensions from the model (Channels, Height, Width).
+        /// Expected input dimensions from the model.
         /// </summary>
         (int Channels, int Height, int Width)? ExpectedDimensions { get; }
 
@@ -47,8 +48,8 @@ namespace DeDupe.Services.Analysis
         Task InitializeAsync(string modelPath);
 
         /// <summary>
-        /// Extract feature vectors from processed items.
+        /// Extract features from processed items.
         /// </summary>
-        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken cancellationToken = default);
+        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken = default);
     }
 }

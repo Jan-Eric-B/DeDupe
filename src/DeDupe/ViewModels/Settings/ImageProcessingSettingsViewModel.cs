@@ -277,10 +277,12 @@ namespace DeDupe.ViewModels.Settings
         {
             _settingsService.PaddingColor = value;
         }
+
         partial void OnDownsamplingMethodChanged(InterpolationMethod value)
         {
             _settingsService.DownsamplingMethod = value;
         }
+
         partial void OnUpsamplingMethodChanged(InterpolationMethod value)
         {
             _settingsService.UpsamplingMethod = value;

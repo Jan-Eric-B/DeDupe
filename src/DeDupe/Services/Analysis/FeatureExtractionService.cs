@@ -1,4 +1,5 @@
-﻿using DeDupe.Models.Results;
+﻿using DeDupe.Models;
+using DeDupe.Models.Results;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SixLabors.ImageSharp;
@@ -207,7 +208,7 @@ namespace DeDupe.Services.Analysis
         #region Feature Extraction
 
         /// <inheritdoc />
-        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken cancellationToken = default)
+        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized)
             {
@@ -223,10 +224,10 @@ namespace DeDupe.Services.Analysis
                 return;
             }
 
-            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normalization, cancellationToken);
+            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normalization, progress, cancellationToken);
         }
 
-        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken ct)
+        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress, CancellationToken ct)
         {
             if (_session == null || _inputName == null || _outputName == null || _inputDimensions == null)
             {
@@ -246,6 +247,12 @@ namespace DeDupe.Services.Analysis
             }
 
             if (batches.Count == 0) return;
+
+            int totalItems = items.Count;
+            int processedItems = 0;
+
+            // Report initial progress
+            progress?.Report(new ProgressInfo(0, totalItems, "Extracting features"));
 
             // Track using buffer
             bool useBufferA = true;
@@ -293,12 +300,19 @@ namespace DeDupe.Services.Analysis
                     }
                 }
 
+                // Update progress after each batch
+                processedItems += batchItems.Count;
+                progress?.Report(new ProgressInfo(processedItems, totalItems, "Extracting features"));
+
                 // Set up for next iteration
                 if (nextPrepareTask != null)
                 {
                     prepareTask = nextPrepareTask;
                 }
             }
+
+            // Final progress report
+            progress?.Report(new ProgressInfo(totalItems, totalItems, "Feature extraction complete"));
         }
 
         private async Task<(DenseTensor<float> Tensor, List<AnalysisItem> Items, List<int> ValidIndices)> PrepareBatchAsync(List<AnalysisItem> batchItems, int height, int width, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, bool useBufferA, CancellationToken ct)

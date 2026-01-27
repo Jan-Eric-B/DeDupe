@@ -43,6 +43,7 @@ namespace DeDupe.Services
 
         // Feature Extraction Performance
         bool EnableGpuAcceleration { get; set; }
+
         int InferenceBatchSize { get; set; }
 
         // Events

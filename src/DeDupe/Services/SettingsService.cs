@@ -58,6 +58,7 @@ namespace DeDupe.Services
 
         // Feature Extraction Performance
         private const string EnableGpuAccelerationKey = "EnableGpuAcceleration";
+
         private const string InferenceBatchSizeKey = "InferenceBatchSize";
 
         #endregion Keys
@@ -75,6 +76,7 @@ namespace DeDupe.Services
 
         // Performance defaults
         private const bool DefaultEnableGpuAcceleration = true;
+
         private const int DefaultInferenceBatchSize = 16;
 
         #endregion Default Values

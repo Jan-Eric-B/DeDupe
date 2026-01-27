@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Helpers;
+using DeDupe.Models;
 using DeDupe.Models.Input;
 using DeDupe.Models.Media;
 using DeDupe.Models.Results;
@@ -41,6 +42,11 @@ namespace DeDupe.ViewModels.Pages
         private bool _isProcessing;
         private bool _hasExtractedFeatures;
         private int _extractedFeaturesCount;
+
+        private int _currentProcessedCount;
+        private int _totalItemsToProcess;
+        private double _progressPercentage;
+        private string _currentOperation = string.Empty;
 
         private bool _includeVideoFiles;
         private ObservableCollection<InputListItem> _inputListItems = [];
@@ -192,6 +198,54 @@ namespace DeDupe.ViewModels.Pages
         }
 
         public override bool CanNavigateToNext => HasExtractedFeatures;
+
+        /// <summary>
+        /// Current number of processed items in the active operation.
+        /// </summary>
+        public int CurrentProcessedCount
+        {
+            get => _currentProcessedCount;
+            set
+            {
+                if (SetProperty(ref _currentProcessedCount, value))
+                {
+                    OnPropertyChanged(nameof(Status));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Total number of items to process in the active operation.
+        /// </summary>
+        public int TotalItemsToProcess
+        {
+            get => _totalItemsToProcess;
+            set
+            {
+                if (SetProperty(ref _totalItemsToProcess, value))
+                {
+                    OnPropertyChanged(nameof(Status));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Progress percentage.
+        /// </summary>
+        public double ProgressPercentage
+        {
+            get => _progressPercentage;
+            set => SetProperty(ref _progressPercentage, Math.Clamp(value, 0, 100));
+        }
+
+        /// <summary>
+        /// Name of operation.
+        /// </summary>
+        public string CurrentOperation
+        {
+            get => _currentOperation;
+            set => SetProperty(ref _currentOperation, value ?? string.Empty);
+        }
 
         #endregion Properties
 
@@ -437,13 +491,16 @@ namespace DeDupe.ViewModels.Pages
                 IsBusy = true;
                 IsProcessing = true;
                 ProcessingProgress = 0;
+                ProgressPercentage = 0;
+                CurrentProcessedCount = 0;
+                TotalItemsToProcess = 0;
 
                 // Reset previous state if re-processing
                 HasProcessedItems = false;
                 HasExtractedFeatures = false;
                 ExtractedFeaturesCount = 0;
 
-                // Step 1 - Processing
+                // Step 1 - Image Processing
                 IReadOnlyCollection<AnalysisItem> analysisItems = _appStateService.AnalysisItems;
 
                 if (analysisItems.Count == 0)
@@ -452,9 +509,25 @@ namespace DeDupe.ViewModels.Pages
                     return;
                 }
 
-                Status = $"Processing {analysisItems.Count} items...";
+                // Create progress handler for image processing
+                Progress<ProgressInfo> imageProcessingProgress = new(info =>
+                {
+                    // Update on UI thread via dispatcher
+                    App.Window.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        CurrentOperation = info.OperationName;
+                        CurrentProcessedCount = info.CurrentItem;
+                        TotalItemsToProcess = info.TotalItems;
+                        ProgressPercentage = info.Percentage;
+                        Status = info.StatusText;
+                    });
+                });
 
-                await _imageProcessingService.ProcessItemsAsync(analysisItems, ct);
+                CurrentOperation = "Processing images";
+                TotalItemsToProcess = analysisItems.Count;
+                Status = $"Processing {analysisItems.Count} images...";
+
+                await _imageProcessingService.ProcessItemsAsync(analysisItems, imageProcessingProgress, ct);
 
                 ct.ThrowIfCancellationRequested();
 
@@ -465,14 +538,16 @@ namespace DeDupe.ViewModels.Pages
                 }
 
                 HasProcessedItems = true;
-                Status = $"Preprocessed {_appStateService.ProcessedItemCount} items. Extracting features...";
 
                 // Step 2 - Feature Extraction
 
                 // Initialize model if needed
                 if (!_featureExtractionService.IsInitialized)
                 {
-                    Status = "Initializing model...";
+                    CurrentOperation = "Initializing model";
+                    Status = "Initializing AI model...";
+                    ProgressPercentage = 0;
+
                     await InitializeFeatureExtractionAsync();
 
                     if (!_featureExtractionService.IsInitialized)
@@ -493,6 +568,23 @@ namespace DeDupe.ViewModels.Pages
                     return;
                 }
 
+                // Create progress handler for feature extraction
+                Progress<ProgressInfo> featureExtractionProgress = new(info =>
+                {
+                    App.Window.DispatcherQueue.TryEnqueue(() =>
+                    {
+                        CurrentOperation = info.OperationName;
+                        CurrentProcessedCount = info.CurrentItem;
+                        TotalItemsToProcess = info.TotalItems;
+                        ProgressPercentage = info.Percentage;
+                        Status = info.StatusText;
+                    });
+                });
+
+                CurrentOperation = "Extracting features";
+                TotalItemsToProcess = processedItems.Count;
+                CurrentProcessedCount = 0;
+                ProgressPercentage = 0;
                 Status = $"Extracting features from {processedItems.Count} items...";
 
                 // Build normalization tuple
@@ -505,8 +597,9 @@ namespace DeDupe.ViewModels.Pages
                     StdB: (float)_settingsService.StdB
                 );
 
-                // Extract features
-                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization, ct);
+                // Extract features with progress
+                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization, featureExtractionProgress, ct);
+
                 _appStateService.NotifyFeaturesExtracted();
 
                 // Release ImageSharp's pooled memory.
@@ -518,6 +611,7 @@ namespace DeDupe.ViewModels.Pages
                 if (ExtractedFeaturesCount > 0)
                 {
                     HasExtractedFeatures = true;
+                    ProgressPercentage = 100;
                     Status = $"Ready! Extracted {ExtractedFeaturesCount} feature vectors. Click 'Find Duplicates' to continue.";
                 }
                 else
@@ -539,6 +633,16 @@ namespace DeDupe.ViewModels.Pages
                 IsProcessing = false;
                 IsBusy = false;
                 ProcessingProgress = 0;
+
+                // Reset progress display after a short delay to show completion
+                await Task.Delay(2000);
+                if (!IsProcessing)
+                {
+                    CurrentProcessedCount = 0;
+                    TotalItemsToProcess = 0;
+                    ProgressPercentage = 0;
+                    CurrentOperation = string.Empty;
+                }
             }
         }
 

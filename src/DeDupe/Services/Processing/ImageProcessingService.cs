@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Models.Results;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Bmp;
@@ -92,7 +93,7 @@ namespace DeDupe.Services.Processing
         /// <summary>
         /// Process all analysis items.
         /// </summary>
-        public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, CancellationToken cancellationToken = default)
+        public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             // Clear processing state
             _appStateService.ClearProcessedState();
@@ -115,6 +116,9 @@ namespace DeDupe.Services.Processing
             int maxParallelism = Math.Max(1, _settingsService.ParallelProcessingCores);
 
             Debug.WriteLine($"Processing {totalCount} images with parallelism {maxParallelism}");
+
+            // Report initial progress
+            progress?.Report(new ProgressInfo(0, totalCount, "Processing images"));
 
             await Parallel.ForEachAsync(
                 itemList,
@@ -142,6 +146,12 @@ namespace DeDupe.Services.Processing
                             {
                                 failedCount++;
                             }
+
+                            // Report progress
+                            if (processedCount % 5 == 0 || processedCount == totalCount)
+                            {
+                                progress?.Report(new ProgressInfo(processedCount, totalCount, "Processing images", item.Source?.Metadata?.FileName));
+                            }
                         }
                     }
                     catch (OperationCanceledException)
@@ -154,10 +164,19 @@ namespace DeDupe.Services.Processing
                         {
                             failedCount++;
                             processedCount++;
+
+                            if (processedCount % 5 == 0 || processedCount == totalCount)
+                            {
+                                progress?.Report(new ProgressInfo(processedCount, totalCount, "Processing images"));
+                            }
                         }
                         Debug.WriteLine($"Error processing item: {ex.Message}");
                     }
                 });
+
+            // Final progress report
+            progress?.Report(new ProgressInfo(totalCount, totalCount, "Processing complete"));
+
             Debug.WriteLine($"Processing complete: {successCount}/{totalCount} successful");
         }
 

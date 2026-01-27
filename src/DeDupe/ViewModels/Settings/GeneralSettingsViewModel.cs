@@ -51,6 +51,7 @@ namespace DeDupe.ViewModels.Settings
         #endregion Constructor
 
         #region Methods
+
         partial void OnSelectedThemeIndexChanged(int value)
         {
             _settingsService.Theme = (AppTheme)value;
