@@ -18,6 +18,15 @@ This project is licensed under the GPL-2.0 License - see the [LICENSE](LICENSE) 
 
 This project uses the following third-party components:
 
-| Component | License | Source |
-|-----------|---------|--------|
-| ResNet50 ONNX Model | Apache-2.0 | [ONNX Model Zoo](https://github.com/onnx/models) |
+| Component                    | License      | Source                                         |
+|------------------------------|--------------|------------------------------------------------|
+| CLIP ViT-B/32                | MIT          | https://github.com/openai/CLIP                 |
+| DINOv2 ViT-B/14              | Apache-2.0   | https://github.com/facebookresearch/dinov2     |
+| ResNet50 ONNX Model          | Apache-2.0   | https://github.com/onnx/models                               |
+| SixLabors.ImageSharp         | Apache-2.0   | https://github.com/SixLabors/ImageSharp        |
+| CommunityToolkit.Mvvm        | MIT          | https://github.com/CommunityToolkit/dotnet     |
+| CommunityToolkit.WinUI       | MIT          | https://github.com/CommunityToolkit/Windows    |
+| Microsoft.ML.OnnxRuntime     | MIT          | https://github.com/microsoft/onnxruntime       |
+| Microsoft.Extensions.*       | MIT          | https://github.com/dotnet/runtime              |
+
+Full license texts are available in the LICENSES folder.
