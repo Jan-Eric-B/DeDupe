@@ -1,5 +1,6 @@
 ﻿using DeDupe.Enums;
 using System;
+using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI;
@@ -55,6 +56,10 @@ namespace DeDupe.Services
         private const string StdGKey = "NormalizationStdG";
         private const string StdBKey = "NormalizationStdB";
 
+        // Feature Extraction Performance
+        private const string EnableGpuAccelerationKey = "EnableGpuAcceleration";
+        private const string InferenceBatchSizeKey = "InferenceBatchSize";
+
         #endregion Keys
 
         #region Default Values
@@ -67,6 +72,10 @@ namespace DeDupe.Services
         private const double DefaultStdR = 0.229;
         private const double DefaultStdG = 0.224;
         private const double DefaultStdB = 0.225;
+
+        // Performance defaults
+        private const bool DefaultEnableGpuAcceleration = true;
+        private const int DefaultInferenceBatchSize = 16;
 
         #endregion Default Values
 
@@ -417,6 +426,34 @@ namespace DeDupe.Services
             }
         }
 
+        // Feature Extraction Performance
+        public bool EnableGpuAcceleration
+        {
+            get => GetValue(EnableGpuAccelerationKey, DefaultEnableGpuAcceleration);
+            set
+            {
+                if (EnableGpuAcceleration != value)
+                {
+                    SetValue(EnableGpuAccelerationKey, value);
+                    EnableGpuAccelerationChanged?.Invoke(this, value);
+                }
+            }
+        }
+
+        public int InferenceBatchSize
+        {
+            get => GetValue(InferenceBatchSizeKey, DefaultInferenceBatchSize);
+            set
+            {
+                int clamped = Math.Clamp(value, 1, 64);
+                if (InferenceBatchSize != clamped)
+                {
+                    SetValue(InferenceBatchSizeKey, clamped);
+                    InferenceBatchSizeChanged?.Invoke(this, clamped);
+                }
+            }
+        }
+
         #endregion Properties
 
         #region Events
@@ -474,6 +511,11 @@ namespace DeDupe.Services
 
         public event EventHandler? ModelConfigurationChanged;
 
+        // Feature Extraction Performance
+        public event EventHandler<bool>? EnableGpuAccelerationChanged;
+
+        public event EventHandler<int>? InferenceBatchSizeChanged;
+
         #endregion Events
 
         #region Constructor
@@ -499,7 +541,7 @@ namespace DeDupe.Services
             }
             catch (Exception ex)
             {
-                // TODO Logging
+                Debug.WriteLine($"Error reading setting '{key}': {ex.Message}");
             }
 
             return defaultValue;
@@ -513,7 +555,7 @@ namespace DeDupe.Services
             }
             catch (Exception ex)
             {
-                // TODO Logging
+                Debug.WriteLine($"Error saving setting '{key}': {ex.Message}");
             }
         }
 

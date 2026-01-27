@@ -59,6 +59,44 @@
                 </StackPanel>
             </controls:SettingsCard>
 
+            <!--  GPU Acceleration  -->
+            <controls:SettingsExpander
+                Description="Use GPU for faster feature extraction via DirectML (Intel, AMD, NVIDIA)"
+                Header="GPU Acceleration"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE950;}"
+                IsExpanded="True">
+                <ToggleSwitch
+                    IsOn="{x:Bind ViewModel.EnableGpuAcceleration, Mode=TwoWay}"
+                    OffContent="CPU Only"
+                    OnContent="Enabled" />
+                <controls:SettingsExpander.Items>
+                    <!--  Batch Size  -->
+                    <controls:SettingsCard Header="Inference Batch Size" HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
+                        <controls:SettingsCard.Description>
+                            <StackPanel>
+                                <TextBlock>Number of images processed per inference call.</TextBlock>
+                                <TextBlock>Higher values are faster but require more GPU/system memory.</TextBlock>
+                            </StackPanel>
+                        </controls:SettingsCard.Description>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Slider
+                                Width="150"
+                                Maximum="64"
+                                Minimum="1"
+                                StepFrequency="1"
+                                TickFrequency="8"
+                                TickPlacement="Outside"
+                                Value="{x:Bind ViewModel.InferenceBatchSize, Mode=TwoWay}" />
+                            <TextBlock
+                                Width="60"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Text="{x:Bind ViewModel.BatchSizeDisplayText, Mode=OneWay}" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+
             <!--  Resize Settings  -->
             <TextBlock
                 Margin="0,29,0,3"

@@ -41,6 +41,10 @@ namespace DeDupe.Services
         double StdG { get; set; }
         double StdB { get; set; }
 
+        // Feature Extraction Performance
+        bool EnableGpuAcceleration { get; set; }
+        int InferenceBatchSize { get; set; }
+
         // Events
         event EventHandler<AppTheme>? ThemeChanged;
 
@@ -91,6 +95,11 @@ namespace DeDupe.Services
         event EventHandler<double>? StdBChanged;
 
         event EventHandler? ModelConfigurationChanged;
+
+        // Feature Extraction Performance
+        event EventHandler<bool>? EnableGpuAccelerationChanged;
+
+        event EventHandler<int>? InferenceBatchSizeChanged;
 
         // Methods
         T GetValue<T>(string key, T defaultValue);

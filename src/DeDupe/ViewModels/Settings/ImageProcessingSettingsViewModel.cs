@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
+using DeDupe.Helpers;
 using DeDupe.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -78,6 +78,15 @@ namespace DeDupe.ViewModels.Settings
         [NotifyPropertyChangedFor(nameof(ParallelCoresDisplayText))]
         public partial int ParallelProcessingCores { get; set; }
 
+        // GPU Acceleration Settings
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsBatchSizeEnabled))]
+        public partial bool EnableGpuAcceleration { get; set; }
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(BatchSizeDisplayText))]
+        public partial int InferenceBatchSize { get; set; }
+
         #endregion Observable Properties
 
         #region Properties
@@ -116,6 +125,24 @@ namespace DeDupe.ViewModels.Settings
         /// </summary>
         public string ParallelCoresDisplayText => ParallelProcessingCores.ToString();
 
+        // GPU Acceleration
+        /// <summary>
+        /// Batch size control is enabled.
+        /// </summary>
+        public bool IsBatchSizeEnabled => true;
+
+        /// <summary>
+        /// Display text for batch size slider.
+        /// </summary>
+        public string BatchSizeDisplayText => InferenceBatchSize.ToString();
+
+        /// <summary>
+        /// Human-readable description of GPU acceleration status.
+        /// </summary>
+        public string GpuAccelerationDescription => EnableGpuAcceleration
+            ? "GPU acceleration"
+            : "CPU-only mode";
+
         // ComboBox Enums
         public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
 
@@ -149,9 +176,7 @@ namespace DeDupe.ViewModels.Settings
                     SuggestedStartLocation = PickerLocationId.DocumentsLibrary
                 };
                 picker.FileTypeFilter.Add("*");
-
-                nint hwnd = GetActiveWindow();
-                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+                picker.InitializeForCurrentWindow();
 
                 StorageFolder folder = await picker.PickSingleFolderAsync();
                 if (folder != null)
@@ -215,81 +240,90 @@ namespace DeDupe.ViewModels.Settings
 
             // Performance
             ParallelProcessingCores = _settingsService.ParallelProcessingCores;
+
+            // GPU Acceleration
+            EnableGpuAcceleration = _settingsService.EnableGpuAcceleration;
+            InferenceBatchSize = _settingsService.InferenceBatchSize;
         }
 
         // Temp Folder
-        private void OnUseCustomTempFolderChanged(bool value)
+        partial void OnUseCustomTempFolderChanged(bool value)
         {
             _settingsService.UseCustomTempFolder = value;
         }
 
-        private void OnCustomTempFolderPathChanged(string value)
+        partial void OnCustomTempFolderPathChanged(string value)
         {
             _settingsService.CustomTempFolderPath = value;
         }
 
         // Resize Settings
-        private void OnEnableResizingChanged(bool value)
+        partial void OnEnableResizingChanged(bool value)
         {
             _settingsService.EnableResizing = value;
         }
 
-        private void OnResizeSizeChanged(uint value)
+        partial void OnResizeSizeChanged(uint value)
         {
             _settingsService.ResizeSize = value;
         }
 
-        private void OnResizeMethodChanged(ResizeMethod value)
+        partial void OnResizeMethodChanged(ResizeMethod value)
         {
             _settingsService.ResizeMethod = value;
         }
 
-        private void OnPaddingColorChanged(Color value)
+        partial void OnPaddingColorChanged(Color value)
         {
             _settingsService.PaddingColor = value;
         }
-
-        private void OnDownsamplingMethodChanged(InterpolationMethod value)
+        partial void OnDownsamplingMethodChanged(InterpolationMethod value)
         {
             _settingsService.DownsamplingMethod = value;
         }
-
-        private void OnUpsamplingMethodChanged(InterpolationMethod value)
+        partial void OnUpsamplingMethodChanged(InterpolationMethod value)
         {
             _settingsService.UpsamplingMethod = value;
         }
 
         // Border Detection
-        private void OnEnableBorderDetectionChanged(bool value)
+        partial void OnEnableBorderDetectionChanged(bool value)
         {
             _settingsService.EnableBorderDetection = value;
         }
 
-        private void OnBorderDetectionToleranceChanged(int value)
+        partial void OnBorderDetectionToleranceChanged(int value)
         {
             _settingsService.BorderDetectionTolerance = value;
         }
 
         // Output Settings
-        private void OnOutputFormatChanged(OutputFormat value)
+        partial void OnOutputFormatChanged(OutputFormat value)
         {
             _settingsService.OutputFormat = value;
         }
 
-        private void OnDpiChanged(uint value)
+        partial void OnDpiChanged(uint value)
         {
             _settingsService.Dpi = value;
         }
 
-        private void OnColorFormatChanged(ColorFormat value)
+        partial void OnColorFormatChanged(ColorFormat value)
         {
             _settingsService.ColorFormat = value;
         }
 
         // Performance Settings
-        private void OnParallelProcessingCoresChanged(int value)
+        partial void OnParallelProcessingCoresChanged(int value)
         {
             _settingsService.ParallelProcessingCores = value;
+        }
+
+        // GPU Acceleration Settings
+        partial void OnEnableGpuAccelerationChanged(bool value)
+        {
+            _settingsService.EnableGpuAcceleration = value;
+            OnPropertyChanged(nameof(GpuAccelerationDescription));
         }
 
         public override void OnNavigatedTo()
@@ -298,14 +332,6 @@ namespace DeDupe.ViewModels.Settings
             LoadSettings();
         }
 
-        public override void OnNavigatedFrom()
-        {
-            base.OnNavigatedFrom();
-        }
-
         #endregion Methods
-
-        [DllImport("user32.dll")]
-        private static extern nint GetActiveWindow();
     }
 }
