@@ -1,16 +1,15 @@
-﻿using DeDupe.Enums;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DeDupe.Enums;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Media
 {
     /// <summary>
     /// Base metadata class for all media types (images and videos).
     /// </summary>
-    public partial class MediaMetadata : INotifyPropertyChanged
+    public partial class MediaMetadata : ObservableObject
     {
         #region File Properties
 
@@ -152,10 +151,7 @@ namespace DeDupe.Models
         /// </summary>
         public MediaMetadata(string filePath, MediaType mediaType)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                throw new ArgumentNullException(nameof(filePath));
-            }
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             FilePath = filePath;
             MediaType = mediaType;
@@ -220,16 +216,5 @@ namespace DeDupe.Models
         }
 
         #endregion Methods
-
-        #region INotifyPropertyChanged
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion INotifyPropertyChanged
     }
 }

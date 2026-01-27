@@ -83,7 +83,7 @@ namespace DeDupe
             services.AddSingleton<ManagementViewModel>();
 
             // Settings Page ViewModels
-            services.AddSingleton<GeneralSettingViewModel>();
+            services.AddSingleton<GeneralSettingsViewModel>();
             services.AddSingleton<ImageProcessingSettingsViewModel>();
             services.AddSingleton<ModelSettingsViewModel>();
 

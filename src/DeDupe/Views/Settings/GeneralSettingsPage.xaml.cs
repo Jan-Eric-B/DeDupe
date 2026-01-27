@@ -6,12 +6,12 @@ namespace DeDupe.Views.Settings
 {
     public sealed partial class GeneralSettingsPage : Page
     {
-        public GeneralSettingViewModel ViewModel { get; }
+        public GeneralSettingsViewModel ViewModel { get; }
 
         public GeneralSettingsPage()
         {
             InitializeComponent();
-            ViewModel = App.Current.GetService<GeneralSettingViewModel>();
+            ViewModel = App.Current.GetService<GeneralSettingsViewModel>();
             DataContext = ViewModel;
         }
 

@@ -1,5 +1,5 @@
 ﻿using DeDupe.Enums;
-using DeDupe.Models;
+using DeDupe.Models.Results;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Jpeg;

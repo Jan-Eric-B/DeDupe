@@ -1,6 +1,6 @@
 ﻿using DeDupe.Enums;
-using DeDupe.Models;
 using DeDupe.Models.Analysis;
+using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;

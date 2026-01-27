@@ -1,5 +1,5 @@
-﻿using DeDupe.Models;
-using DeDupe.Models.Analysis;
+﻿using DeDupe.Models.Analysis;
+using DeDupe.Models.Results;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

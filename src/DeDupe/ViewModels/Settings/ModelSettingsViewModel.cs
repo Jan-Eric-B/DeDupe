@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DeDupe.Helpers;
 using DeDupe.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -170,9 +170,7 @@ namespace DeDupe.ViewModels.Settings
                 };
 
                 fileOpenPicker.FileTypeFilter.Add(".onnx");
-
-                nint hwnd = GetActiveWindow();
-                WinRT.Interop.InitializeWithWindow.Initialize(fileOpenPicker, hwnd);
+                fileOpenPicker.InitializeForCurrentWindow();
 
                 StorageFile? file = await fileOpenPicker.PickSingleFileAsync();
                 if (file != null)
@@ -236,43 +234,43 @@ namespace DeDupe.ViewModels.Settings
         }
 
         // Model Selection Change Handlers
-        private void OnUseBundledModelChanged(bool value)
+        partial void OnUseBundledModelChanged(bool value)
         {
             _settingsService.UseBundledModel = value;
         }
 
-        private void OnCustomModelFilePathChanged(string value)
+        partial void OnCustomModelFilePathChanged(string value)
         {
             _settingsService.CustomModelFilePath = value;
         }
 
         // Normalization Change Handlers
-        private void OnMeanRChanged(double value)
+        partial void OnMeanRChanged(double value)
         {
             _settingsService.MeanR = value;
         }
 
-        private void OnMeanGChanged(double value)
+        partial void OnMeanGChanged(double value)
         {
             _settingsService.MeanG = value;
         }
 
-        private void OnMeanBChanged(double value)
+        partial void OnMeanBChanged(double value)
         {
             _settingsService.MeanB = value;
         }
 
-        private void OnStdRChanged(double value)
+        partial void OnStdRChanged(double value)
         {
             _settingsService.StdR = value;
         }
 
-        private void OnStdGChanged(double value)
+        partial void OnStdGChanged(double value)
         {
             _settingsService.StdG = value;
         }
 
-        private void OnStdBChanged(double value)
+        partial void OnStdBChanged(double value)
         {
             _settingsService.StdB = value;
         }
@@ -283,14 +281,6 @@ namespace DeDupe.ViewModels.Settings
             LoadSettings();
         }
 
-        public override void OnNavigatedFrom()
-        {
-            base.OnNavigatedFrom();
-        }
-
         #endregion Methods
-
-        [DllImport("user32.dll")]
-        private static extern nint GetActiveWindow();
     }
 }

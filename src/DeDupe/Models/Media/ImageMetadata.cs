@@ -9,7 +9,7 @@ using Windows.Storage;
 using Windows.Storage.FileProperties;
 using Windows.Storage.Streams;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Media
 {
     /// <summary>
     /// Extended metadata (EXIF) for image files.

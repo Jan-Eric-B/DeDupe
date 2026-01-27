@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -37,7 +38,7 @@ namespace DeDupe.Services
                 if (!_isAvailable.HasValue)
                 {
                     _isAvailable = !string.IsNullOrEmpty(BundledModelPath) && File.Exists(BundledModelPath);
-                    System.Diagnostics.Debug.WriteLine($"BundledModelService: IsBundledModelAvailable = {_isAvailable}, Path = {BundledModelPath}");
+                    Debug.WriteLine($"BundledModelService: IsBundledModelAvailable = {_isAvailable}, Path = {BundledModelPath}");
                 }
                 return _isAvailable.Value;
             }
@@ -56,7 +57,7 @@ namespace DeDupe.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error validating bundled model: {ex.Message}");
+                Debug.WriteLine($"Error validating bundled model: {ex.Message}");
             }
 
             return false;
@@ -66,15 +67,15 @@ namespace DeDupe.Services
         {
             string basePath = AppContext.BaseDirectory;
             string modelPath = Path.Combine(basePath, BundledModelRelativePath);
-            System.Diagnostics.Debug.WriteLine($"BundledModelService: Trying AppContext.BaseDirectory: {modelPath}");
+            Debug.WriteLine($"BundledModelService: Trying AppContext.BaseDirectory: {modelPath}");
 
             if (File.Exists(modelPath))
             {
-                System.Diagnostics.Debug.WriteLine($"BundledModelService: Found at AppContext.BaseDirectory");
+                Debug.WriteLine($"BundledModelService: Found at AppContext.BaseDirectory");
                 return modelPath;
             }
 
-            System.Diagnostics.Debug.WriteLine($"BundledModelService: Model not found in any location");
+            Debug.WriteLine($"BundledModelService: Model not found in any location");
             return string.Empty;
         }
     }

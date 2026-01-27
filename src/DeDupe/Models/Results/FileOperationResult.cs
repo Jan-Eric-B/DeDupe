@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Results
 {
     /// <summary>
     /// Result of file operation (move or copy).

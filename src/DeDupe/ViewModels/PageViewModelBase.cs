@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
 
 namespace DeDupe.ViewModels
@@ -7,29 +8,19 @@ namespace DeDupe.ViewModels
     {
         private bool _disposed = false;
 
-        private bool _isComplete;
-
-        public bool IsComplete
-        {
-            get => _isComplete;
-            set
-            {
-                if (SetProperty(ref _isComplete, value))
-                {
-                    OnPropertyChanged(nameof(CanNavigateToNext));
-                    NavigateToNextCommand.NotifyCanExecuteChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CanNavigateToNext))]
+        [NotifyCanExecuteChangedFor(nameof(NavigateToNextCommand))]
+        public partial bool IsComplete { get; set; }
 
         public virtual bool CanNavigateToNext => IsComplete;
         public RelayCommand NavigateToNextCommand { get; }
 
-        public PageViewModelBase(int stepIndex = 0)
+        public PageViewModelBase()
         {
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);
 
-            _isComplete = false;
+            IsComplete = false;
         }
 
         #region Navigation

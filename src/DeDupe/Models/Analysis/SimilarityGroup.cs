@@ -1,16 +1,17 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DeDupe.Models.Results;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace DeDupe.Models.Analysis
 {
     /// <summary>
     /// A group of similar media items (images/frames) identified by clustering.
     /// </summary>
-    public partial class SimilarityGroup : INotifyPropertyChanged
+    public partial class SimilarityGroup : ObservableObject
     {
         #region Fields
 
@@ -405,14 +406,5 @@ namespace DeDupe.Models.Analysis
         }
 
         #endregion Object Overrides
-
-        #region INotifyPropertyChanged
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion INotifyPropertyChanged
     }
 }

@@ -34,11 +34,7 @@ namespace DeDupe.Services
         /// </summary>
         public static bool Validate(string? name)
         {
-            // Null or empty
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                return false;
-            }
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name);
 
             string trimmedName = name.Trim();
 
@@ -82,10 +78,7 @@ namespace DeDupe.Services
         /// </summary>
         public static string? Sanitize(string? name, char replacement = '_')
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                return null;
-            }
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(name);
 
             string sanitized = name.Trim();
 

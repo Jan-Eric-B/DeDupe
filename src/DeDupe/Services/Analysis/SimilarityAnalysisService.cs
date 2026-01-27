@@ -1,7 +1,8 @@
-﻿using DeDupe.Models;
-using DeDupe.Models.Analysis;
+﻿using DeDupe.Models.Analysis;
+using DeDupe.Models.Results;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,7 +44,7 @@ namespace DeDupe.Services.Analysis
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error during clustering: {ex.Message}");
+                Debug.WriteLine($"Error during clustering: {ex.Message}");
                 throw;
             }
         }

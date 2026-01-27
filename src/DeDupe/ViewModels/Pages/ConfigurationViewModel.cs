@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
-using DeDupe.Enums;
-using DeDupe.Models;
+using DeDupe.Helpers;
 using DeDupe.Models.Input;
+using DeDupe.Models.Media;
+using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using DeDupe.Services.Processing;
@@ -13,6 +14,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -53,7 +55,6 @@ namespace DeDupe.ViewModels.Pages
         private CancellationTokenSource? _processingCts;
 
         private static readonly HashSet<string> SupportedImageExtensionsSet = new(SupportedFileExtensions.SupportedImageExtensions, StringComparer.OrdinalIgnoreCase);
-        //private static readonly HashSet<string> SupportedVideoExtensionsSet = new(SupportedFileExtensions.SupportedVideoExtensions, StringComparer.OrdinalIgnoreCase);
 
         #endregion Fields
 
@@ -145,13 +146,6 @@ namespace DeDupe.ViewModels.Pages
 
         public bool CanOpenTempFolder => HasProcessedItems && !string.IsNullOrEmpty(_settingsService.TempFolderPath);
 
-        // Available options for dropdowns
-        public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
-
-        public IEnumerable<ResizeMethod> ResizeMethods => Enum.GetValues<ResizeMethod>();
-        public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
-        public IEnumerable<ColorFormat> BitDepths => Enum.GetValues<ColorFormat>();
-
         public string ModelFilePath => _settingsService.UseBundledModel
             ? _bundledModelService.BundledModelPath
             : _settingsService.CustomModelFilePath;
@@ -203,7 +197,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IBorderDetectionService borderDetectionService) : base(0)
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IBorderDetectionService borderDetectionService)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -285,17 +279,14 @@ namespace DeDupe.ViewModels.Pages
         #region Commands
 
         [RelayCommand]
-        private async Task AddFolder()
+        private async Task AddFolderAsync()
         {
             FolderPicker folderPicker = new()
             {
                 ViewMode = PickerViewMode.List,
                 SuggestedStartLocation = PickerLocationId.ComputerFolder
             };
-
-            // Initialize folder picker
-            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
-            InitializeWithWindow.Initialize(folderPicker, windowHandle);
+            folderPicker.InitializeForCurrentWindow();
 
             // Show folder picker
             StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
@@ -329,7 +320,7 @@ namespace DeDupe.ViewModels.Pages
         }
 
         [RelayCommand]
-        private async Task AddFiles()
+        private async Task AddFilesAsync()
         {
             FileOpenPicker fileOpenPicker = new()
             {
@@ -429,7 +420,7 @@ namespace DeDupe.ViewModels.Pages
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error opening temp folder: {ex.Message}");
+                Debug.WriteLine($"Error opening temp folder: {ex.Message}");
             }
         }
 
@@ -437,7 +428,7 @@ namespace DeDupe.ViewModels.Pages
         private async Task ProcessAsync()
         {
             // Cancel any existing processing
-            await _processingCts?.CancelAsync();
+            _processingCts?.Cancel();
             _processingCts = new CancellationTokenSource();
             CancellationToken ct = _processingCts.Token;
 
@@ -518,7 +509,7 @@ namespace DeDupe.ViewModels.Pages
                 await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization, ct);
                 _appStateService.NotifyFeaturesExtracted();
 
-                /// Release ImageSharp's pooled memory.
+                // Release ImageSharp's pooled memory.
                 Configuration.Default.MemoryAllocator.ReleaseRetainedResources();
 
                 // Update results
@@ -541,7 +532,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error during processing: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Processing error: {ex}");
+                Debug.WriteLine($"Processing error: {ex}");
             }
             finally
             {
@@ -588,8 +579,9 @@ namespace DeDupe.ViewModels.Pages
             }
 
             // Cancel existing scan
-            await _scanCts?.CancelAsync();
-            _scanCts = new CancellationTokenSource();
+            CancellationTokenSource? oldCts = Interlocked.Exchange(ref _scanCts, new CancellationTokenSource());
+            oldCts?.Cancel();
+            oldCts?.Dispose();
             CancellationToken ct = _scanCts.Token;
 
             IsBusy = true;
@@ -645,7 +637,7 @@ namespace DeDupe.ViewModels.Pages
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"Failed to create source for {filePath}: {ex.Message}");
+                            Debug.WriteLine($"Failed to create source for {filePath}: {ex.Message}");
                             continue;
                         }
 
@@ -675,7 +667,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error scanning folder: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
+                Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
             }
             finally
             {
@@ -685,7 +677,7 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        public async Task AddFileAsync(string filePath, string sourcePath)
+        public void AddFile(string filePath, string sourcePath)
         {
             string normalizedPath = filePath.ToLowerInvariant();
 
@@ -707,12 +699,11 @@ namespace DeDupe.ViewModels.Pages
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load source media for {filePath}: {ex.Message}");
+                    Debug.WriteLine($"Failed to load source media for {filePath}: {ex.Message}");
                 }
             }
 
             UpdateAppStateSourceMedia();
-            await Task.CompletedTask;
         }
 
         private void AddSourceToTracking(string filePath, string sourcePath, SourceMedia source)
@@ -798,7 +789,21 @@ namespace DeDupe.ViewModels.Pages
 
                 if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
                 {
-                    await _featureExtractionService.InitializeAsync(modelPath);
+                    // Use settings for GPU and batch size
+                    bool useGpu = _settingsService.EnableGpuAcceleration;
+                    int batchSize = _settingsService.InferenceBatchSize;
+
+                    await _featureExtractionService.InitializeAsync(modelPath, useGpu, batchSize);
+
+                    // Optionally update status to show GPU state
+                    if (_featureExtractionService.IsGpuEnabled)
+                    {
+                        Debug.WriteLine("Feature extraction initialized with GPU acceleration");
+                    }
+                    else
+                    {
+                        Debug.WriteLine("Feature extraction initialized with CPU (GPU not available or disabled)");
+                    }
                 }
                 else
                 {
@@ -808,7 +813,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error initializing model: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Model initialization error: {ex}");
+                Debug.WriteLine($"Model initialization error: {ex}");
             }
         }
 

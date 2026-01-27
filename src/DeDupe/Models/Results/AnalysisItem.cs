@@ -1,16 +1,16 @@
-﻿using DeDupe.Enums;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DeDupe.Enums;
+using DeDupe.Models.Media;
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Results
 {
     /// <summary>
     /// Represents single item going through analysis.
     /// Images: 1x SourceMedia -> 1x AnalysisItem
     /// Videos: 1x SourceMedia -> multiple AnalysisItems (for each extracted frame)
     /// </summary>
-    public partial class AnalysisItem : INotifyPropertyChanged
+    public partial class AnalysisItem : ObservableObject
     {
         #region Fields
 
@@ -187,16 +187,5 @@ namespace DeDupe.Models
         }
 
         #endregion Methods
-
-        #region INotifyPropertyChanged
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion INotifyPropertyChanged
     }
 }

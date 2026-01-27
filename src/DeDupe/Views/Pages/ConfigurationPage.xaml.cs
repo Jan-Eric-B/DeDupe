@@ -125,7 +125,7 @@ namespace DeDupe.Views.Pages
                     foreach (InputListItem fileItem in filesToAdd)
                     {
                         ViewModel.InputListItems.Add(fileItem);
-                        await ViewModel.AddFileAsync(fileItem.Path, fileItem.Path);
+                        ViewModel.AddFile(fileItem.Path, fileItem.Path);
                     }
                 }
                 finally

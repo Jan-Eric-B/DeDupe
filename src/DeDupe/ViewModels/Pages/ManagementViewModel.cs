@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
-using DeDupe.Models;
 using DeDupe.Models.Analysis;
+using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using Microsoft.Extensions.Logging;
@@ -793,7 +793,7 @@ namespace DeDupe.ViewModels.Pages
 
         #region Constructor
 
-        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger) : base(3)
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));

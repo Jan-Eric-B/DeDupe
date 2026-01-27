@@ -1,4 +1,5 @@
-﻿using DeDupe.Models;
+﻿using DeDupe.Models.Media;
+using DeDupe.Models.Results;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

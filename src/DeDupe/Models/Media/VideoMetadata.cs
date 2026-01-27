@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Media
 {
     /// <summary>
     /// Extended metadata for video files.

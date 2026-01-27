@@ -1,10 +1,11 @@
 ﻿using DeDupe.Constants;
 using DeDupe.Enums;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace DeDupe.Models
+namespace DeDupe.Models.Media
 {
     /// <summary>
     /// Represents an original source file (image or video).
@@ -102,8 +103,7 @@ namespace DeDupe.Models
 
         private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentNullException(nameof(filePath));
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             FilePath = filePath;
             MediaType = mediaType;
@@ -119,10 +119,7 @@ namespace DeDupe.Models
         /// </summary>
         public static SourceMedia CreateLightweight(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                throw new ArgumentNullException(nameof(filePath));
-            }
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
             MediaType mediaType;
@@ -186,10 +183,7 @@ namespace DeDupe.Models
         /// </summary>
         public static async Task<SourceMedia?> CreateAsync(string filePath, bool loadFullMetadata = true)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                return null;
-            }
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
@@ -226,7 +220,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load dimensions for {FilePath}: {ex.Message}");
+                Debug.WriteLine($"Failed to load dimensions for {FilePath}: {ex.Message}");
             }
         }
 
@@ -253,7 +247,7 @@ namespace DeDupe.Models
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Failed to load metadata for {FilePath}: {ex.Message}");
+                Debug.WriteLine($"Failed to load metadata for {FilePath}: {ex.Message}");
             }
         }
 

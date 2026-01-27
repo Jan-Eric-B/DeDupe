@@ -1,6 +1,8 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DeDupe.Models.Media;
+using DeDupe.Models.Results;
+using System;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace DeDupe.Models.Analysis
 {
@@ -12,7 +14,7 @@ namespace DeDupe.Models.Analysis
     /// </remarks>
     /// <param name="item">The item to wrap.</param>
     /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
-    public partial class SelectableItem(AnalysisItem item) : INotifyPropertyChanged
+    public partial class SelectableItem(AnalysisItem item) : ObservableObject
     {
         #region Fields
 
@@ -105,14 +107,5 @@ namespace DeDupe.Models.Analysis
         public float[]? FeatureVector => Item.FeatureVector;
 
         #endregion Convenience Accessors
-
-        #region INotifyPropertyChanged
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion INotifyPropertyChanged
     }
 }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace DeDupe.ViewModels.Settings
 {
-    public partial class GeneralSettingViewModel : SettingsPageViewModelBase
+    public partial class GeneralSettingsViewModel : SettingsPageViewModelBase
     {
         #region Fields
 
@@ -37,7 +37,7 @@ namespace DeDupe.ViewModels.Settings
 
         #region Constructor
 
-        public GeneralSettingViewModel(ISettingsService settingsService)
+        public GeneralSettingsViewModel(ISettingsService settingsService)
         {
             _settingsService = settingsService;
             Title = "General";
@@ -51,18 +51,17 @@ namespace DeDupe.ViewModels.Settings
         #endregion Constructor
 
         #region Methods
-
-        private void OnSelectedThemeIndexChanged(int value)
+        partial void OnSelectedThemeIndexChanged(int value)
         {
             _settingsService.Theme = (AppTheme)value;
         }
 
-        private void OnSelectedBackdropIndexChanged(int value)
+        partial void OnSelectedBackdropIndexChanged(int value)
         {
             _settingsService.Backdrop = (AppBackdrop)value;
         }
 
-        private void OnSelectedAccentColorIndexChanged(int value)
+        partial void OnSelectedAccentColorIndexChanged(int value)
         {
             _settingsService.AccentColor = (AppAccentColor)value;
         }
@@ -75,11 +74,6 @@ namespace DeDupe.ViewModels.Settings
             SelectedThemeIndex = (int)_settingsService.Theme;
             SelectedBackdropIndex = (int)_settingsService.Backdrop;
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
-        }
-
-        public override void OnNavigatedFrom()
-        {
-            base.OnNavigatedFrom();
         }
 
         #endregion Methods

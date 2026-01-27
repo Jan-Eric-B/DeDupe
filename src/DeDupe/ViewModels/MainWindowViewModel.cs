@@ -1,22 +1,14 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace DeDupe.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
-        private bool _isInManagementMode = false;
-
-        public bool IsInManagementMode
-        {
-            get => _isInManagementMode;
-            set => SetProperty(ref _isInManagementMode, value);
-        }
+        [ObservableProperty]
+        public partial bool IsInManagementMode { get; set; }
 
         public bool IsInConfigurationMode => !IsInManagementMode;
-
-        public MainWindowViewModel()
-        {
-        }
 
         [RelayCommand]
         private void StartManagementMode()
