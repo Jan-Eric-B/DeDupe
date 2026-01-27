@@ -1,8 +1,12 @@
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Pages;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
+using System;
 using System.ComponentModel;
+using Windows.Foundation;
 
 namespace DeDupe
 {
@@ -27,7 +31,8 @@ namespace DeDupe
             _themeService = App.Current.GetService<IThemeService>();
             _themeService.RegisterWindow(this, grdRoot);
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(grdTitleBar);
+            grdTitleBar.Loaded += (s, e) => SetRegionsForCustomTitleBar();
+            grdTitleBar.SizeChanged += (s, e) => SetRegionsForCustomTitleBar();
 
             // Cleanup on close
             this.Closed += OnWindowClosed;
@@ -38,6 +43,28 @@ namespace DeDupe
 
             // Navigate to ConfigurationPage initially
             frMain.Navigate(typeof(ConfigurationPage));
+        }
+
+        private void SetRegionsForCustomTitleBar()
+        {
+            double scaleAdjustment = grdTitleBar.XamlRoot.RasterizationScale;
+
+            // Set padding for caption buttons
+            RightPaddingColumn.Width = new GridLength(AppWindow.TitleBar.RightInset / scaleAdjustment);
+            LeftPaddingColumn.Width = new GridLength(AppWindow.TitleBar.LeftInset / scaleAdjustment);
+
+            // Make the button interactive
+            GeneralTransform? transform = btnSettings.TransformToVisual(null);
+            Rect bounds = transform.TransformBounds(new Rect(0, 0, btnSettings.ActualWidth, btnSettings.ActualHeight));
+
+            Windows.Graphics.RectInt32 buttonRect = new(
+                (int)Math.Round(bounds.X * scaleAdjustment),
+                (int)Math.Round(bounds.Y * scaleAdjustment),
+                (int)Math.Round(bounds.Width * scaleAdjustment),
+                (int)Math.Round(bounds.Height * scaleAdjustment));
+
+            InputNonClientPointerSource? nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(AppWindow.Id);
+            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, new[] { buttonRect });
         }
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
