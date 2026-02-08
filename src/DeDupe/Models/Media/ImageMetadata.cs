@@ -1,8 +1,8 @@
 ﻿using DeDupe.Enums;
+using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -299,7 +299,7 @@ namespace DeDupe.Models.Media
             try
             {
                 // Simple header reading first
-                if (await TryLoadDimensionsFromHeaderAsync())
+                if (await LoadDimensionsAsync())
                 {
                     AreDimensionsLoaded = true;
                     return;
@@ -315,125 +315,23 @@ namespace DeDupe.Models.Media
             }
         }
 
-        private async Task<bool> TryLoadDimensionsFromHeaderAsync()
+        private async Task<bool> LoadDimensionsAsync()
         {
             try
             {
-                string extension = Extension.ToLowerInvariant();
-
-                await Task.Run(() =>
+                ImageInfo info = await Image.IdentifyAsync(FilePath);
+                if (info != null)
                 {
-                    using FileStream fs = new(FilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096);
-                    using BinaryReader reader = new(fs);
-
-                    switch (extension)
-                    {
-                        case ".jpg":
-                        case ".jpeg":
-                            ReadJpegDimensions(reader);
-                            break;
-
-                        case ".png":
-                            ReadPngDimensions(reader);
-                            break;
-
-                        case ".gif":
-                            ReadGifDimensions(reader);
-                            break;
-
-                        case ".bmp":
-                            ReadBmpDimensions(reader);
-                            break;
-
-                        default:
-                            // Unknown format
-                            throw new NotSupportedException();
-                    }
-                });
-
-                return Width > 0 && Height > 0;
+                    Width = info.Width;
+                    Height = info.Height;
+                    return true;
+                }
+                return false;
             }
             catch
             {
                 return false;
             }
-        }
-
-        private void ReadJpegDimensions(BinaryReader reader)
-        {
-            if (reader.ReadByte() != 0xFF || reader.ReadByte() != 0xD8)
-            {
-                throw new InvalidDataException("Not a valid JPEG");
-            }
-
-            while (reader.BaseStream.Position < reader.BaseStream.Length)
-            {
-                byte marker1 = reader.ReadByte();
-                if (marker1 != 0xFF)
-                {
-                    continue;
-                }
-
-                byte marker2 = reader.ReadByte();
-
-                // Start of Frame markers
-                if (marker2 >= 0xC0 && marker2 <= 0xCF && marker2 != 0xC4 && marker2 != 0xC8 && marker2 != 0xCC)
-                {
-                    reader.ReadInt16(); // Skip length
-                    reader.ReadByte();  // Skip precision
-                    Height = ReadBigEndianInt16(reader);
-                    Width = ReadBigEndianInt16(reader);
-                    return;
-                }
-
-                // Skip other segments
-                if (marker2 != 0xD0 && marker2 != 0xD9 && marker2 != 0x01)
-                {
-                    int length = ReadBigEndianInt16(reader);
-                    reader.BaseStream.Seek(length - 2, SeekOrigin.Current);
-                }
-            }
-        }
-
-        private void ReadPngDimensions(BinaryReader reader)
-        {
-            reader.BaseStream.Seek(8, SeekOrigin.Begin);
-
-            // IHDR chunk
-            reader.ReadInt32(); // Length
-            uint chunkType = reader.ReadUInt32();
-
-            if (chunkType == 0x52444849) // "IHDR"
-            {
-                Width = ReadBigEndianInt32(reader);
-                Height = ReadBigEndianInt32(reader);
-            }
-        }
-
-        private void ReadGifDimensions(BinaryReader reader)
-        {
-            reader.BaseStream.Seek(6, SeekOrigin.Begin);
-            Width = reader.ReadInt16();
-            Height = reader.ReadInt16();
-        }
-
-        private void ReadBmpDimensions(BinaryReader reader)
-        {
-            reader.BaseStream.Seek(18, SeekOrigin.Begin);
-            Width = reader.ReadInt32();
-            Height = Math.Abs(reader.ReadInt32());
-        }
-
-        private static int ReadBigEndianInt16(BinaryReader reader)
-        {
-            byte[] bytes = reader.ReadBytes(2);
-            return (bytes[0] << 8) | bytes[1];
-        }
-
-        private static int ReadBigEndianInt32(BinaryReader reader)
-        {
-            byte[] bytes = reader.ReadBytes(4);
-            return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
         }
 
         /// <summary>

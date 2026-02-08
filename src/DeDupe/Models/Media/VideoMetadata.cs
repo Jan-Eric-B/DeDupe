@@ -193,8 +193,7 @@ namespace DeDupe.Models.Media
         #region Constructor
 
         /// <summary>
-        /// Create video metadata from file path.
-        /// Protected internal to allow inheritance by VideoSource.
+        /// Create video metadata from file path. Protected internal to allow inheritance by VideoSource.
         /// </summary>
         protected internal VideoMetadata(string filePath, MediaType mediaType) : base(filePath, mediaType)
         {
