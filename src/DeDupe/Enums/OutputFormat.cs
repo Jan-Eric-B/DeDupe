@@ -1,10 +1,22 @@
-﻿namespace DeDupe.Enums
+﻿using System.ComponentModel;
+
+namespace DeDupe.Enums
 {
     public enum OutputFormat
     {
+        [Description("PNG")]
         PNG,
+
+        [Description("JPEG")]
         JPEG,
+
+        [Description("BMP")]
         BMP,
-        TIFF
+
+        [Description("TIFF")]
+        TIFF,
+
+        [Description("WebP")]
+        WebP
     }
 }
