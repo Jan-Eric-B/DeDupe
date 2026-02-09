@@ -74,8 +74,6 @@
     <None Remove="Assets\Icon\Wide310x150Logo.scale-150.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-200.png" />
     <None Remove="Assets\Icon\Wide310x150Logo.scale-400.png" />
-    <None Remove="Resources\Models\clip-vit-b32-image.onnx" />
-    <None Remove="Resources\Models\dinov2_vitb14.onnx" />
     <None Remove="Views\Pages\ManagementPage.xaml" />
   </ItemGroup>
 
@@ -103,17 +101,6 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1-RTM" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Resources\Models\clip-vit-b32-image.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Models\dinov2_vitb14.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Resources\Models\resnet50-v2-7.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\Settings\GeneralSettingsPage.xaml">
