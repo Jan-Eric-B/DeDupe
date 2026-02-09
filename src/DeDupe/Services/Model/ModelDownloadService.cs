@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 
-namespace DeDupe.Services
+namespace DeDupe.Services.Model
 {
     /// <summary>
     /// Progress info for model downloads.

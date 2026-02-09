@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DeDupe.Services
+namespace DeDupe.Services.Model
 {
     public interface IModelDownloadService
     {

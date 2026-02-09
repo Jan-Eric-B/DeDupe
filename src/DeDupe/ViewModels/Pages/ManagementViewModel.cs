@@ -5,6 +5,7 @@ using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
+using DeDupe.Services.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 using System;

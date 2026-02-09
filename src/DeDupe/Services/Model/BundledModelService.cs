@@ -1,7 +1,7 @@
 ﻿using DeDupe.Models.Configuration;
 using System.Collections.Generic;
 
-namespace DeDupe.Services
+namespace DeDupe.Services.Model
 {
     /// <summary>
     /// Service for accessing bundled ONNX models.

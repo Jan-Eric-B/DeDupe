@@ -1,5 +1,6 @@
 ﻿using DeDupe.Services;
 using DeDupe.Services.Analysis;
+using DeDupe.Services.Model;
 using DeDupe.Services.Processing;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;

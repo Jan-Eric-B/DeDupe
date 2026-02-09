@@ -4,6 +4,7 @@ using DeDupe.Constants;
 using DeDupe.Helpers;
 using DeDupe.Models.Configuration;
 using DeDupe.Services;
+using DeDupe.Services.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

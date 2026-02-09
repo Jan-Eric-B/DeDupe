@@ -8,6 +8,7 @@ using DeDupe.Models.Media;
 using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
+using DeDupe.Services.Model;
 using DeDupe.Services.Processing;
 using Microsoft.UI.Xaml;
 using SixLabors.ImageSharp;
