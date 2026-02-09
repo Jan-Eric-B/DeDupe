@@ -2,12 +2,12 @@
 <Page
     x:Class="DeDupe.Views.Settings.ModelSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:config="using:DeDupe.Models.Configuration"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:config="using:DeDupe.Models.Configuration"
     Background="Transparent"
     mc:Ignorable="d">
 
@@ -40,17 +40,24 @@
                     Description="{x:Bind ViewModel.SelectedModelDescription, Mode=OneWay}"
                     Header="Select model"
                     HeaderIcon="{ui:FontIcon Glyph=&#xE74C;}">
-                    <ComboBox
-                        MinWidth="220"
-                        ItemsSource="{x:Bind ViewModel.BundledModels}"
-                        SelectedValue="{x:Bind ViewModel.SelectedBundledModelId, Mode=TwoWay}"
-                        SelectedValuePath="Id">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="config:BundledModelInfo">
-                                <TextBlock Text="{x:Bind DisplayName}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <StackPanel>
+                        <ComboBox
+                            MinWidth="220"
+                            ItemsSource="{x:Bind ViewModel.BundledModels}"
+                            SelectedValue="{x:Bind ViewModel.SelectedBundledModelId, Mode=TwoWay}"
+                            SelectedValuePath="Id">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="config:BundledModelInfo">
+                                    <TextBlock Text="{x:Bind DisplayName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock
+                            Margin="48,0,0,0"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{StaticResource CaptionTextBlockStyle}"
+                            Text="{x:Bind ViewModel.SelectedModelAvailability, Mode=OneWay}" />
+                    </StackPanel>
                 </controls:SettingsCard>
             </StackPanel>
 

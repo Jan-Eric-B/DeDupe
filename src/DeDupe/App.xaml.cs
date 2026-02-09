@@ -71,8 +71,9 @@ namespace DeDupe
             services.AddSingleton<SettingsWindowViewModel>();
 
             // App State
-            services.AddSingleton<IBundledModelService, BundledModelService>();
             services.AddSingleton<IAppStateService, AppStateService>();
+            services.AddSingleton<IModelDownloadService, ModelDownloadService>();
+            services.AddSingleton<IBundledModelService, BundledModelService>();
 
             // Image Processing
             services.AddTransient<IBorderDetectionService, BorderDetectionService>();

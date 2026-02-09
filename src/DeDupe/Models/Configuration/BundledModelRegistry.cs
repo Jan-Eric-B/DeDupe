@@ -8,6 +8,8 @@ namespace DeDupe.Models.Configuration;
 /// </summary>
 public static class BundledModelRegistry
 {
+    private const string ReleaseBaseUrl = "https://github.com/Jan-Eric-B/DeDupe/releases/download/v1.0.0-models";
+
     /// <summary>
     /// DINOv2 ViT-B/14
     /// </summary>
@@ -17,7 +19,9 @@ public static class BundledModelRegistry
         FileName: "dinov2_vitb14.onnx",
         Description: "Best visual similarity. Finds duplicates even with edits or different angles.",
         Normalization: NormalizationSettings.ImageNet,
-        InputSize: 224);
+        InputSize: 224,
+        DownloadUrl: $"{ReleaseBaseUrl}/dinov2_vitb14.onnx",
+        ExpectedFileSize: 347_148_037);
 
     /// <summary>
     /// ResNet50-v2
@@ -28,7 +32,9 @@ public static class BundledModelRegistry
         FileName: "resnet50-v2-7.onnx",
         Description: "Fastest option. Good for exact or near-exact duplicates.",
         Normalization: NormalizationSettings.ImageNet,
-        InputSize: 224);
+        InputSize: 224,
+        DownloadUrl: $"{ReleaseBaseUrl}/resnet50-v2-7.onnx",
+        ExpectedFileSize: 102_442_452);
 
     /// <summary>
     /// CLIP ViT-B/32
@@ -39,41 +45,36 @@ public static class BundledModelRegistry
         FileName: "clip-vit-b32-image.onnx",
         Description: "Groups by content (e.g., all beach photos). Less strict on visual match.",
         Normalization: NormalizationSettings.Clip,
-        InputSize: 224);
+        InputSize: 224,
+        DownloadUrl: $"{ReleaseBaseUrl}/clip-vit-b32-image.onnx",
+        ExpectedFileSize: 976_517);
 
     /// <summary>
     /// All bundled models.
     /// </summary>
     public static IReadOnlyList<BundledModelInfo> All { get; } =
     [
-        DinoV2VitB14,
         ResNet50,
+        DinoV2VitB14,
         ClipVitB32
     ];
 
     /// <summary>
     /// Default model ID.
     /// </summary>
-    public static string DefaultModelId => DinoV2VitB14.Id;
+    public static string DefaultModelId => ResNet50.Id;
 
     /// <summary>
     /// Get model by ID.
     /// </summary>
     public static BundledModelInfo? GetById(string? id)
     {
-        if (string.IsNullOrEmpty(id))
-        {
-            return null;
-        }
-
+        if (string.IsNullOrEmpty(id)) return null;
         return All.FirstOrDefault(m => m.Id == id);
     }
 
     /// <summary>
     /// Check if model exists.
     /// </summary>
-    public static bool Exists(string? id)
-    {
-        return GetById(id) != null;
-    }
+    public static bool Exists(string? id) => GetById(id) != null;
 }

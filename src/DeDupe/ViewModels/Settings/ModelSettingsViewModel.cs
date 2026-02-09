@@ -20,6 +20,7 @@ namespace DeDupe.ViewModels.Settings
 
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
+        private readonly IModelDownloadService _downloadService;
 
         #endregion Fields
 
@@ -65,6 +66,26 @@ namespace DeDupe.ViewModels.Settings
         public string SelectedModelDescription => SelectedBundledModel?.Description ?? string.Empty;
 
         public int SelectedModelInputSize => SelectedBundledModel?.InputSize ?? 224;
+
+        public string SelectedModelAvailability
+        {
+            get
+            {
+                BundledModelInfo? model = SelectedBundledModel;
+                if (model is null)
+                {
+                    return string.Empty;
+                }
+
+                if (_downloadService.IsModelAvailable(model))
+                {
+                    return "Downloaded ✓";
+                }
+
+                double sizeMB = model.ExpectedFileSize / 1024.0 / 1024.0;
+                return $"Not downloaded ({sizeMB:F0} MB)";
+            }
+        }
 
         // Mode toggles
         public bool UseCustomModel => !UseBundledModel;
@@ -130,10 +151,11 @@ namespace DeDupe.ViewModels.Settings
 
         #region Constructor
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, IModelDownloadService downloadService)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
+            _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
 
             Title = "Model Configuration";
 
@@ -241,6 +263,8 @@ namespace DeDupe.ViewModels.Settings
                     Normalization = model.Normalization;
                 }
             }
+
+            OnPropertyChanged(nameof(SelectedModelAvailability));
         }
 
         partial void OnCustomModelFilePathChanged(string value)

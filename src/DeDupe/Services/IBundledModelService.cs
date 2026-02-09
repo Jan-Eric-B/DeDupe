@@ -14,11 +14,6 @@ namespace DeDupe.Services
         IReadOnlyList<BundledModelInfo> AvailableModels { get; }
 
         /// <summary>
-        /// Default model to use.
-        /// </summary>
-        BundledModelInfo DefaultModel { get; }
-
-        /// <summary>
         /// Get full file path of bundled model.
         /// </summary>
         string GetModelPath(string modelId);
@@ -32,5 +27,10 @@ namespace DeDupe.Services
         /// Get model metadata by ID.
         /// </summary>
         BundledModelInfo? GetModelInfo(string modelId);
+
+        /// <summary>
+        /// Check if file needs to be downloaded.
+        /// </summary>
+        bool NeedsDownload(string modelId);
     }
 }
