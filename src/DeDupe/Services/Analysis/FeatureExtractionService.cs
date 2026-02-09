@@ -91,7 +91,7 @@ namespace DeDupe.Services.Analysis
                     int modelBatchSize = _inputDimensions[0];
                     if (_batchSize > modelBatchSize)
                     {
-                        Debug.WriteLine($"Model has fixed batch dimension of {modelBatchSize}, " + $"overriding configured batch size {_batchSize}");
+                        Debug.WriteLine($"Model has fixed batch dimension of {modelBatchSize}, overriding configured batch size {_batchSize}");
                         _batchSize = modelBatchSize;
                     }
                 }
@@ -359,7 +359,7 @@ namespace DeDupe.Services.Analysis
                         // Validate dimensions
                         if (image.Width != width || image.Height != height)
                         {
-                            Debug.WriteLine($"Dimension mismatch for {item.ProcessedFilePath}: " + $"expected {width}x{height}, got {image.Width}x{image.Height}");
+                            Debug.WriteLine($"Dimension mismatch for {item.ProcessedFilePath}: expected {width}x{height}, got {image.Width}x{image.Height}");
                             return;
                         }
 

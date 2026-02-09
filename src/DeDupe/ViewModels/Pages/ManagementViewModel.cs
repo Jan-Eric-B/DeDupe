@@ -30,7 +30,7 @@ namespace DeDupe.ViewModels.Pages
 
         private bool _isAnalyzingSimilarity;
         private bool _hasSimilarityResults;
-        private double _similarityThreshold = 0.85;
+        private double _similarityThreshold = 0.95;
         private SimilarityResult? _similarityResult;
         private SimilarityGroup? _selectedCluster;
         private bool _isDeleting;

@@ -95,7 +95,7 @@ namespace DeDupe.Services.Model
                 catch (Exception ex)
                 {
                     lastException = ex;
-                    Debug.WriteLine($"Download attempt {attempt + 1}/{MaxRetries + 1} failed for " + $"'{model.DisplayName}': {ex.Message}");
+                    Debug.WriteLine($"Download attempt {attempt + 1}/{MaxRetries + 1} failed for '{model.DisplayName}': {ex.Message}");
                 }
             }
 
