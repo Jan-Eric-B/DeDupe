@@ -211,6 +211,60 @@ namespace DeDupe.Services
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>
+        /// Remove analysis items by source file paths.
+        /// </summary>
+        public int RemoveAnalysisItemsByPath(IEnumerable<string> filePaths)
+        {
+            if (filePaths == null)
+            {
+                return 0;
+            }
+
+            HashSet<string> pathSet = [.. filePaths];
+
+            if (pathSet.Count == 0)
+            {
+                return 0;
+            }
+
+            // Find items to remove
+            List<AnalysisItem> itemsToRemove = [.. _analysisItems.Where(item => pathSet.Contains(item.Source.Metadata.FilePath))];
+
+            if (itemsToRemove.Count == 0)
+            {
+                return 0;
+            }
+
+            // Remove items
+            foreach (AnalysisItem item in itemsToRemove)
+            {
+                _analysisItems.Remove(item);
+
+                // Also remove from source media
+                if (!_analysisItems.Any(a => a.Source.Id == item.Source.Id))
+                {
+                    _sourceMedia.Remove(item.Source);
+                }
+            }
+
+            // Notify changes
+            OnPropertyChanged(nameof(AnalysisItems));
+            OnPropertyChanged(nameof(AnalysisItemCount));
+            OnPropertyChanged(nameof(ProcessedItems));
+            OnPropertyChanged(nameof(ProcessedItemCount));
+            OnPropertyChanged(nameof(ItemsWithFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            OnPropertyChanged(nameof(SourceMedia));
+            OnPropertyChanged(nameof(SourceCount));
+
+            AnalysisItemsChanged?.Invoke(this, EventArgs.Empty);
+            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
+            SourceMediaChanged?.Invoke(this, EventArgs.Empty);
+
+            return itemsToRemove.Count;
+        }
+
         #endregion State Methods
 
         #region Events

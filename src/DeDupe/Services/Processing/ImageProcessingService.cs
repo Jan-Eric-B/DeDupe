@@ -6,6 +6,7 @@ using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Tiff;
+using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Transforms;
@@ -307,6 +308,10 @@ namespace DeDupe.Services.Processing
 
                 case OutputFormat.TIFF:
                     await image.SaveAsTiffAsync(path, new TiffEncoder(), ct);
+                    break;
+
+                case OutputFormat.WebP:
+                    await image.SaveAsWebpAsync(path, new WebpEncoder { Quality = 90 }, ct);
                     break;
 
                 default:

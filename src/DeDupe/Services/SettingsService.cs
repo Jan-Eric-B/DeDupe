@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Models.Configuration;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -32,22 +33,19 @@ namespace DeDupe.Services
         private const string PaddingColorKey = "PaddingColor";
         private const string DownsamplingMethodKey = "DownsamplingMethod";
         private const string UpsamplingMethodKey = "UpsamplingMethod";
-
         private const string EnableBorderDetectionKey = "EnableBorderDetection";
         private const string BorderDetectionToleranceKey = "BorderDetectionTolerance";
-
         private const string OutputFormatKey = "OutputFormat";
         private const string DpiKey = "Dpi";
         private const string ColorFormatKey = "ColorFormat";
-
         private const string UseCustomTempFolderKey = "UseCustomTempFolder";
         private const string CustomTempFolderPathKey = "CustomTempFolderPath";
-
         private const string ParallelProcessingCoresKey = "ParallelProcessingCores";
 
         // Model Configuration
         private const string UseBundledModelKey = "UseBundledModel";
 
+        private const string SelectedBundledModelIdKey = "SelectedBundledModelId";
         private const string CustomModelFilePathKey = "CustomModelFilePath";
         private const string MeanRKey = "NormalizationMeanR";
         private const string MeanGKey = "NormalizationMeanG";
@@ -62,24 +60,6 @@ namespace DeDupe.Services
         private const string InferenceBatchSizeKey = "InferenceBatchSize";
 
         #endregion Keys
-
-        #region Default Values
-
-        // ImageNet normalization defaults
-        private const double DefaultMeanR = 0.485;
-
-        private const double DefaultMeanG = 0.456;
-        private const double DefaultMeanB = 0.406;
-        private const double DefaultStdR = 0.229;
-        private const double DefaultStdG = 0.224;
-        private const double DefaultStdB = 0.225;
-
-        // Performance defaults
-        private const bool DefaultEnableGpuAcceleration = true;
-
-        private const int DefaultInferenceBatchSize = 16;
-
-        #endregion Default Values
 
         #region Properties
 
@@ -282,7 +262,7 @@ namespace DeDupe.Services
 
         public string CustomTempFolderPath
         {
-            get => GetValue(CustomTempFolderPathKey, _defaultTempFolderPath);
+            get => GetValue(CustomTempFolderPathKey, string.Empty);
             set
             {
                 if (CustomTempFolderPath != value)
@@ -296,11 +276,13 @@ namespace DeDupe.Services
             }
         }
 
-        public string TempFolderPath => UseCustomTempFolder && !string.IsNullOrEmpty(CustomTempFolderPath) ? CustomTempFolderPath : _defaultTempFolderPath;
+        public string TempFolderPath => UseCustomTempFolder && !string.IsNullOrEmpty(CustomTempFolderPath)
+            ? CustomTempFolderPath
+            : _defaultTempFolderPath;
 
         public int ParallelProcessingCores
         {
-            get => GetValue(ParallelProcessingCoresKey, 4);
+            get => GetValue(ParallelProcessingCoresKey, Environment.ProcessorCount);
             set
             {
                 int clamped = Math.Clamp(value, 1, Environment.ProcessorCount);
@@ -327,6 +309,24 @@ namespace DeDupe.Services
             }
         }
 
+        public string SelectedBundledModelId
+        {
+            get => GetValue(SelectedBundledModelIdKey, BundledModelRegistry.DefaultModelId);
+            set
+            {
+                string newValue = string.IsNullOrEmpty(value) ? BundledModelRegistry.DefaultModelId : value;
+                if (SelectedBundledModelId != newValue)
+                {
+                    SetValue(SelectedBundledModelIdKey, newValue);
+                    SelectedBundledModelIdChanged?.Invoke(this, newValue);
+                    if (UseBundledModel)
+                    {
+                        ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                }
+            }
+        }
+
         public string CustomModelFilePath
         {
             get => GetValue(CustomModelFilePathKey, string.Empty);
@@ -344,85 +344,28 @@ namespace DeDupe.Services
             }
         }
 
-        public double MeanR
+        public NormalizationSettings Normalization
         {
-            get => GetValue(MeanRKey, DefaultMeanR);
+            get => new(
+                GetValue(MeanRKey, NormalizationSettings.Default.MeanR),
+                GetValue(MeanGKey, NormalizationSettings.Default.MeanG),
+                GetValue(MeanBKey, NormalizationSettings.Default.MeanB),
+                GetValue(StdRKey, NormalizationSettings.Default.StdR),
+                GetValue(StdGKey, NormalizationSettings.Default.StdG),
+                GetValue(StdBKey, NormalizationSettings.Default.StdB));
             set
             {
-                if (Math.Abs(MeanR - value) > double.Epsilon)
+                NormalizationSettings current = Normalization;
+                if (current != value)
                 {
-                    SetValue(MeanRKey, value);
-                    MeanRChanged?.Invoke(this, value);
-                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
+                    SetValue(MeanRKey, value.MeanR);
+                    SetValue(MeanGKey, value.MeanG);
+                    SetValue(MeanBKey, value.MeanB);
+                    SetValue(StdRKey, value.StdR);
+                    SetValue(StdGKey, value.StdG);
+                    SetValue(StdBKey, value.StdB);
 
-        public double MeanG
-        {
-            get => GetValue(MeanGKey, DefaultMeanG);
-            set
-            {
-                if (Math.Abs(MeanG - value) > double.Epsilon)
-                {
-                    SetValue(MeanGKey, value);
-                    MeanGChanged?.Invoke(this, value);
-                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public double MeanB
-        {
-            get => GetValue(MeanBKey, DefaultMeanB);
-            set
-            {
-                if (Math.Abs(MeanB - value) > double.Epsilon)
-                {
-                    SetValue(MeanBKey, value);
-                    MeanBChanged?.Invoke(this, value);
-                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public double StdR
-        {
-            get => GetValue(StdRKey, DefaultStdR);
-            set
-            {
-                if (Math.Abs(StdR - value) > double.Epsilon)
-                {
-                    SetValue(StdRKey, value);
-                    StdRChanged?.Invoke(this, value);
-                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public double StdG
-        {
-            get => GetValue(StdGKey, DefaultStdG);
-            set
-            {
-                if (Math.Abs(StdG - value) > double.Epsilon)
-                {
-                    SetValue(StdGKey, value);
-                    StdGChanged?.Invoke(this, value);
-                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public double StdB
-        {
-            get => GetValue(StdBKey, DefaultStdB);
-            set
-            {
-                if (Math.Abs(StdB - value) > double.Epsilon)
-                {
-                    SetValue(StdBKey, value);
-                    StdBChanged?.Invoke(this, value);
+                    NormalizationChanged?.Invoke(this, value);
                     ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -431,7 +374,7 @@ namespace DeDupe.Services
         // Feature Extraction Performance
         public bool EnableGpuAcceleration
         {
-            get => GetValue(EnableGpuAccelerationKey, DefaultEnableGpuAcceleration);
+            get => GetValue(EnableGpuAccelerationKey, true);
             set
             {
                 if (EnableGpuAcceleration != value)
@@ -444,7 +387,7 @@ namespace DeDupe.Services
 
         public int InferenceBatchSize
         {
-            get => GetValue(InferenceBatchSizeKey, DefaultInferenceBatchSize);
+            get => GetValue(InferenceBatchSizeKey, 16);
             set
             {
                 int clamped = Math.Clamp(value, 1, 64);
@@ -497,19 +440,11 @@ namespace DeDupe.Services
         // Model Configuration
         public event EventHandler<bool>? UseBundledModelChanged;
 
+        public event EventHandler<string>? SelectedBundledModelIdChanged;
+
         public event EventHandler<string>? CustomModelFilePathChanged;
 
-        public event EventHandler<double>? MeanRChanged;
-
-        public event EventHandler<double>? MeanGChanged;
-
-        public event EventHandler<double>? MeanBChanged;
-
-        public event EventHandler<double>? StdRChanged;
-
-        public event EventHandler<double>? StdGChanged;
-
-        public event EventHandler<double>? StdBChanged;
+        public event EventHandler<NormalizationSettings>? NormalizationChanged;
 
         public event EventHandler? ModelConfigurationChanged;
 

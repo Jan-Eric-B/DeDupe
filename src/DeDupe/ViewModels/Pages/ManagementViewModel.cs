@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
 using DeDupe.Models.Analysis;
+using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
@@ -201,10 +202,19 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                if (string.IsNullOrEmpty(_settingsService.UseBundledModel ? _bundledModelService.BundledModelPath : _settingsService.CustomModelFilePath))
-                    return "No model";
-
-                return Path.GetFileNameWithoutExtension(_settingsService.UseBundledModel ? _bundledModelService.BundledModelPath : _settingsService.CustomModelFilePath);
+                if (_settingsService.UseBundledModel)
+                {
+                    BundledModelInfo? model = _bundledModelService.GetModelInfo(_settingsService.SelectedBundledModelId);
+                    return model?.DisplayName ?? "Unknown Model";
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(_settingsService.CustomModelFilePath))
+                    {
+                        return "No model selected";
+                    }
+                    return Path.GetFileNameWithoutExtension(_settingsService.CustomModelFilePath);
+                }
             }
         }
 
@@ -333,7 +343,6 @@ namespace DeDupe.ViewModels.Pages
         /// <summary>
         /// Core file deletion logic used by both recycle bin and permanent delete operations.
         /// </summary>
-        /// <param name="permanentDelete">If true, files are permanently deleted. If false, files are moved to Recycle Bin.</param>
         private async Task ExecuteFileDeletionAsync(bool permanentDelete)
         {
             if (TotalSelectedCount == 0)
@@ -914,11 +923,18 @@ namespace DeDupe.ViewModels.Pages
                 }
             }
 
+            // Remove items from AppStateService
+            int removedFromState = _appStateService.RemoveAnalysisItemsByPath(deletedPaths);
+
+            // Update Configuration Info displays
+            OnPropertyChanged(nameof(TotalFileCount));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+
             // Update UI
             OnPropertyChanged(nameof(DuplicateGroupsCount));
             UpdateSelectionSummary();
 
-            _logger.LogInformation("Refreshed after deletion: Removed {ItemCount} items from groups, removed {GroupCount} groups", totalItemsRemoved, groupsToRemove.Count);
+            _logger.LogInformation("Refreshed after deletion: Removed {ItemCount} items from UI groups, {GroupCount} groups removed, {StateCount} items removed from state", totalItemsRemoved, groupsToRemove.Count, removedFromState);
         }
 
         protected override void Dispose(bool disposing)

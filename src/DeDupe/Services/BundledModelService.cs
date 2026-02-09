@@ -1,8 +1,8 @@
-﻿using System;
+﻿using DeDupe.Models.Configuration;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
-using Windows.Storage;
 
 namespace DeDupe.Services
 {
@@ -11,72 +11,97 @@ namespace DeDupe.Services
     /// </summary>
     public class BundledModelService : IBundledModelService
     {
-        private const string BundledModelRelativePath = @"Resources\Models\resnet50-v2-7.onnx";
-        private const string ModelDisplayName = "ResNet50-v2";
+        private readonly Dictionary<string, string> _pathCache = [];
+        private readonly Dictionary<string, bool> _availabilityCache = [];
 
-        private string? _cachedModelPath;
-        private bool? _isAvailable;
+        #region Properties
 
-        public string BundledModelPath
+        /// <inheritdoc />
+        public IReadOnlyList<BundledModelInfo> AvailableModels => BundledModelRegistry.All;
+
+        /// <inheritdoc />
+        public BundledModelInfo DefaultModel => BundledModelRegistry.ResNet50;
+
+        #endregion Properties
+
+        #region Public Methods
+
+        /// <inheritdoc />
+        public string GetModelPath(string modelId)
         {
-            get
+            if (string.IsNullOrEmpty(modelId))
             {
-                if (_cachedModelPath == null)
-                {
-                    _cachedModelPath = GetBundledModelPath();
-                }
-                return _cachedModelPath;
+                Debug.WriteLine("Model ID is null or empty");
+                return string.Empty;
             }
+
+            if (_pathCache.TryGetValue(modelId, out string? cachedPath))
+            {
+                return cachedPath;
+            }
+
+            BundledModelInfo? modelInfo = BundledModelRegistry.GetById(modelId);
+            if (modelInfo == null)
+            {
+                Debug.WriteLine($"Unknown model ID: {modelId}");
+                return string.Empty;
+            }
+
+            string path = ResolvePath(modelInfo.RelativePath);
+            _pathCache[modelId] = path;
+
+            return path;
         }
 
-        public string BundledModelName => ModelDisplayName;
-
-        public bool IsBundledModelAvailable
+        /// <inheritdoc />
+        public bool IsModelAvailable(string modelId)
         {
-            get
+            if (string.IsNullOrEmpty(modelId))
             {
-                if (!_isAvailable.HasValue)
-                {
-                    _isAvailable = !string.IsNullOrEmpty(BundledModelPath) && File.Exists(BundledModelPath);
-                    Debug.WriteLine($"BundledModelService: IsBundledModelAvailable = {_isAvailable}, Path = {BundledModelPath}");
-                }
-                return _isAvailable.Value;
+                return false;
             }
+
+            if (_availabilityCache.TryGetValue(modelId, out bool cached))
+            {
+                return cached;
+            }
+
+            string path = GetModelPath(modelId);
+            bool available = !string.IsNullOrEmpty(path) && File.Exists(path);
+
+            _availabilityCache[modelId] = available;
+            Debug.WriteLine($"Model '{modelId}' available: {available}");
+
+            return available;
         }
 
-        public async Task<bool> ValidateBundledModelAsync()
+        /// <inheritdoc />
+        public BundledModelInfo? GetModelInfo(string modelId)
         {
-            try
-            {
-                if (IsBundledModelAvailable)
-                {
-                    StorageFile file = await StorageFile.GetFileFromPathAsync(BundledModelPath);
-                    Windows.Storage.FileProperties.BasicProperties props = await file.GetBasicPropertiesAsync();
-                    return props.Size > 1024;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error validating bundled model: {ex.Message}");
-            }
-
-            return false;
+            return BundledModelRegistry.GetById(modelId);
         }
 
-        private static string GetBundledModelPath()
+        #endregion Public Methods
+
+        #region Private Methods
+
+        private static string ResolvePath(string relativePath)
         {
             string basePath = AppContext.BaseDirectory;
-            string modelPath = Path.Combine(basePath, BundledModelRelativePath);
-            Debug.WriteLine($"BundledModelService: Trying AppContext.BaseDirectory: {modelPath}");
+            string modelPath = Path.Combine(basePath, relativePath);
+
+            Debug.WriteLine($"Checking path: {modelPath}");
 
             if (File.Exists(modelPath))
             {
-                Debug.WriteLine($"BundledModelService: Found at AppContext.BaseDirectory");
+                Debug.WriteLine($"Found model at: {modelPath}");
                 return modelPath;
             }
 
-            Debug.WriteLine($"BundledModelService: Model not found in any location");
+            Debug.WriteLine($"Model not found at: {modelPath}");
             return string.Empty;
         }
+
+        #endregion Private Methods
     }
 }

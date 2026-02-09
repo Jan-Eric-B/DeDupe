@@ -60,8 +60,6 @@ namespace DeDupe.ViewModels.Pages
         private CancellationTokenSource? _scanCts;
         private CancellationTokenSource? _processingCts;
 
-        private static readonly HashSet<string> SupportedImageExtensionsSet = new(SupportedFileExtensions.SupportedImageExtensions, StringComparer.OrdinalIgnoreCase);
-
         #endregion Fields
 
         #region Properties
@@ -143,7 +141,7 @@ namespace DeDupe.ViewModels.Pages
                 // Check if model is available
                 if (_settingsService.UseBundledModel)
                 {
-                    return _bundledModelService.IsBundledModelAvailable;
+                    return _bundledModelService.IsModelAvailable(_settingsService.SelectedBundledModelId);
                 }
 
                 return !string.IsNullOrEmpty(_settingsService.CustomModelFilePath) && File.Exists(_settingsService.CustomModelFilePath);
@@ -153,7 +151,7 @@ namespace DeDupe.ViewModels.Pages
         public bool CanOpenTempFolder => HasProcessedItems && !string.IsNullOrEmpty(_settingsService.TempFolderPath);
 
         public string ModelFilePath => _settingsService.UseBundledModel
-            ? _bundledModelService.BundledModelPath
+            ? _bundledModelService.GetModelPath(_settingsService.SelectedBundledModelId)
             : _settingsService.CustomModelFilePath;
 
         public bool IsProcessing
@@ -404,7 +402,7 @@ namespace DeDupe.ViewModels.Pages
 
                     foreach (StorageFile file in files)
                     {
-                        if (IsImageFile(file.FileType) && !InputListItems.Any(item => string.Equals(item.Path, file.Path, StringComparison.OrdinalIgnoreCase)))
+                        if (SupportedFileExtensions.IsImageFile(file.FileType) && !InputListItems.Any(item => string.Equals(item.Path, file.Path, StringComparison.OrdinalIgnoreCase)))
                         {
                             InputListItem inputListItem = new()
                             {
@@ -587,19 +585,8 @@ namespace DeDupe.ViewModels.Pages
                 ProgressPercentage = 0;
                 Status = $"Extracting features from {processedItems.Count} items...";
 
-                // Build normalization tuple
-                (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization = (
-                    MeanR: (float)_settingsService.MeanR,
-                    MeanG: (float)_settingsService.MeanG,
-                    MeanB: (float)_settingsService.MeanB,
-                    StdR: (float)_settingsService.StdR,
-                    StdG: (float)_settingsService.StdG,
-                    StdB: (float)_settingsService.StdB
-                );
-
-                // Extract features with progress
-                await _featureExtractionService.ExtractFeaturesAsync(processedItems, normalization, featureExtractionProgress, ct);
-
+                // Extract features
+                await _featureExtractionService.ExtractFeaturesAsync(processedItems, _settingsService.Normalization, featureExtractionProgress, ct);
                 _appStateService.NotifyFeaturesExtracted();
 
                 // Release ImageSharp's pooled memory.
@@ -708,12 +695,12 @@ namespace DeDupe.ViewModels.Pages
                     try
                     {
                         files = Directory.EnumerateFiles(folderItem.Path, "*.*", searchOption)
-                            .Where(f => SupportedImageExtensionsSet.Contains(Path.GetExtension(f)));
+                            .Where(f => SupportedFileExtensions.IsImageFile(Path.GetExtension(f)));
                     }
                     catch (UnauthorizedAccessException)
                     {
                         files = Directory.EnumerateFiles(folderItem.Path, "*.*", SearchOption.TopDirectoryOnly)
-                            .Where(f => SupportedImageExtensionsSet.Contains(Path.GetExtension(f)));
+                            .Where(f => SupportedFileExtensions.IsImageFile(Path.GetExtension(f)));
                     }
 
                     foreach (string filePath in files)
@@ -825,11 +812,6 @@ namespace DeDupe.ViewModels.Pages
             }
             sources.Add(sourcePath);
             _loadedSourceMedia[normalizedPath] = source;
-        }
-
-        public static bool IsImageFile(string extension)
-        {
-            return SupportedFileExtensions.IsImageFile(extension);
         }
 
         private void RemoveSource(string sourcePath)

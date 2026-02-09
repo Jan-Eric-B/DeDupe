@@ -14,8 +14,6 @@ namespace DeDupe
     {
         private MainWindowViewModel ViewModel { get; }
 
-        private int _previousStepIndex = 0;
-
         private readonly WindowsSizeService _windowsSizeService;
         private readonly IThemeService _themeService;
 
@@ -64,7 +62,7 @@ namespace DeDupe
                 (int)Math.Round(bounds.Height * scaleAdjustment));
 
             InputNonClientPointerSource? nonClientInputSrc = InputNonClientPointerSource.GetForWindowId(AppWindow.Id);
-            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, new[] { buttonRect });
+            nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, [buttonRect]);
         }
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
@@ -78,14 +76,10 @@ namespace DeDupe
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode))
+            if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode) && ViewModel.IsInManagementMode)
             {
-                if (ViewModel.IsInManagementMode)
-                {
-                    // Navigate to ManagementPage when entering management mode
-                    frManagement.Navigate(typeof(ManagementPage));
-                }
-                // When returning to configuration mode, ConfigurationPage is already loaded in frMain
+                // Navigate to ManagementPage when entering management mode
+                frManagement.Navigate(typeof(ManagementPage));
             }
         }
 

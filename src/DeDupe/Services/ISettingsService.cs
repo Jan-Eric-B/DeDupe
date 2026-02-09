@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Models.Configuration;
 using System;
 using Windows.UI;
 
@@ -6,15 +7,17 @@ namespace DeDupe.Services
 {
     public interface ISettingsService
     {
-        // General
-        AppTheme Theme { get; set; }
+        #region General
 
+        AppTheme Theme { get; set; }
         AppBackdrop Backdrop { get; set; }
         AppAccentColor AccentColor { get; set; }
 
-        // Processing
-        bool EnableResizing { get; set; }
+        #endregion General
 
+        #region Processing
+
+        bool EnableResizing { get; set; }
         uint ResizeSize { get; set; }
         ResizeMethod ResizeMethod { get; set; }
         Color PaddingColor { get; set; }
@@ -30,29 +33,34 @@ namespace DeDupe.Services
         string TempFolderPath { get; }
         int ParallelProcessingCores { get; set; }
 
-        // Model Configuration
+        #endregion Processing
+
+        #region Model Configuration
+
         bool UseBundledModel { get; set; }
-
+        string SelectedBundledModelId { get; set; }
         string CustomModelFilePath { get; set; }
-        double MeanR { get; set; }
-        double MeanG { get; set; }
-        double MeanB { get; set; }
-        double StdR { get; set; }
-        double StdG { get; set; }
-        double StdB { get; set; }
+        NormalizationSettings Normalization { get; set; }
 
-        // Feature Extraction Performance
+        #endregion Model Configuration
+
+        #region Feature Extraction
+
         bool EnableGpuAcceleration { get; set; }
-
         int InferenceBatchSize { get; set; }
 
-        // Events
+        #endregion Feature Extraction
+
+        #region Events
+
+        // General
         event EventHandler<AppTheme>? ThemeChanged;
 
         event EventHandler<AppBackdrop>? BackdropChanged;
 
         event EventHandler<AppAccentColor>? AccentColorChanged;
 
+        // Processing
         event EventHandler? TempFolderPathChanged;
 
         event EventHandler<bool>? EnableResizingChanged;
@@ -79,21 +87,14 @@ namespace DeDupe.Services
 
         event EventHandler<int>? ParallelProcessingCoresChanged;
 
+        // Model Configuration
         event EventHandler<bool>? UseBundledModelChanged;
+
+        event EventHandler<string>? SelectedBundledModelIdChanged;
 
         event EventHandler<string>? CustomModelFilePathChanged;
 
-        event EventHandler<double>? MeanRChanged;
-
-        event EventHandler<double>? MeanGChanged;
-
-        event EventHandler<double>? MeanBChanged;
-
-        event EventHandler<double>? StdRChanged;
-
-        event EventHandler<double>? StdGChanged;
-
-        event EventHandler<double>? StdBChanged;
+        event EventHandler<NormalizationSettings>? NormalizationChanged;
 
         event EventHandler? ModelConfigurationChanged;
 
@@ -102,9 +103,14 @@ namespace DeDupe.Services
 
         event EventHandler<int>? InferenceBatchSizeChanged;
 
-        // Methods
+        #endregion Events
+
+        #region Methods
+
         T GetValue<T>(string key, T defaultValue);
 
         void SetValue<T>(string key, T value);
+
+        #endregion Methods
     }
 }

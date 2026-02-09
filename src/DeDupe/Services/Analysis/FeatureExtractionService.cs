@@ -1,4 +1,5 @@
 ﻿using DeDupe.Models;
+using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
@@ -52,8 +53,8 @@ namespace DeDupe.Services.Analysis
         /// Expected input dimensions from the model [N, C, H, W].
         /// </summary>
         public (int Channels, int Height, int Width)? ExpectedDimensions => _inputDimensions != null
-                ? (_inputDimensions[1], _inputDimensions[2], _inputDimensions[3])
-                : null;
+            ? (_inputDimensions[1], _inputDimensions[2], _inputDimensions[3])
+            : null;
 
         #endregion Properties
 
@@ -84,7 +85,17 @@ namespace DeDupe.Services.Analysis
 
                 await Task.Run(ExtractModelMetadata);
 
-                // Pre-allocate tensor buffers after we know the dimensions
+                // Use models fixed batch dimension
+                if (_inputDimensions != null && _inputDimensions.Length >= 4 && _inputDimensions[0] >= 1)
+                {
+                    int modelBatchSize = _inputDimensions[0];
+                    if (_batchSize > modelBatchSize)
+                    {
+                        Debug.WriteLine($"Model has fixed batch dimension of {modelBatchSize}, " + $"overriding configured batch size {_batchSize}");
+                        _batchSize = modelBatchSize;
+                    }
+                }
+
                 AllocateTensorBuffers(_batchSize);
 
                 Debug.WriteLine($"FeatureExtractionService initialized: GPU={_isGpuEnabled}, BatchSize={_batchSize}");
@@ -193,7 +204,7 @@ namespace DeDupe.Services.Analysis
                 DenseTensor<float>? buffer = useBufferA ? _tensorBufferA : _tensorBufferB;
                 if (buffer != null)
                 {
-                    // Clear the buffer for reuse
+                    // Clear buffer for reuse
                     buffer.Buffer.Span.Clear();
                     return buffer;
                 }
@@ -208,7 +219,7 @@ namespace DeDupe.Services.Analysis
         #region Feature Extraction
 
         /// <inheritdoc />
-        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
+        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized)
             {
@@ -216,6 +227,7 @@ namespace DeDupe.Services.Analysis
             }
 
             ArgumentNullException.ThrowIfNull(items);
+            ArgumentNullException.ThrowIfNull(normalization);
 
             List<AnalysisItem> itemList = [.. items.Where(i => i.IsProcessed)];
 
@@ -224,17 +236,19 @@ namespace DeDupe.Services.Analysis
                 return;
             }
 
-            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normalization, progress, cancellationToken);
+            // Convert to float
+            NormalizationSettingsFloat normFloat = normalization.ToFloat();
+
+            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normFloat, progress, cancellationToken);
         }
 
-        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress, CancellationToken ct)
+        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, NormalizationSettingsFloat normalization, IProgress<ProgressInfo>? progress, CancellationToken ct)
         {
             if (_session == null || _inputName == null || _outputName == null || _inputDimensions == null)
             {
                 return;
             }
 
-            int channels = _inputDimensions[1];
             int height = _inputDimensions[2];
             int width = _inputDimensions[3];
 
@@ -251,7 +265,6 @@ namespace DeDupe.Services.Analysis
             int totalItems = items.Count;
             int processedItems = 0;
 
-            // Report initial progress
             progress?.Report(new ProgressInfo(0, totalItems, "Extracting features"));
 
             // Track using buffer
@@ -274,8 +287,8 @@ namespace DeDupe.Services.Analysis
                 {
                     useBufferA = !useBufferA; // Swap buffer
                     List<AnalysisItem> nextBatch = [.. items
-                        .Skip(batches[batchIndex + 1].Start)
-                        .Take(batches[batchIndex + 1].Count)];
+                    .Skip(batches[batchIndex + 1].Start)
+                    .Take(batches[batchIndex + 1].Count)];
                     nextPrepareTask = PrepareBatchAsync(nextBatch, height, width, normalization, useBufferA, ct);
                 }
 
@@ -311,11 +324,10 @@ namespace DeDupe.Services.Analysis
                 }
             }
 
-            // Final progress report
             progress?.Report(new ProgressInfo(totalItems, totalItems, "Feature extraction complete"));
         }
 
-        private async Task<(DenseTensor<float> Tensor, List<AnalysisItem> Items, List<int> ValidIndices)> PrepareBatchAsync(List<AnalysisItem> batchItems, int height, int width, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, bool useBufferA, CancellationToken ct)
+        private async Task<(DenseTensor<float> Tensor, List<AnalysisItem> Items, List<int> ValidIndices)> PrepareBatchAsync(List<AnalysisItem> batchItems, int height, int width, NormalizationSettingsFloat normalization, bool useBufferA, CancellationToken ct)
         {
             DenseTensor<float> tensor = GetOrCreateTensor(batchItems.Count, useBufferA);
             List<int> validIndices = [];
@@ -417,12 +429,12 @@ namespace DeDupe.Services.Analysis
             }
         }
 
-        private static void FillTensorFromImage(DenseTensor<float> tensor, int batchIndex, Image<Rgb24> image, int height, int width, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization)
+        private static void FillTensorFromImage(DenseTensor<float> tensor, int batchIndex, Image<Rgb24> image, int height, int width, NormalizationSettingsFloat normalization)
         {
-            // Pre-compute normalization inverses for faster division
-            float invStdR = 1.0f / normalization.StdR;
-            float invStdG = 1.0f / normalization.StdG;
-            float invStdB = 1.0f / normalization.StdB;
+            // Inverse std
+            float invStdR = normalization.InvStdR;
+            float invStdG = normalization.InvStdG;
+            float invStdB = normalization.InvStdB;
 
             for (int y = 0; y < height; y++)
             {
@@ -430,7 +442,7 @@ namespace DeDupe.Services.Analysis
                 {
                     Rgb24 pixel = image[x, y];
 
-                    // Normalize to [0, 1] then apply ImageNet normalization
+                    // Normalize to [0, 1] then apply normalization
                     float r = pixel.R / 255.0f;
                     float g = pixel.G / 255.0f;
                     float b = pixel.B / 255.0f;
@@ -442,7 +454,7 @@ namespace DeDupe.Services.Analysis
             }
         }
 
-        private async Task ProcessItemsIndividuallyAsync(List<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, CancellationToken ct)
+        private async Task ProcessItemsIndividuallyAsync(List<AnalysisItem> items, NormalizationSettingsFloat normalization, CancellationToken ct)
         {
             if (_session == null || _inputName == null || _inputDimensions == null) return;
 
@@ -450,7 +462,7 @@ namespace DeDupe.Services.Analysis
             int height = _inputDimensions[2];
             int width = _inputDimensions[3];
 
-            // Reuse a single-item tensor
+            // Reuse single-item tensor
             DenseTensor<float> singleTensor = new([1, channels, height, width]);
 
             foreach (AnalysisItem item in items)

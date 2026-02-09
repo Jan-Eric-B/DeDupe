@@ -3,193 +3,188 @@
     x:Class="DeDupe.Views.Settings.ModelSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:config="using:DeDupe.Models.Configuration"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
-    <Page.Resources>
-        <converters:StatusToBrushConverter x:Key="StatusToBrushConverter" />
-    </Page.Resources>
+
     <ScrollViewer>
-        <StackPanel Spacing="4">
+        <StackPanel MaxWidth="1000" Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
                 Text="Model Configuration" />
 
-            <!--  Model Selection Section  -->
+            <!--  Model Source Toggle  -->
+            <controls:SettingsCard
+                Description="Switch between pre-configured models or your own ONNX file"
+                Header="Model source"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
+                <controls:Segmented x:Name="ModelSourceSegmented" SelectionChanged="ModelSourceSegmented_SelectionChanged">
+                    <controls:SegmentedItem Content="Bundled" Tag="Bundled" />
+                    <controls:SegmentedItem Content="Custom" Tag="Custom" />
+                </controls:Segmented>
+            </controls:SettingsCard>
+
+            <!--  Bundled Model Selection  -->
+            <StackPanel
+                x:Name="BundledModelSection"
+                Margin="0,8,0,0"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.UseBundledModel, Mode=OneWay}">
+
+                <controls:SettingsCard
+                    Description="{x:Bind ViewModel.SelectedModelDescription, Mode=OneWay}"
+                    Header="Select model"
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE74C;}">
+                    <ComboBox
+                        MinWidth="220"
+                        ItemsSource="{x:Bind ViewModel.BundledModels}"
+                        SelectedValue="{x:Bind ViewModel.SelectedBundledModelId, Mode=TwoWay}"
+                        SelectedValuePath="Id">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="config:BundledModelInfo">
+                                <TextBlock Text="{x:Bind DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </controls:SettingsCard>
+            </StackPanel>
+
+            <!--  Custom Model Selection  -->
+            <StackPanel
+                x:Name="CustomModelSection"
+                Margin="0,8,0,0"
+                Spacing="8"
+                Visibility="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}">
+
+                <!--  File picker  -->
+                <controls:SettingsCard
+                    Description="Drag and drop, or click Browse to select your .onnx file"
+                    Header="Model file"
+                    HeaderIcon="{ui:FontIcon Glyph=&#xF003;}">
+                    <Grid
+                        x:Name="ModelFileDropGrid"
+                        AllowDrop="True"
+                        ColumnSpacing="8"
+                        DragOver="ModelFileDropGrid_DragOver"
+                        Drop="ModelFileDropGrid_Drop">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border
+                            Grid.Column="0"
+                            MinWidth="280"
+                            MinHeight="36"
+                            Padding="12,0"
+                            VerticalAlignment="Center"
+                            Background="{ThemeResource ControlFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{ThemeResource ControlCornerRadius}"
+                            DoubleTapped="ModelFileTextBlock_DoubleTapped"
+                            ToolTipService.ToolTip="{x:Bind ViewModel.CustomModelFilePath, Mode=OneWay}">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{x:Bind ViewModel.CustomFileName, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis">
+                                <TextBlock.Foreground>
+                                    <SolidColorBrush Color="{ThemeResource TextFillColorSecondary}" />
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                        </Border>
+
+                        <Button
+                            Grid.Column="1"
+                            Command="{x:Bind ViewModel.SelectCustomModelFileCommand}"
+                            Content="Browse"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </Grid>
+                </controls:SettingsCard>
+
+                <!--  Download links  -->
+                <controls:SettingsCard
+                    Description="Find compatible ONNX models from these repositories"
+                    Header="Need a model?"
+                    HeaderIcon="{ui:FontIcon Glyph=&#xE896;}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <HyperlinkButton Content="Hugging Face" NavigateUri="https://huggingface.co/webml/models-moved/tree/main" />
+                        <HyperlinkButton Content="ONNX Model Zoo" NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" />
+                    </StackPanel>
+                </controls:SettingsCard>
+            </StackPanel>
+
+            <!--  Advanced Settings  -->
             <TextBlock
-                Margin="0,0,0,3"
+                Margin="0,28,0,8"
                 Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Model Selection" />
-
-            <!--  Bundled Model Option  -->
-            <controls:SettingsExpander
-                Description="ResNet50-v2 optimized for image feature extraction. Recommended for most users."
-                Header="Use Bundled Model"
-                HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}"
-                IsExpanded="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}">
-                <ToggleSwitch
-                    IsOn="{x:Bind ViewModel.UseBundledModel, Mode=TwoWay}"
-                    OffContent="Custom"
-                    OnContent="Bundled" />
-                <controls:SettingsExpander.Items>
-                    <controls:SettingsCard
-                        Description="(Recommended: resnet50-v2-7.onnx)"
-                        Header="Download Pre-trained Models"
-                        HeaderIcon="{ui:FontIcon Glyph=&#xE896;}"
-                        IsEnabled="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <HyperlinkButton NavigateUri="https://huggingface.co/webml/models-moved/tree/main" ToolTipService.ToolTip="https://huggingface.co/webml/models-moved/tree/main">
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <FontIcon
-                                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                        FontSize="14"
-                                        Glyph="&#xE8A7;" />
-                                    <TextBlock Text="HuggingFace" />
-                                </StackPanel>
-                            </HyperlinkButton>
-                            <HyperlinkButton NavigateUri="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model" ToolTipService.ToolTip="https://github.com/onnx/models/tree/main/validated/vision/classification/resnet/model">
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <FontIcon
-                                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                        FontSize="14"
-                                        Glyph="&#xE8A7;" />
-                                    <TextBlock Text="GitHub" />
-                                </StackPanel>
-                            </HyperlinkButton>
-                        </StackPanel>
-                    </controls:SettingsCard>
-
-                    <!--  Custom Model Selection  -->
-                    <controls:SettingsCard
-                        VerticalAlignment="Top"
-                        Description="Select your own ONNX model file (.onnx)"
-                        Header="Custom Model"
-                        HeaderIcon="{ui:FontIcon Glyph=&#xF003;}"
-                        IsEnabled="{x:Bind ViewModel.UseCustomModel, Mode=OneWay}">
-
-                        <!--  Custom Model File Picker  -->
-                        <Grid
-                            x:Name="ModelFileDropGrid"
-                            AllowDrop="True"
-                            ColumnSpacing="5"
-                            DragOver="ModelFileDropGrid_DragOver"
-                            Drop="ModelFileDropGrid_Drop">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <Border
-                                Grid.Column="0"
-                                MinWidth="300"
-                                MinHeight="32"
-                                Padding="12,5,12,6"
-                                Background="{ThemeResource TextControlBackground}"
-                                BorderBrush="{ThemeResource TextControlBorderBrush}"
-                                BorderThickness="{ThemeResource TextControlBorderThemeThickness}"
-                                CornerRadius="{ThemeResource ControlCornerRadius}"
-                                DoubleTapped="ModelFileTextBlock_DoubleTapped"
-                                ToolTipService.ToolTip="Double-click to open in Explorer">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="{Binding UseCustomModel, Converter={StaticResource StatusToBrushConverter}}"
-                                    TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{x:Bind ViewModel.CustomModelFilePath, Mode=OneWay}">
-                                    <Run
-                                        FontSize="11"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{x:Bind ViewModel.CustomDirectoryPath, Mode=OneWay}" />
-                                    <Run FontWeight="SemiBold" Text="{x:Bind ViewModel.CustomFileName, Mode=OneWay}" />
-                                </TextBlock>
-                            </Border>
-                            <Button
-                                Grid.Column="1"
-                                HorizontalAlignment="Stretch"
-                                AllowDrop="True"
-                                Command="{x:Bind ViewModel.SelectCustomModelFileCommand}"
-                                ToolTipService.ToolTip="Browse for model file">
-                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
-                            </Button>
-                        </Grid>
-                    </controls:SettingsCard>
-                </controls:SettingsExpander.Items>
-            </controls:SettingsExpander>
-
-            <!--  Normalization  -->
-            <TextBlock
-                Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Normalization" />
+                Text="Advanced" />
 
             <controls:SettingsExpander
-                VerticalAlignment="Top"
-                Description="Advanced color value adjustments. Most users should keep the defaults."
-                Header="Normalization Settings"
-                HeaderIcon="{ui:FontIcon Glyph=&#xE713;}">
-                <Button
-                    HorizontalAlignment="Right"
-                    Command="{x:Bind ViewModel.ResetNormalizationCommand}"
-                    Content="Reset to Default"
-                    Style="{StaticResource DefaultButtonStyle}"
-                    ToolTipService.ToolTip="Reset to ImageNet normalization values" />
+                Description="Configure image preprocessing. Auto-applied when selecting bundled models."
+                Header="Normalization"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}"
+                IsExpanded="False">
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        Command="{x:Bind ViewModel.ApplyModelNormalizationCommand}"
+                        Content="Apply model defaults"
+                        IsEnabled="{x:Bind ViewModel.UseBundledModel, Mode=OneWay}" />
+                </StackPanel>
 
                 <controls:SettingsExpander.Items>
-                    <!--  Mean  -->
-                    <controls:SettingsCard Description="R, G, B" Header="Mean Values">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                    <controls:SettingsCard Header="Mean (R, G, B)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Red"
                                 LargeChange="0.01"
-                                PlaceholderText="0.485"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.MeanR, Mode=TwoWay}" />
-
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Green"
                                 LargeChange="0.01"
-                                PlaceholderText="0.456"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.MeanG, Mode=TwoWay}" />
-
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Blue"
                                 LargeChange="0.01"
-                                PlaceholderText="0.406"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.MeanB, Mode=TwoWay}" />
                         </StackPanel>
                     </controls:SettingsCard>
 
-                    <!--  Standard Deviation  -->
-                    <controls:SettingsCard Description="R, G, B" Header="Standard Deviation Values">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
+                    <controls:SettingsCard Header="Std Dev (R, G, B)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Red"
                                 LargeChange="0.01"
-                                PlaceholderText="0.229"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.StdR, Mode=TwoWay}" />
-
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Green"
                                 LargeChange="0.01"
-                                PlaceholderText="0.224"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.StdG, Mode=TwoWay}" />
-
                             <NumberBox
+                                Width="110"
                                 BorderBrush="Blue"
                                 LargeChange="0.01"
-                                PlaceholderText="0.225"
                                 SmallChange="0.001"
                                 SpinButtonPlacementMode="Compact"
                                 Value="{x:Bind ViewModel.StdB, Mode=TwoWay}" />

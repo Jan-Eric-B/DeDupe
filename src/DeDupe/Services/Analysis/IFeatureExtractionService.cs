@@ -1,4 +1,5 @@
 ﻿using DeDupe.Models;
+using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using System;
 using System.Collections.Generic;
@@ -8,9 +9,9 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <summary>
-    /// Interface for feature extraction service.
+    /// Interface for extracting feature vectors from images.
     /// </summary>
-    public interface IFeatureExtractionService
+    public interface IFeatureExtractionService : IDisposable
     {
         /// <summary>
         /// Path to loaded model.
@@ -50,6 +51,6 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Extract features from processed items.
         /// </summary>
-        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, (float MeanR, float MeanG, float MeanB, float StdR, float StdG, float StdB) normalization, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken = default);
+        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
     }
 }

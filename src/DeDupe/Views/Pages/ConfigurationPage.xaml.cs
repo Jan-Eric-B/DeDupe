@@ -87,7 +87,7 @@ namespace DeDupe.Views.Pages
                 else if (item is StorageFile file)
                 {
                     string extension = file.FileType.ToLowerInvariant();
-                    if (IsImageFile(extension))
+                    if (SupportedFileExtensions.IsImageFile(extension))
                     {
                         InputListItem sourcePathItem = new()
                         {
@@ -133,11 +133,6 @@ namespace DeDupe.Views.Pages
                     ViewModel.IsBusy = false;
                 }
             }
-        }
-
-        private static bool IsImageFile(string extension)
-        {
-            return SupportedFileExtensions.IsImageFile(extension);
         }
     }
 }

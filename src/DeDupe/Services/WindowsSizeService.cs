@@ -77,9 +77,8 @@ namespace DeDupe.Services
         #region P/Invoke Declarations
 
         /// <summary>
-        /// Delegate signature for subclass callback function
-        /// - StdCall convention matches Windows API expectations
-        /// - Called by Windows for every message sent to window
+        /// Delegate signature for subclass callback function - StdCall convention matches Windows API expectations -
+        /// Called by Windows for every message sent to window
         /// </summary>
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData);

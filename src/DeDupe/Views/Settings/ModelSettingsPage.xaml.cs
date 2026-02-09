@@ -1,3 +1,4 @@
+using CommunityToolkit.WinUI.Controls;
 using DeDupe.Constants;
 using DeDupe.ViewModels.Settings;
 using Microsoft.UI.Xaml;
@@ -22,6 +23,15 @@ namespace DeDupe.Views.Settings
             DataContext = ViewModel;
         }
 
+        private void ModelSourceSegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is Segmented segmented && segmented.SelectedItem is SegmentedItem item)
+            {
+                bool isBundled = item.Tag?.ToString() == "Bundled";
+                ViewModel.UseBundledModel = isBundled;
+            }
+        }
+
         private void ModelFileDropGrid_DragOver(object sender, DragEventArgs e)
         {
             if (ViewModel.UseBundledModel)
@@ -33,7 +43,7 @@ namespace DeDupe.Views.Settings
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "Use custom model";
+                e.DragUIOverride.Caption = "Use this model";
                 e.DragUIOverride.IsContentVisible = true;
                 e.DragUIOverride.IsCaptionVisible = true;
             }
@@ -87,12 +97,20 @@ namespace DeDupe.Views.Settings
         {
             base.OnNavigatedTo(e);
             ViewModel.OnNavigatedTo();
+
+            // Sync UI with ViewModel state
+            SyncUIWithViewModel();
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
             ViewModel.OnNavigatedFrom();
+        }
+
+        private void SyncUIWithViewModel()
+        {
+            ModelSourceSegmented.SelectedIndex = ViewModel.UseBundledModel ? 0 : 1;
         }
     }
 }

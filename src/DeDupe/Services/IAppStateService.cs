@@ -77,6 +77,11 @@ namespace DeDupe.Services
         /// </summary>
         int ExtractedFeaturesCount { get; }
 
+        /// <summary>
+        /// Remove analysis items by source file paths.
+        /// </summary>
+        int RemoveAnalysisItemsByPath(IEnumerable<string> filePaths);
+
         #endregion Analysis Items
 
         #region Pipeline State
