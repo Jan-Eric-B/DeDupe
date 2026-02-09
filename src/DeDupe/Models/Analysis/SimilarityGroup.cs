@@ -24,8 +24,6 @@ namespace DeDupe.Models.Analysis
 
         #region Events
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         public event EventHandler? GroupSelectionChanged;
 
         #endregion Events
