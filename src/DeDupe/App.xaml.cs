@@ -32,8 +32,6 @@ namespace DeDupe
         {
             InitializeComponent();
 
-            ConfigureImageSharp();
-
             _host = Host.CreateDefaultBuilder()
                 .ConfigureServices(ConfigureServices)
                 .ConfigureLogging(logging =>
@@ -43,18 +41,27 @@ namespace DeDupe
                     logging.AddDebug();
                     logging.SetMinimumLevel(LogLevel.Debug);
 #else
-                    logging.SetMinimumLevel(LogLevel.Warning);
+            logging.SetMinimumLevel(LogLevel.Warning);
 #endif
                 })
                 .Build();
 
             _serviceProvider = _host.Services;
 
-            // Add exception handling
+            // Configure ImageSharp with user's parallelism setting
+            ISettingsService settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
+            ConfigureImageSharp(settingsService.ParallelProcessingCores);
+
+            // Update ImageSharp if user changes the setting at runtime
+            settingsService.ParallelProcessingCoresChanged += (_, cores) =>
+            {
+                Configuration.Default.MaxDegreeOfParallelism = cores;
+                Debug.WriteLine($"ImageSharp parallelism updated to {cores}");
+            };
+
             this.UnhandledException += App_UnhandledException;
 
 #if DEBUG
-            // Add binding failure debugging
             this.DebugSettings.BindingFailed += DebugSettings_BindingFailed;
 #endif
         }
@@ -102,7 +109,7 @@ namespace DeDupe
         /// <summary>
         /// Configure ImageSharp memory pool and concurrent operations.
         /// </summary>
-        private static void ConfigureImageSharp(int maxPoolSizeMegabytes = 128)
+        private static void ConfigureImageSharp(int maxParallelism, int maxPoolSizeMegabytes = 128)
         {
             try
             {
@@ -112,11 +119,9 @@ namespace DeDupe
                         MaximumPoolSizeMegabytes = maxPoolSizeMegabytes
                     });
 
-                // TODO Use settings value for parallelism
-                // Set maximum concurrent operations (Match ParallelProcessingCores constant)
-                Configuration.Default.MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 4);
+                Configuration.Default.MaxDegreeOfParallelism = maxParallelism;
 
-                Debug.WriteLine($"ImageSharp configured: {maxPoolSizeMegabytes}MB pool, " + $"{Configuration.Default.MaxDegreeOfParallelism} max parallelism");
+                Debug.WriteLine($"ImageSharp configured: {maxPoolSizeMegabytes}MB pool, {Configuration.Default.MaxDegreeOfParallelism} max parallelism");
             }
             catch (Exception ex)
             {
