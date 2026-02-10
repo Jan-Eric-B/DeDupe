@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 
@@ -12,7 +13,7 @@ namespace DeDupe.Views.Pages
 {
     public sealed partial class ConfigurationPage : Page
     {
-        public ConfigurationViewModel ViewModel { get; }
+        private ConfigurationViewModel ViewModel { get; }
 
         public ConfigurationPage()
         {
@@ -20,6 +21,8 @@ namespace DeDupe.Views.Pages
             ViewModel = App.Current.GetService<ConfigurationViewModel>();
             DataContext = ViewModel;
         }
+
+        #region Item Loading
 
         private void LvInputList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
         {
@@ -47,92 +50,107 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Collect items to add
-            List<InputListItem> foldersToProcess = [];
-            List<InputListItem> filesToAdd = [];
+            (List<InputListItem>? folders, List<InputListItem>? files) = await CollectDroppedItemsAsync(items);
+
+            await ProcessDroppedFoldersAsync(folders);
+            ProcessDroppedFiles(files);
+        }
+
+        private async Task<(List<InputListItem> Folders, List<InputListItem> Files)> CollectDroppedItemsAsync(IReadOnlyList<IStorageItem> items)
+        {
+            List<InputListItem> folders = [];
+            List<InputListItem> files = [];
 
             foreach (IStorageItem item in items)
             {
-                // Skip item if already in collection
-                if (ViewModel.InputListItems.Any(existingItem =>
-                    existingItem.Path.Equals(item.Path, StringComparison.OrdinalIgnoreCase)))
+                if (IsAlreadyInInputList(item.Path))
                 {
                     continue;
                 }
 
                 if (item is StorageFolder folder)
                 {
-                    try
+                    InputListItem? folderItem = await CreateFolderItemAsync(folder);
+                    if (folderItem is not null)
                     {
-                        // Check if folder has subdirectories
-                        IReadOnlyList<StorageFolder>? subfolders = await folder.GetFoldersAsync();
-                        bool hasSubdirectories = subfolders.Count > 0;
-
-                        InputListItem sourcePathItem = new()
-                        {
-                            Path = folder.Path,
-                            IsFolder = true,
-                            HasSubdirectories = hasSubdirectories,
-                            IncludeSubdirectories = hasSubdirectories
-                        };
-
-                        foldersToProcess.Add(sourcePathItem);
-                    }
-                    catch (Exception)
-                    {
-                        // Skip folders we can't access
-                        continue;
+                        folders.Add(folderItem);
                     }
                 }
-                else if (item is StorageFile file)
+                else if (item is StorageFile file && SupportedFileExtensions.IsImageFile(file.FileType.ToLowerInvariant()))
                 {
-                    string extension = file.FileType.ToLowerInvariant();
-                    if (SupportedFileExtensions.IsImageFile(extension))
+                    files.Add(new InputListItem
                     {
-                        InputListItem sourcePathItem = new()
-                        {
-                            Path = file.Path,
-                            IsFolder = false,
-                            HasSubdirectories = false,
-                            IncludeSubdirectories = false
-                        };
-
-                        filesToAdd.Add(sourcePathItem);
-                    }
+                        Path = file.Path,
+                        IsFolder = false,
+                        HasSubdirectories = false,
+                        IncludeSubdirectories = false
+                    });
                 }
             }
 
-            // Nothing to add
-            if (foldersToProcess.Count == 0 && filesToAdd.Count == 0)
-            {
-                return;
-            }
+            return (folders, files);
+        }
 
-            // Process folders (ProcessFolderAsync handles IsBusy internally)
-            foreach (InputListItem folderItem in foldersToProcess)
+        private bool IsAlreadyInInputList(string path)
+        {
+            return ViewModel.InputListItems.Any(existingItem => existingItem.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static async Task<InputListItem?> CreateFolderItemAsync(StorageFolder folder)
+        {
+            try
+            {
+                // Check if folder has subdirectories
+                IReadOnlyList<StorageFolder> subfolders = await folder.GetFoldersAsync();
+                bool hasSubdirectories = subfolders.Count > 0;
+
+                return new InputListItem
+                {
+                    Path = folder.Path,
+                    IsFolder = true,
+                    HasSubdirectories = hasSubdirectories,
+                    IncludeSubdirectories = hasSubdirectories
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing folder '{folder.Path}': {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task ProcessDroppedFoldersAsync(List<InputListItem> folders)
+        {
+            foreach (InputListItem folderItem in folders)
             {
                 ViewModel.InputListItems.Add(folderItem);
                 await ViewModel.ProcessFolderAsync(folderItem);
             }
+        }
 
-            // Process files with IsBusy wrapper for consistent UX
-            if (filesToAdd.Count > 0)
+        private void ProcessDroppedFiles(List<InputListItem> files)
+        {
+            if (files.Count == 0)
             {
-                ViewModel.IsBusy = true;
+                return;
+            }
 
-                try
+            ViewModel.IsBusy = true;
+
+            try
+            {
+                foreach (InputListItem fileItem in files)
                 {
-                    foreach (InputListItem fileItem in filesToAdd)
-                    {
-                        ViewModel.InputListItems.Add(fileItem);
-                        ViewModel.AddFile(fileItem.Path, fileItem.Path);
-                    }
-                }
-                finally
-                {
-                    ViewModel.IsBusy = false;
+                    ViewModel.InputListItems.Add(fileItem);
+                    ViewModel.AddFile(fileItem.Path, fileItem.Path);
                 }
             }
+            finally
+            {
+                ViewModel.IsBusy = false;
+            }
         }
+
+        #endregion Item Loading
     }
 }

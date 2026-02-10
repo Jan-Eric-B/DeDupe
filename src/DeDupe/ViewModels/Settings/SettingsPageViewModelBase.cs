@@ -1,4 +1,4 @@
-﻿namespace DeDupe.ViewModels
+﻿namespace DeDupe.ViewModels.Settings
 {
     public abstract class SettingsPageViewModelBase : ViewModelBase
     {

@@ -6,7 +6,7 @@ namespace DeDupe.Views.Settings
 {
     public sealed partial class GeneralSettingsPage : Page
     {
-        public GeneralSettingsViewModel ViewModel { get; }
+        private GeneralSettingsViewModel ViewModel { get; }
 
         public GeneralSettingsPage()
         {
@@ -14,6 +14,8 @@ namespace DeDupe.Views.Settings
             ViewModel = App.Current.GetService<GeneralSettingsViewModel>();
             DataContext = ViewModel;
         }
+
+        #region Navigation
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -26,5 +28,7 @@ namespace DeDupe.Views.Settings
             base.OnNavigatedFrom(e);
             ViewModel.OnNavigatedFrom();
         }
+
+        #endregion Navigation
     }
 }

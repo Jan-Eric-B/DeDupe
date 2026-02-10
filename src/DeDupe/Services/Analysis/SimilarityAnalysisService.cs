@@ -135,13 +135,13 @@ namespace DeDupe.Services.Analysis
             int count = items.Count;
 
             // Initialize each item as its own cluster
-            List<List<int>> clusters = [];
+            List<List<int>> groups = [];
             for (int i = 0; i < count; i++)
             {
-                clusters.Add([i]);
+                groups.Add([i]);
             }
 
-            // Track active clusters
+            // Track active groups
             bool[] activeClusters = new bool[count];
             Array.Fill(activeClusters, true);
 
@@ -156,26 +156,26 @@ namespace DeDupe.Services.Analysis
                 double maxSimilarity = -1.0;
                 int clusterI = -1, clusterJ = -1;
 
-                for (int i = 0; i < clusters.Count; i++)
+                for (int i = 0; i < groups.Count; i++)
                 {
                     if (!activeClusters[i])
                     {
                         continue;
                     }
 
-                    for (int j = i + 1; j < clusters.Count; j++)
+                    for (int j = i + 1; j < groups.Count; j++)
                     {
                         if (!activeClusters[j])
                         {
                             continue;
                         }
 
-                        if (WouldViolateSourceConstraint(clusters[i], clusters[j], items))
+                        if (WouldViolateSourceConstraint(groups[i], groups[j], items))
                         {
                             continue;
                         }
 
-                        double similarity = CalculateClusterSimilarity(clusters[i], clusters[j], similarityMatrix);
+                        double similarity = CalculateClusterSimilarity(groups[i], groups[j], similarityMatrix);
 
                         if (similarity > maxSimilarity)
                         {
@@ -193,7 +193,7 @@ namespace DeDupe.Services.Analysis
                 }
 
                 // Merge clusters
-                clusters[clusterI].AddRange(clusters[clusterJ]);
+                groups[clusterI].AddRange(groups[clusterJ]);
                 activeClusters[clusterJ] = false;
 
                 mergeOperations++;
@@ -209,14 +209,14 @@ namespace DeDupe.Services.Analysis
             int clusterId = 0;
             int duplicateGroupNumber = 1;
 
-            for (int i = 0; i < clusters.Count; i++)
+            for (int i = 0; i < groups.Count; i++)
             {
                 if (!activeClusters[i])
                 {
                     continue;
                 }
 
-                List<AnalysisItem> clusterItems = [.. clusters[i].Select(idx => items[idx])];
+                List<AnalysisItem> clusterItems = [.. groups[i].Select(idx => items[idx])];
 
                 string? groupName = clusterItems.Count > 1 ? $"Group {duplicateGroupNumber++}" : null;
 
@@ -230,13 +230,13 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Check if merging two clusters would put items from the same source together.
         /// </summary>
-        private static bool WouldViolateSourceConstraint(List<int> clusterA, List<int> clusterB, List<AnalysisItem> items)
+        private static bool WouldViolateSourceConstraint(List<int> groupA, List<int> groupB, List<AnalysisItem> items)
         {
-            // Get all source IDs in cluster A
-            HashSet<Guid> sourceIdsA = [.. clusterA.Select(idx => items[idx].SourceId)];
+            // Get all source IDs in group A
+            HashSet<Guid> sourceIdsA = [.. groupA.Select(idx => items[idx].SourceId)];
 
-            // Check if any item in cluster B shares a source with cluster A
-            foreach (int idx in clusterB)
+            // Check if any item in group B shares a source with group A
+            foreach (int idx in groupB)
             {
                 if (sourceIdsA.Contains(items[idx].SourceId))
                 {
@@ -250,14 +250,14 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Calculate similarity between two clusters using average linkage.
         /// </summary>
-        private static double CalculateClusterSimilarity(List<int> clusterA, List<int> clusterB, double[,] similarityMatrix)
+        private static double CalculateClusterSimilarity(List<int> groupA, List<int> groupB, double[,] similarityMatrix)
         {
             double totalSimilarity = 0.0;
             int pairCount = 0;
 
-            foreach (int i in clusterA)
+            foreach (int i in groupA)
             {
-                foreach (int j in clusterB)
+                foreach (int j in groupB)
                 {
                     totalSimilarity += similarityMatrix[i, j];
                     pairCount++;
@@ -270,33 +270,33 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Calculate average similarity within each cluster.
         /// </summary>
-        private void CalculateClusterStatistics(List<SimilarityGroup> clusters)
+        private void CalculateClusterStatistics(List<SimilarityGroup> groups)
         {
-            foreach (SimilarityGroup cluster in clusters)
+            foreach (SimilarityGroup group in groups)
             {
-                if (cluster.Count <= 1)
+                if (group.Count <= 1)
                 {
-                    cluster.AverageSimilarity = 1.0; // Single image clusters
+                    group.AverageSimilarity = 1.0; // Single image clusters
                     continue;
                 }
 
                 double totalSimilarity = 0.0;
                 int pairCount = 0;
 
-                for (int i = 0; i < cluster.Items.Count; i++)
+                for (int i = 0; i < group.Items.Count; i++)
                 {
-                    for (int j = i + 1; j < cluster.Items.Count; j++)
+                    for (int j = i + 1; j < group.Items.Count; j++)
                     {
                         // Find indices of images in original similarity matrix
                         // TODO - Maintain index mappings
-                        double similarity = CalculateCosineSimilarity(cluster.Items[i].FeatureVector!, cluster.Items[j].FeatureVector!);
+                        double similarity = CalculateCosineSimilarity(group.Items[i].FeatureVector!, group.Items[j].FeatureVector!);
 
                         totalSimilarity += similarity;
                         pairCount++;
                     }
                 }
 
-                cluster.AverageSimilarity = pairCount > 0 ? totalSimilarity / pairCount : 1.0;
+                group.AverageSimilarity = pairCount > 0 ? totalSimilarity / pairCount : 1.0;
             }
         }
     }

@@ -15,17 +15,17 @@ namespace DeDupe.Views
     {
         private SettingsWindowViewModel ViewModel { get; }
 
-        private readonly WindowsSizeService _windowsSizeService;
+        private readonly WindowSizeService _windowsSizeService;
         private readonly IThemeService _themeService;
 
         public SettingsWindow()
         {
             InitializeComponent();
 
-            // Set minimum window size
-            nint hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowsSizeService(hwnd, 1000, 700);
-            SetWindowSize(hwnd, 1000, 700);
+            // Set window size and minimum size
+            nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            _windowsSizeService = new WindowSizeService(hWnd, 1000, 700);
+            SetWindowSize(hWnd, 1000, 700);
 
             // Theme
             _themeService = App.Current.GetService<IThemeService>();
@@ -33,8 +33,10 @@ namespace DeDupe.Views
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(spTitle);
 
-            this.Closed += OnWindowClosed;
+            // Cleanup on close
+            Closed += OnWindowClosed;
 
+            // ViewModel
             ViewModel = App.Current.GetService<SettingsWindowViewModel>();
             grdRoot.DataContext = ViewModel;
 
@@ -67,19 +69,19 @@ namespace DeDupe.Views
             }
         }
 
-        private static void SetWindowSize(nint hwnd, int width, int height)
+        private static void SetWindowSize(IntPtr hWnd, int width, int height)
         {
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
 
-            // DPI scaling
-            uint dpi = GetDpiForWindow(hwnd);
+            // DPI scaling adjustment
+            uint dpi = GetDpiForWindow(hWnd);
             float scalingFactor = dpi / 96f;
 
             appWindow.Resize(new Windows.Graphics.SizeInt32((int)(width * scalingFactor), (int)(height * scalingFactor)));
         }
 
         [DllImport("user32.dll")]
-        private static extern uint GetDpiForWindow(nint hwnd);
+        private static extern uint GetDpiForWindow(nint hWnd);
     }
 }

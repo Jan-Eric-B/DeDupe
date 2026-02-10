@@ -14,12 +14,14 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Memory;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace DeDupe
 {
     public partial class App : Application
     {
         public new static App Current => (App)Application.Current;
+
         public static Window? Window { get; private set; }
 
         private readonly IServiceProvider _serviceProvider;
@@ -48,67 +50,71 @@ namespace DeDupe
 
             _serviceProvider = _host.Services;
 
-            // Configure ImageSharp with user's parallelism setting
+            // Configure ImageSharp memory pool and concurrent operations.
             ISettingsService settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
             ConfigureImageSharp(settingsService.ParallelProcessingCores);
 
-            // Update ImageSharp if user changes the setting at runtime
+            // Update ImageSharp if user changes setting at runtime
             settingsService.ParallelProcessingCoresChanged += (_, cores) =>
             {
                 Configuration.Default.MaxDegreeOfParallelism = cores;
                 Debug.WriteLine($"ImageSharp parallelism updated to {cores}");
             };
 
-            this.UnhandledException += App_UnhandledException;
+            UnhandledException += App_UnhandledException;
 
 #if DEBUG
-            this.DebugSettings.BindingFailed += DebugSettings_BindingFailed;
+            DebugSettings.BindingFailed += DebugSettings_BindingFailed;
 #endif
         }
 
         private static void ConfigureServices(HostBuilderContext context, IServiceCollection services)
         {
-            // Settings & Theme
-            services.AddSingleton<ISettingsService, SettingsService>();
-            services.AddSingleton<IThemeService, ThemeService>();
+            // ViewModels
 
-            // MainWindowViewModel
+            // Windows
             services.AddSingleton<MainWindowViewModel>();
-
-            // SettingsWindowViewModel
             services.AddSingleton<SettingsWindowViewModel>();
 
-            // App State
+            // Pages
+            services.AddSingleton<ConfigurationViewModel>();
+            services.AddSingleton<ManagementViewModel>();
+            services.AddSingleton<GeneralSettingsViewModel>();
+            services.AddSingleton<ImageProcessingSettingsViewModel>();
+            services.AddSingleton<ModelSettingsViewModel>();
+
+            // Services
+
+            services.AddSingleton<ISettingsService, SettingsService>();
+            services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IAppStateService, AppStateService>();
-            services.AddSingleton<IModelDownloadService, ModelDownloadService>();
-            services.AddSingleton<IBundledModelService, BundledModelService>();
 
             // Image Processing
             services.AddTransient<IBorderDetectionService, BorderDetectionService>();
             services.AddTransient<ImageProcessingService>();
 
-            // Page ViewModels
-            services.AddSingleton<ConfigurationViewModel>();
-            services.AddSingleton<ManagementViewModel>();
-
-            // Settings Page ViewModels
-            services.AddSingleton<GeneralSettingsViewModel>();
-            services.AddSingleton<ImageProcessingSettingsViewModel>();
-            services.AddSingleton<ModelSettingsViewModel>();
+            // Model Management
+            services.AddSingleton<IModelDownloadService, ModelDownloadService>();
+            services.AddSingleton<IBundledModelService, BundledModelService>();
 
             // Feature Extraction
             services.AddSingleton<IFeatureExtractionService, FeatureExtractionService>();
+
+            // Similarity Analysis
             services.AddSingleton<ISimilarityAnalysisService, SimilarityAnalysisService>();
 
+            // Auto Selection
             services.AddSingleton<IAutoSelectionService, AutoSelectionService>();
 
             // Logging
             services.AddLogging();
         }
 
-        /// <summary>
-        /// Configure ImageSharp memory pool and concurrent operations.
-        /// </summary>
+        public T GetService<T>() where T : class
+        {
+            return _serviceProvider.GetRequiredService<T>();
+        }
+
         private static void ConfigureImageSharp(int maxParallelism, int maxPoolSizeMegabytes = 128)
         {
             try
@@ -129,9 +135,17 @@ namespace DeDupe
             }
         }
 
-        public T GetService<T>() where T : class
+        protected override async void OnLaunched(LaunchActivatedEventArgs args)
         {
-            return _serviceProvider.GetRequiredService<T>();
+            await _host.StartAsync();
+
+            _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
+
+            IThemeService themeService = _serviceProvider.GetRequiredService<IThemeService>();
+            themeService.Initialize();
+
+            Window = new MainWindow();
+            Window.Activate();
         }
 
         public void OpenSettingsWindow()
@@ -145,37 +159,20 @@ namespace DeDupe
             _settingsWindow.Activate();
         }
 
-        protected override async void OnLaunched(LaunchActivatedEventArgs args)
-        {
-            await _host.StartAsync();
-
-            _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
-
-            // Initialize theme service
-            IThemeService themeService = _serviceProvider.GetRequiredService<IThemeService>();
-            themeService.Initialize();
-
-            Window = new MainWindow();
-            Window.Activate();
-        }
-
-        public void Shutdown()
+        public async void Shutdown()
         {
             // Close settings window
             _settingsWindow?.Close();
             _settingsWindow = null;
 
-            // Stop host and dispose resources
-            OnAppClosing();
+            // Stop host
+            await _host.StopAsync();
+
+            // Dispose
+            _host.Dispose();
 
             // Exit application
             Environment.Exit(0);
-        }
-
-        public async void OnAppClosing()
-        {
-            await _host.StopAsync();
-            _host.Dispose();
         }
 
         #region Exception Handling

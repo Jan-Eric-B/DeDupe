@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
@@ -17,24 +18,7 @@ namespace DeDupe.Views.Pages
 {
     public sealed partial class ManagementPage : Page
     {
-        #region Fields
-
-        private bool _isEditingGroupName;
-        private bool _isConfirmingRename;
-        private double _rightPanelWidthRatio = 0.4;
-        private bool _isPanelOpen = false;
-
-        private SimilarityGroup? _subscribedCluster;
-
-        #endregion Fields
-
-        #region Properties
-
-        public ManagementViewModel ViewModel { get; }
-
-        #endregion Properties
-
-        #region Constructor
+        private ManagementViewModel ViewModel { get; }
 
         public ManagementPage()
         {
@@ -46,43 +30,41 @@ namespace DeDupe.Views.Pages
             SplitViewGrid.SizeChanged += SplitViewGrid_SizeChanged;
         }
 
-        #endregion Constructor
+        private void BackToConfiguration_Click(object sender, RoutedEventArgs e)
+        {
+            MainWindowViewModel? mainViewModel = App.Current.GetService<MainWindowViewModel>();
+            mainViewModel?.BackToConfigurationCommand.Execute(null);
+        }
 
-        #region ViewModel Event Handlers
+        #region Group Selection & Panel Management
+
+        private double _rightPanelWidthRatio = 0.4;
+
+        private bool _isPanelOpen = false;
+
+        private SimilarityGroup? _subscribedGroup;
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ManagementViewModel.SelectedCluster))
+            if (e.PropertyName == nameof(ManagementViewModel.SelectedGroup))
             {
-                HandleClusterSelectionChanged();
+                HandleGroupSelectionChanged();
             }
         }
 
-        #endregion ViewModel Event Handlers
-
-        #region Panel Management
-
-        private void SplitViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (_isPanelOpen && e.NewSize.Width > 0)
-            {
-                UpdateRightPanelWidth();
-            }
-        }
-
-        private void HandleClusterSelectionChanged()
+        private void HandleGroupSelectionChanged()
         {
             ExitEditMode(false);
 
-            // Unsubscribe from cluster
-            UnsubscribeFromCluster();
+            // Unsubscribe from group
+            UnsubscribeFromGroup();
 
-            if (ViewModel.SelectedCluster != null)
+            if (ViewModel.SelectedGroup != null)
             {
-                // Subscribe to cluster events
-                SubscribeToCluster(ViewModel.SelectedCluster);
+                // Subscribe to group events
+                SubscribeToGroup(ViewModel.SelectedGroup);
 
-                SetupPanelForCluster();
+                SetupPanelForGroup();
 
                 UpdateSelection();
 
@@ -99,31 +81,58 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private void SubscribeToCluster(SimilarityGroup cluster)
+        private void SubscribeToGroup(SimilarityGroup group)
         {
-            _subscribedCluster = cluster;
-            cluster.PropertyChanged += OnClusterPropertyChanged;
+            _subscribedGroup = group;
+            group.PropertyChanged += OnGroupPropertyChanged;
         }
 
-        private void UnsubscribeFromCluster()
+        private void UnsubscribeFromGroup()
         {
-            if (_subscribedCluster != null)
+            if (_subscribedGroup != null)
             {
-                _subscribedCluster.PropertyChanged -= OnClusterPropertyChanged;
-                _subscribedCluster = null;
+                _subscribedGroup.PropertyChanged -= OnGroupPropertyChanged;
+                _subscribedGroup = null;
             }
         }
 
-        private void OnClusterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void CloseGroupContentPanel_Click(object sender, RoutedEventArgs e)
         {
-            // update UI when selection change
-            if (e.PropertyName is nameof(SimilarityGroup.IsSelected) or nameof(SimilarityGroup.SelectedCount) or nameof(SimilarityGroup.AllSelected) or nameof(SimilarityGroup.NoneSelected))
+            ExitEditMode(false);
+            ViewModel.SelectedGroup = null;
+        }
+
+        private void UpdateRightPanelWidth()
+        {
+            if (!_isPanelOpen || SplitViewGrid.ActualWidth <= 0)
             {
-                DispatcherQueue.TryEnqueue(UpdateSelection);
+                return;
+            }
+
+            double totalWidth = SplitViewGrid.ActualWidth;
+            double rightPanelWidth = totalWidth * _rightPanelWidthRatio;
+
+            double minWidth = 300;
+            double maxWidth = totalWidth * 0.7;
+            rightPanelWidth = Math.Clamp(rightPanelWidth, minWidth, maxWidth);
+
+            SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(rightPanelWidth, GridUnitType.Pixel);
+        }
+
+        private void SavePanelWidthRatio()
+        {
+            if (_isPanelOpen && SplitViewGrid.ActualWidth > 0)
+            {
+                double currentRightWidth = SplitViewGrid.ColumnDefinitions[2].ActualWidth;
+                if (currentRightWidth > 0)
+                {
+                    _rightPanelWidthRatio = currentRightWidth / SplitViewGrid.ActualWidth;
+                    _rightPanelWidthRatio = System.Math.Clamp(_rightPanelWidthRatio, 0.2, 0.7);
+                }
             }
         }
 
-        private void SetupPanelForCluster()
+        private void SetupPanelForGroup()
         {
             double totalWidth = SplitViewGrid.ActualWidth;
 
@@ -143,7 +152,7 @@ namespace DeDupe.Views.Pages
                 maxWidth = minWidth;
             }
 
-            rightPanelWidth = System.Math.Clamp(rightPanelWidth, minWidth, maxWidth);
+            rightPanelWidth = Math.Clamp(rightPanelWidth, minWidth, maxWidth);
 
             if (!_isPanelOpen)
             {
@@ -152,19 +161,6 @@ namespace DeDupe.Views.Pages
                 SplitViewGrid.ColumnDefinitions[2].MinWidth = minWidth;
 
                 _isPanelOpen = true;
-            }
-        }
-
-        private void SavePanelWidthRatio()
-        {
-            if (_isPanelOpen && SplitViewGrid.ActualWidth > 0)
-            {
-                double currentRightWidth = SplitViewGrid.ColumnDefinitions[2].ActualWidth;
-                if (currentRightWidth > 0)
-                {
-                    _rightPanelWidthRatio = currentRightWidth / SplitViewGrid.ActualWidth;
-                    _rightPanelWidthRatio = System.Math.Clamp(_rightPanelWidthRatio, 0.2, 0.7);
-                }
             }
         }
 
@@ -177,88 +173,17 @@ namespace DeDupe.Views.Pages
             _isPanelOpen = false;
         }
 
-        private void UpdateRightPanelWidth()
+        private void SplitViewGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (!_isPanelOpen || SplitViewGrid.ActualWidth <= 0)
+            if (_isPanelOpen && e.NewSize.Width > 0)
             {
-                return;
-            }
-
-            double totalWidth = SplitViewGrid.ActualWidth;
-            double rightPanelWidth = totalWidth * _rightPanelWidthRatio;
-
-            double minWidth = 300;
-            double maxWidth = totalWidth * 0.7;
-            rightPanelWidth = System.Math.Clamp(rightPanelWidth, minWidth, maxWidth);
-
-            SplitViewGrid.ColumnDefinitions[2].Width = new GridLength(rightPanelWidth, GridUnitType.Pixel);
-        }
-
-        private void BackToConfiguration_Click(object sender, RoutedEventArgs e)
-        {
-            MainWindowViewModel? mainViewModel = App.Current.GetService<MainWindowViewModel>();
-            mainViewModel?.BackToConfigurationCommand.Execute(null);
-        }
-
-        private void CloseGroupContentPanel_Click(object sender, RoutedEventArgs e)
-        {
-            ExitEditMode(false);
-            ViewModel.SelectedCluster = null;
-        }
-
-        #endregion Panel Management
-
-        #region Selection Handling
-
-        /// <summary>
-        /// Update SelectAllCheckBox and SelectionCountText to match current cluster's state.
-        /// </summary>
-        private void UpdateSelection()
-        {
-            if (ViewModel.SelectedCluster == null)
-            {
-                return;
-            }
-
-            SimilarityGroup cluster = ViewModel.SelectedCluster;
-
-            // Update checkbox state to match cluster's IsSelected
-            SelectAllCheckBox.IsChecked = cluster.IsSelected;
-
-            SelectionCountText.Text = $"{cluster.SelectedCount} of {cluster.Count} selected";
-        }
-
-        /// <summary>
-        /// Handle user clicking SelectAll checkbox.
-        /// </summary>
-        private void SelectAllGroupCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (ViewModel.SelectedCluster == null)
-            {
-                return;
-            }
-
-            if (ViewModel.SelectedCluster.AllSelected)
-            {
-                ViewModel.SelectedCluster.DeselectAll();
-            }
-            else
-            {
-                ViewModel.SelectedCluster.SelectAll();
+                UpdateRightPanelWidth();
             }
         }
 
-        /// <summary>
-        /// Handle user clicking SelectAll checkbox.
-        /// </summary>
-        private void SelectAllCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNone);
-        }
+        #endregion Group Selection & Panel Management
 
-        #endregion Selection Handling
-
-        #region Sort Handlers
+        #region Sorting
 
         private void SortBy_Similarity(object sender, RoutedEventArgs e)
         {
@@ -275,7 +200,57 @@ namespace DeDupe.Views.Pages
             ViewModel.SortGroups(GroupSortingOption.Name);
         }
 
-        #endregion Sort Handlers
+        #endregion Sorting
+
+        #region Selection
+
+        private void OnGroupPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // Update UI on selection change
+            if (e.PropertyName is nameof(SimilarityGroup.IsSelected) or nameof(SimilarityGroup.SelectedCount) or nameof(SimilarityGroup.AllSelected) or nameof(SimilarityGroup.NoneSelected))
+            {
+                DispatcherQueue.TryEnqueue(UpdateSelection);
+            }
+        }
+
+        private void UpdateSelection()
+        {
+            if (ViewModel.SelectedGroup == null)
+            {
+                return;
+            }
+
+            SimilarityGroup group = ViewModel.SelectedGroup;
+
+            // Update checkbox state to match group's IsSelected
+            SelectAllCheckBox.IsChecked = group.IsSelected;
+
+            SelectionCountText.Text = $"{group.SelectedCount} of {group.Count} selected";
+        }
+
+        private void SelectAllGroupCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel.SelectedGroup == null)
+            {
+                return;
+            }
+
+            if (ViewModel.SelectedGroup.AllSelected)
+            {
+                ViewModel.SelectedGroup.DeselectAll();
+            }
+            else
+            {
+                ViewModel.SelectedGroup.SelectAll();
+            }
+        }
+
+        private void SelectAllCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNone);
+        }
+
+        #endregion Selection
 
         #region Auto Selection - Current Group
 
@@ -309,7 +284,7 @@ namespace DeDupe.Views.Pages
             ViewModel.ApplyStrategyToCurrentGroupCommand.Execute(SelectionStrategy.KeepSmallestFileSize);
         }
 
-        private void ClearGroupSelection_Click(object sender, RoutedEventArgs e)
+        private void ClearGroupSelection_Click(object _, RoutedEventArgs __)
         {
             ViewModel.ClearCurrentGroupSelectionCommand.Execute(null);
         }
@@ -353,40 +328,184 @@ namespace DeDupe.Views.Pages
             ViewModel.ClearAllSelectionsCommand.Execute(null);
         }
 
-        private void SelectAllSelections_Click(object sender, RoutedEventArgs e)
-        {
-            ViewModel.ClearAllSelectionsCommand.Execute(null);
-        }
-
         #endregion Auto Selection - All Groups
 
-        #region Delete Functionality
+        #region File Operations
 
-        private async void DeleteSelectedFiles_Click(object sender, RoutedEventArgs e)
+        private static async Task<string?> PickFolderAsync(string title)
+        {
+            FolderPicker folderPicker = new()
+            {
+                ViewMode = PickerViewMode.List,
+                SuggestedStartLocation = PickerLocationId.PicturesLibrary,
+                CommitButtonText = title,
+            };
+
+            // Initialize folder picker
+            folderPicker.FileTypeFilter.Add("*");
+            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(folderPicker, windowHandle);
+
+            StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
+            return folder?.Path;
+        }
+
+        private async Task<bool> ShowMoveConfirmationAsync(string operation, string destination, int fileCount, int groupCount, bool isGrouped)
+        {
+            string groupInfo = isGrouped ? $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group." : "";
+
+            string message = $"{operation} {fileCount} file{(fileCount == 1 ? "" : "s")} to:\n{destination}{groupInfo}";
+
+            ContentDialog confirmDialog = new()
+            {
+                Title = $"Confirm {operation}",
+                Content = message,
+                PrimaryButtonText = operation,
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = XamlRoot
+            };
+
+            ContentDialogResult result = await confirmDialog.ShowAsync();
+            return result == ContentDialogResult.Primary;
+        }
+
+        private async Task ShowOperationResultAsync(string operation, FileOperationResult result)
+        {
+            if (result.HasFailures)
+            {
+                string message = $"Completed with some issues:\n\n" +
+                                $"✓ {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")} {operation.ToLower()}d successfully\n" +
+                                $"✗ {result.FailedCount} file{(result.FailedCount == 1 ? "" : "s")} failed";
+
+                ContentDialog resultDialog = new()
+                {
+                    Title = $"{operation} Completed",
+                    Content = message,
+                    CloseButtonText = "OK",
+                    XamlRoot = XamlRoot
+                };
+
+                await resultDialog.ShowAsync();
+            }
+        }
+
+        private async void MoveToSingleFolder_Click(object sender, RoutedEventArgs e)
         {
             int count = ViewModel.TotalSelectedCount;
-            if (count == 0)
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
             {
                 return;
             }
 
-            // Show confirmation dialog
-            ContentDialog confirmDialog = new()
+            // Pick destination folder
+            string? folderPath = await PickFolderAsync("Select destination folder");
+            if (string.IsNullOrEmpty(folderPath))
             {
-                Title = "Confirm Deletion",
-                Content = $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
-
-            ContentDialogResult result = await confirmDialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
-            {
-                await ViewModel.DeleteSelectedFilesCommand.ExecuteAsync(null);
+                return;
             }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, 0, isGrouped: false);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute move
+            FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
+
+            // Show result
+            await ShowOperationResultAsync("Move", result);
+        }
+
+        private async void MoveToGroupFolders_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            int groupCount = ViewModel.GroupsWithSelectionsCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick root folder
+            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, groupCount, isGrouped: true);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute move
+            FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
+
+            // Show result
+            await ShowOperationResultAsync("Move", result);
+        }
+
+        private async void CopyToSingleFolder_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick destination folder
+            string? folderPath = await PickFolderAsync("Select destination folder");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, 0, isGrouped: false);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute copy
+            FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
+
+            // Show result
+            await ShowOperationResultAsync("Copy", result);
+        }
+
+        private async void CopyToGroupFolders_Click(object sender, RoutedEventArgs e)
+        {
+            int count = ViewModel.TotalSelectedCount;
+            int groupCount = ViewModel.GroupsWithSelectionsCount;
+            if (count == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            // Pick root folder
+            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            // Show confirmation
+            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, groupCount, isGrouped: true);
+            if (!confirmed)
+            {
+                return;
+            }
+
+            // Execute copy
+            FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
+
+            // Show result
+            await ShowOperationResultAsync("Copy", result);
         }
 
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
@@ -422,221 +541,44 @@ namespace DeDupe.Views.Pages
 
             if (result == ContentDialogResult.Primary)
             {
-                // TODO: Implement permanent deletion
                 await ViewModel.DeletePermanentlyCommand.ExecuteAsync(null);
             }
         }
 
-        #endregion Delete Functionality
-
-        #region Move and Copy Functionality
-
-        /// <summary>
-        /// Show folder picker dialog and return selected folder path.
-        /// </summary>
-        /// <param name="title">Dialog title for context.</param>
-        /// <returns>Selected folder path, or null if cancelled.</returns>
-        private async System.Threading.Tasks.Task<string?> PickFolderAsync(string title)
+        private async void DeleteSelectedFiles_Click(object _, RoutedEventArgs __)
         {
-            FolderPicker folderPicker = new()
+            int count = ViewModel.TotalSelectedCount;
+            if (count == 0)
             {
-                ViewMode = PickerViewMode.List,
-                SuggestedStartLocation = PickerLocationId.PicturesLibrary,
-                CommitButtonText = "Select Folder"
-            };
+                return;
+            }
 
-            // FileTypeFilter is required even for folder pickers
-            folderPicker.FileTypeFilter.Add("*");
-
-            // Initialize with window handle
-            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
-            InitializeWithWindow.Initialize(folderPicker, windowHandle);
-
-            StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
-            return folder?.Path;
-        }
-
-        /// <summary>
-        /// Show confirmation dialog for move/copy operations.
-        /// </summary>
-        private async System.Threading.Tasks.Task<bool> ShowMoveConfirmationAsync(string operation, string destination, int fileCount, int groupCount, bool isGrouped)
-        {
-            string groupInfo = isGrouped
-                ? $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group."
-                : "";
-
-            string message = $"{operation} {fileCount} file{(fileCount == 1 ? "" : "s")} to:\n{destination}{groupInfo}";
-
+            // Show confirmation dialog
             ContentDialog confirmDialog = new()
             {
-                Title = $"Confirm {operation}",
-                Content = message,
-                PrimaryButtonText = operation,
+                Title = "Confirm Deletion",
+                Content = $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.",
+                PrimaryButtonText = "Delete",
                 CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Primary,
+                DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
 
             ContentDialogResult result = await confirmDialog.ShowAsync();
-            return result == ContentDialogResult.Primary;
-        }
 
-        /// <summary>
-        /// Show result dialog after operation.
-        /// </summary>
-        private async System.Threading.Tasks.Task ShowOperationResultAsync(string operation, FileOperationResult result)
-        {
-            if (result.HasFailures)
+            if (result == ContentDialogResult.Primary)
             {
-                string message = $"Completed with some issues:\n\n" +
-                                $"✓ {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")} {operation.ToLower()}d successfully\n" +
-                                $"✗ {result.FailedCount} file{(result.FailedCount == 1 ? "" : "s")} failed";
-
-                ContentDialog resultDialog = new()
-                {
-                    Title = $"{operation} Completed",
-                    Content = message,
-                    CloseButtonText = "OK",
-                    XamlRoot = this.XamlRoot
-                };
-
-                await resultDialog.ShowAsync();
+                await ViewModel.DeleteSelectedFilesCommand.ExecuteAsync(null);
             }
         }
 
-        /// <summary>
-        /// Move all selected files to a single folder.
-        /// </summary>
-        private async void MoveToSingleFolder_Click(object sender, RoutedEventArgs e)
-        {
-            int count = ViewModel.TotalSelectedCount;
-            if (count == 0 || !ViewModel.CanMoveOrCopy)
-            {
-                return;
-            }
+        #endregion File Operations
 
-            // Pick destination folder
-            string? folderPath = await PickFolderAsync("Select destination folder");
-            if (string.IsNullOrEmpty(folderPath))
-            {
-                return;
-            }
+        #region Group Renaming
 
-            // Show confirmation
-            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, 0, isGrouped: false);
-            if (!confirmed)
-            {
-                return;
-            }
+        private bool _isEditingGroupName;
 
-            // Execute move
-            FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
-
-            // Show result if there were failures
-            await ShowOperationResultAsync("Move", result);
-        }
-
-        /// <summary>
-        /// Move selected files into group-named subfolders.
-        /// </summary>
-        private async void MoveToGroupFolders_Click(object sender, RoutedEventArgs e)
-        {
-            int count = ViewModel.TotalSelectedCount;
-            int groupCount = ViewModel.GroupsWithSelectionsCount;
-            if (count == 0 || !ViewModel.CanMoveOrCopy)
-            {
-                return;
-            }
-
-            // Pick root folder
-            string? folderPath = await PickFolderAsync("Select root folder for group organization");
-            if (string.IsNullOrEmpty(folderPath))
-            {
-                return;
-            }
-
-            // Show confirmation
-            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, groupCount, isGrouped: true);
-            if (!confirmed)
-            {
-                return;
-            }
-
-            // Execute move
-            FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
-
-            // Show result if there were failures
-            await ShowOperationResultAsync("Move", result);
-        }
-
-        /// <summary>
-        /// Copy all selected files to a single folder.
-        /// </summary>
-        private async void CopyToSingleFolder_Click(object sender, RoutedEventArgs e)
-        {
-            int count = ViewModel.TotalSelectedCount;
-            if (count == 0 || !ViewModel.CanMoveOrCopy)
-            {
-                return;
-            }
-
-            // Pick destination folder
-            string? folderPath = await PickFolderAsync("Select destination folder");
-            if (string.IsNullOrEmpty(folderPath))
-            {
-                return;
-            }
-
-            // Show confirmation
-            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, 0, isGrouped: false);
-            if (!confirmed)
-            {
-                return;
-            }
-
-            // Execute copy
-            FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
-
-            // Show result if there were failures
-            await ShowOperationResultAsync("Copy", result);
-        }
-
-        /// <summary>
-        /// Copy selected files into group-named subfolders.
-        /// </summary>
-        private async void CopyToGroupFolders_Click(object sender, RoutedEventArgs e)
-        {
-            int count = ViewModel.TotalSelectedCount;
-            int groupCount = ViewModel.GroupsWithSelectionsCount;
-            if (count == 0 || !ViewModel.CanMoveOrCopy)
-            {
-                return;
-            }
-
-            // Pick root folder
-            string? folderPath = await PickFolderAsync("Select root folder for group organization");
-            if (string.IsNullOrEmpty(folderPath))
-            {
-                return;
-            }
-
-            // Show confirmation
-            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, groupCount, isGrouped: true);
-            if (!confirmed)
-            {
-                return;
-            }
-
-            // Execute copy
-            FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
-
-            // Show result if there were failures
-            await ShowOperationResultAsync("Copy", result);
-        }
-
-        #endregion Move and Copy Functionality
-
-        #region Group Name Editing
+        private bool _isConfirmingRename;
 
         private void GroupNameTextBlock_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
@@ -674,28 +616,30 @@ namespace DeDupe.Views.Pages
 
         private void GroupNameTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (_isEditingGroupName && !_isConfirmingRename)
+            if (!_isEditingGroupName || _isConfirmingRename)
             {
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    if (_isEditingGroupName && !_isConfirmingRename)
-                    {
-                        ExitEditMode(true);
-                    }
-                });
+                return;
             }
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (_isEditingGroupName && !_isConfirmingRename)
+                {
+                    ExitEditMode(true);
+                }
+            });
         }
 
         private void EnterEditMode()
         {
-            if (_isEditingGroupName || ViewModel.SelectedCluster == null)
+            if (_isEditingGroupName || ViewModel.SelectedGroup == null)
             {
                 return;
             }
 
             _isEditingGroupName = true;
 
-            GroupNameTextBox.Text = ViewModel.SelectedCluster.Name;
+            GroupNameTextBox.Text = ViewModel.SelectedGroup.Name;
 
             GroupNameDisplayPanel.Visibility = Visibility.Collapsed;
             GroupNameEditPanel.Visibility = Visibility.Visible;
@@ -713,20 +657,13 @@ namespace DeDupe.Views.Pages
 
             _isConfirmingRename = true;
 
-            if (save && ViewModel.SelectedCluster != null)
+            if (save && ViewModel.SelectedGroup != null)
             {
                 string newName = GroupNameTextBox.Text?.Trim() ?? string.Empty;
 
-                if (!string.IsNullOrWhiteSpace(newName) && newName != ViewModel.SelectedCluster.Name)
+                if (!string.IsNullOrWhiteSpace(newName) && newName != ViewModel.SelectedGroup.Name)
                 {
-                    if (FolderNameValidationService.Validate(newName))
-                    {
-                        ViewModel.SelectedCluster.Name = newName;
-                    }
-                    else
-                    {
-                        ViewModel.SelectedCluster.Name = FolderNameValidationService.Sanitize(newName);
-                    }
+                    ViewModel.SelectedGroup.Name = FolderNameValidationService.Validate(newName) ? newName : FolderNameValidationService.Sanitize(newName) ?? ViewModel.SelectedGroup.Name;
                 }
             }
 
@@ -737,6 +674,6 @@ namespace DeDupe.Views.Pages
             _isConfirmingRename = false;
         }
 
-        #endregion Group Name Editing
+        #endregion Group Renaming
     }
 }

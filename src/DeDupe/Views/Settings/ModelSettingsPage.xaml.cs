@@ -3,6 +3,7 @@ using DeDupe.Constants;
 using DeDupe.ViewModels.Settings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace DeDupe.Views.Settings
 {
     public sealed partial class ModelSettingsPage : Page
     {
-        public ModelSettingsViewModel ViewModel { get; }
+        private ModelSettingsViewModel ViewModel { get; }
 
         public ModelSettingsPage()
         {
@@ -22,6 +23,8 @@ namespace DeDupe.Views.Settings
             ViewModel = App.Current.GetService<ModelSettingsViewModel>();
             DataContext = ViewModel;
         }
+
+        #region Model Selection
 
         private void ModelSourceSegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -55,52 +58,41 @@ namespace DeDupe.Views.Settings
 
         private async void ModelFileDropGrid_Drop(object sender, DragEventArgs e)
         {
-            if (ViewModel.UseBundledModel)
+            if (ViewModel.UseBundledModel || !e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 return;
             }
 
-            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            try
             {
-                try
+                IReadOnlyList<IStorageItem>? items = await e.DataView.GetStorageItemsAsync();
+
+                if (items.Count == 0 || items[0] is not StorageFile file)
                 {
-                    IReadOnlyList<IStorageItem>? items = await e.DataView.GetStorageItemsAsync();
-
-                    if (items.Count > 0)
-                    {
-                        IStorageItem? item = items[0];
-
-                        if (item is StorageFile file)
-                        {
-                            string extension = file.FileType.ToLowerInvariant();
-
-                            if (SupportedFileExtensions.IsSupportedModelFile(extension))
-                            {
-                                ViewModel.CustomModelFilePath = file.Path;
-                            }
-                        }
-                    }
+                    return;
                 }
-                catch (Exception ex)
+
+                string extension = file.FileType.ToLowerInvariant();
+
+                if (SupportedFileExtensions.IsSupportedModelFile(extension))
                 {
-                    Debug.WriteLine($"Error handling file drop: {ex.Message}");
+                    ViewModel.CustomModelFilePath = file.Path;
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling file drop: {ex.Message}");
             }
         }
 
-        private void ModelFileTextBlock_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+        private void ModelFileTextBlock_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             ViewModel.OpenModelLocationCommand.Execute(null);
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            ViewModel.OnNavigatedTo();
+        #endregion Model Selection
 
-            // Sync UI with ViewModel state
-            SyncUIWithViewModel();
-        }
+        #region Navigation
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
@@ -108,9 +100,15 @@ namespace DeDupe.Views.Settings
             ViewModel.OnNavigatedFrom();
         }
 
-        private void SyncUIWithViewModel()
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            base.OnNavigatedTo(e);
+            ViewModel.OnNavigatedTo();
+
+            // Sync Segmented control with ViewModel's state
             ModelSourceSegmented.SelectedIndex = ViewModel.UseBundledModel ? 0 : 1;
         }
+
+        #endregion Navigation
     }
 }

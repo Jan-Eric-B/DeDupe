@@ -14,7 +14,7 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// All clusters (immutable).
         /// </summary>
-        public IReadOnlyList<SimilarityGroup> Clusters { get; }
+        public IReadOnlyList<SimilarityGroup> Groups { get; }
 
         /// <summary>
         /// Similarity threshold used for clustering.
@@ -34,22 +34,22 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// Total number of clusters.
         /// </summary>
-        public int TotalClusters => Clusters.Count;
+        public int TotalClusters => Groups.Count;
 
         /// <summary>
         /// Number of clusters with potential duplicates (more than 1 item).
         /// </summary>
-        public int DuplicateGroupsCount => Clusters.Count(c => c.IsDuplicateGroup);
+        public int DuplicateGroupsCount => Groups.Count(c => c.IsDuplicateGroup);
 
         /// <summary>
         /// Number of singleton clusters (items with no similar matches).
         /// </summary>
-        public int SingletonClustersCount => Clusters.Count(c => !c.IsDuplicateGroup);
+        public int SingletonGroupCount => Groups.Count(c => !c.IsDuplicateGroup);
 
         /// <summary>
         /// Total number of items in duplicate groups.
         /// </summary>
-        public int TotalDuplicateItems => Clusters.Where(c => c.IsDuplicateGroup).Sum(c => c.Count);
+        public int TotalDuplicateItems => Groups.Where(c => c.IsDuplicateGroup).Sum(c => c.Count);
 
         /// <summary>
         /// Clusters that contain potential duplicates, ordered by similarity.
@@ -80,7 +80,7 @@ namespace DeDupe.Models.Analysis
 
             // Create immutable copies
             List<SimilarityGroup> clusterList = [.. clusters];
-            Clusters = clusterList.AsReadOnly();
+            Groups = clusterList.AsReadOnly();
 
             DuplicateGroups = clusterList
                 .Where(c => c.IsDuplicateGroup)
@@ -98,7 +98,7 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         private SimilarityResult(double similarityThreshold)
         {
-            Clusters = [];
+            Groups = [];
             DuplicateGroups = [];
             SimilarityThreshold = similarityThreshold;
             TotalItemsAnalyzed = 0;
@@ -138,7 +138,7 @@ namespace DeDupe.Models.Analysis
 
             return $"Found {DuplicateGroupsCount} duplicate group{(DuplicateGroupsCount == 1 ? "" : "s")} " +
                    $"containing {TotalDuplicateItems} item{(TotalDuplicateItems == 1 ? "" : "s")}. " +
-                   $"{SingletonClustersCount} item{(SingletonClustersCount == 1 ? "" : "s")} unique.";
+                   $"{SingletonGroupCount} item{(SingletonGroupCount == 1 ? "" : "s")} unique.";
         }
 
         public override string ToString()

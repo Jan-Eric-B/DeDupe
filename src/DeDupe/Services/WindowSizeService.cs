@@ -4,19 +4,21 @@ using System.Runtime.InteropServices;
 namespace DeDupe.Services
 {
     /// <summary>
-    /// Service to set minimum window size using SetWindowSubclass API
+    /// Service to enforce minimum window size constraints.
     /// </summary>
-    public partial class WindowsSizeService : IDisposable
+    /// <remarks>
+    /// Automatically adjusts display DPI scaling and intercepts sizing messages.
+    /// </remarks>
+    public partial class WindowSizeService : IDisposable
     {
         // Windows message sent when the OS queries window size constraints
         private const int WM_GETMINMAXINFO = 0x0024;
 
         // Window handle - ID for window
-        private readonly IntPtr _hwnd;
+        private readonly IntPtr _hWnd;
 
         // Minimum pixel size (before DPI scaling)
         private readonly int _minWidth;
-
         private readonly int _minHeight;
 
         // ID for subclass
@@ -25,41 +27,34 @@ namespace DeDupe.Services
         // Delegate instance
         private readonly SUBCLASSPROC _subclassProcDelegate;
 
-        public WindowsSizeService(IntPtr hwnd, int minWidth, int minHeight, uint subclassId = 1)
+        public WindowSizeService(IntPtr hWnd, int minWidth, int minHeight, uint subclassId = 1)
         {
-            _hwnd = hwnd;
-            _hwnd = hwnd;
+            _hWnd = hWnd;
             _minWidth = minWidth;
             _minHeight = minHeight;
             _subclassId = subclassId;
             _subclassProcDelegate = SubclassProc;
 
             // Install subclass using API
-            if (!SetWindowSubclass(_hwnd, _subclassProcDelegate, _subclassId, IntPtr.Zero))
+            if (!SetWindowSubclass(_hWnd, _subclassProcDelegate, _subclassId, IntPtr.Zero))
             {
                 throw new InvalidOperationException("Failed to set window subclass");
             }
         }
 
-        /// <summary>
-        /// Callback invoked by Windows for every window message
-        /// </summary>
         private IntPtr SubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData)
         {
             // Only intercept message that queries size constraints
             if (uMsg == WM_GETMINMAXINFO)
             {
-                // Get current DPI for this window
-                // - 100% scaling = 96 DPI (Default)
-                // - 150% scaling = 144 DPI
-                // - 200% scaling = 192 DPI
+                // DPI scaling adjustment
                 uint dpi = GetDpiForWindow(hWnd);
                 float scalingFactor = dpi / 96f;
 
                 // Read MINMAXINFO structure from unmanaged memory
                 MinMaxInfo minMaxInfo = Marshal.PtrToStructure<MinMaxInfo>(lParam);
 
-                // Set minimum size with DPI to be consistent across different displays
+                // Set minimum size with DPI
                 minMaxInfo.ptMinTrackSize.x = (int)(_minWidth * scalingFactor);
                 minMaxInfo.ptMinTrackSize.y = (int)(_minHeight * scalingFactor);
 
@@ -76,19 +71,8 @@ namespace DeDupe.Services
 
         #region P/Invoke Declarations
 
-        /// <summary>
-        /// Delegate signature for subclass callback function - StdCall convention matches Windows API expectations -
-        /// Called by Windows for every message sent to window
-        /// </summary>
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate IntPtr SUBCLASSPROC(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct Point
-        {
-            public int x;
-            public int y;
-        }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct MinMaxInfo
@@ -98,6 +82,13 @@ namespace DeDupe.Services
             public Point ptMaxPosition;     // Position of maximized window
             public Point ptMinTrackSize;    // Min size
             public Point ptMaxTrackSize;    // Max size
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Point
+        {
+            public int x;
+            public int y;
         }
 
         /// <summary>
@@ -121,7 +112,7 @@ namespace DeDupe.Services
 
         #endregion P/Invoke Declarations
 
-        #region IDisposable
+        #region Cleanup
 
         private bool _disposed;
 
@@ -129,12 +120,12 @@ namespace DeDupe.Services
         {
             if (!_disposed)
             {
-                RemoveWindowSubclass(_hwnd, _subclassProcDelegate, _subclassId);
+                RemoveWindowSubclass(_hWnd, _subclassProcDelegate, _subclassId);
                 _disposed = true;
             }
         }
 
-        ~WindowsSizeService()
+        ~WindowSizeService()
         {
             Dispose(false);
         }
@@ -149,6 +140,6 @@ namespace DeDupe.Services
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool RemoveWindowSubclass(IntPtr hWnd, SUBCLASSPROC pfnSubclass, uint uIdSubclass);
 
-        #endregion IDisposable
+        #endregion Cleanup
     }
 }

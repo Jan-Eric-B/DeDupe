@@ -513,7 +513,7 @@ namespace DeDupe.Services.Analysis
 
         #endregion Feature Extraction
 
-        #region IDisposable
+        #region Cleanup
 
         private void DisposeResources()
         {
@@ -534,6 +534,6 @@ namespace DeDupe.Services.Analysis
             }
         }
 
-        #endregion IDisposable
+        #endregion Cleanup
     }
 }

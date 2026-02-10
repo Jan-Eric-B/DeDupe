@@ -6,7 +6,8 @@ namespace DeDupe.ViewModels
 {
     public partial class PageViewModelBase : ViewModelBase, IDisposable
     {
-        private bool _disposed = false;
+        private bool _disposed;
+        private readonly Action? _navigateToNextAction;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CanNavigateToNext))]
@@ -14,26 +15,25 @@ namespace DeDupe.ViewModels
         public partial bool IsComplete { get; set; }
 
         public virtual bool CanNavigateToNext => IsComplete;
+
         public RelayCommand NavigateToNextCommand { get; }
 
-        public PageViewModelBase()
+        public PageViewModelBase(Action? navigateToNextAction = null)
         {
+            _navigateToNextAction = navigateToNextAction;
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);
-
-            IsComplete = false;
         }
 
         #region Navigation
 
         protected virtual void NavigateToNext()
         {
-            MainWindowViewModel mainViewModel = App.Current.GetService<MainWindowViewModel>();
-            mainViewModel?.StartManagementModeCommand.Execute(null);
+            _navigateToNextAction?.Invoke();
         }
 
         #endregion Navigation
 
-        #region IDisposable
+        #region Cleanup
 
         public void Dispose()
         {
@@ -47,12 +47,11 @@ namespace DeDupe.ViewModels
             {
                 if (disposing)
                 {
-                    // TODO Fill this
                 }
                 _disposed = true;
             }
         }
 
-        #endregion IDisposable
+        #endregion Cleanup
     }
 }

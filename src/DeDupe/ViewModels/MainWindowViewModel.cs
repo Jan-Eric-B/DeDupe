@@ -6,22 +6,26 @@ namespace DeDupe.ViewModels
     public partial class MainWindowViewModel : ViewModelBase
     {
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsInConfigurationMode))]
         public partial bool IsInManagementMode { get; set; }
 
         public bool IsInConfigurationMode => !IsInManagementMode;
+
+        public MainWindowViewModel()
+        {
+            Title = "DeDupe";
+        }
 
         [RelayCommand]
         private void StartManagementMode()
         {
             IsInManagementMode = true;
-            OnPropertyChanged(nameof(IsInConfigurationMode));
         }
 
         [RelayCommand]
         private void BackToConfiguration()
         {
             IsInManagementMode = false;
-            OnPropertyChanged(nameof(IsInConfigurationMode));
         }
     }
 }

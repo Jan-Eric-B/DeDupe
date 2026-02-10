@@ -59,8 +59,8 @@ namespace DeDupe.Services
             };
 
             // Get AppWindow
-            nint hwnd = WindowNative.GetWindowHandle(window);
-            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            nint hWnd = WindowNative.GetWindowHandle(window);
+            WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
             AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
 
             // Get theme

@@ -14,7 +14,7 @@ namespace DeDupe
     {
         private MainWindowViewModel ViewModel { get; }
 
-        private readonly WindowsSizeService _windowsSizeService;
+        private readonly WindowSizeService _windowsSizeService;
         private readonly IThemeService _themeService;
 
         public MainWindow()
@@ -22,8 +22,8 @@ namespace DeDupe
             InitializeComponent();
 
             // Set minimum window size
-            nint hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowsSizeService(hwnd, 800, 600);
+            nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            _windowsSizeService = new WindowSizeService(hWnd, 800, 600);
 
             // Theme
             _themeService = App.Current.GetService<IThemeService>();
@@ -33,13 +33,14 @@ namespace DeDupe
             grdTitleBar.SizeChanged += (s, e) => SetRegionsForCustomTitleBar();
 
             // Cleanup on close
-            this.Closed += OnWindowClosed;
+            Closed += OnWindowClosed;
 
+            // ViewModel
             ViewModel = App.Current.GetService<MainWindowViewModel>();
             grdRoot.DataContext = ViewModel;
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-            // Navigate to ConfigurationPage initially
+            // Navigate to ConfigurationPage
             frMain.Navigate(typeof(ConfigurationPage));
         }
 
@@ -51,7 +52,7 @@ namespace DeDupe
             RightPaddingColumn.Width = new GridLength(AppWindow.TitleBar.RightInset / scaleAdjustment);
             LeftPaddingColumn.Width = new GridLength(AppWindow.TitleBar.LeftInset / scaleAdjustment);
 
-            // Make the button interactive
+            // Make button interactive
             GeneralTransform? transform = btnSettings.TransformToVisual(null);
             Rect bounds = transform.TransformBounds(new Rect(0, 0, btnSettings.ActualWidth, btnSettings.ActualHeight));
 
@@ -67,6 +68,7 @@ namespace DeDupe
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
         {
+            // Unregister and dispose
             _themeService.UnregisterWindow(this);
             _windowsSizeService?.Dispose();
 
