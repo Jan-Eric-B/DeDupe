@@ -70,7 +70,7 @@ namespace DeDupe.ViewModels.Pages
 
         public string ResultSummary => SimilarityResult?.GetSummary() ?? string.Empty;
 
-        public int TotalFileCount => _appStateService.SourceCount;
+        public int TotalFileCount => _appStateService.SourceMediaCount;
 
         public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
 

@@ -24,7 +24,7 @@ namespace DeDupe.ViewModels.Settings
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
         }
 
-        #region Theme
+        #region Appearance
 
         [ObservableProperty]
         public partial int SelectedThemeIndex { get; set; }
@@ -56,7 +56,7 @@ namespace DeDupe.ViewModels.Settings
             _settingsService.AccentColor = (AppAccentColor)value;
         }
 
-        #endregion Theme
+        #endregion Appearance
 
         #region Navigation
 

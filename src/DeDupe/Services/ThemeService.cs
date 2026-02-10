@@ -11,19 +11,13 @@ using WinRT.Interop;
 
 namespace DeDupe.Services
 {
+    /// <inheritdoc/>
     public class ThemeService(ISettingsService settingsService) : IThemeService
     {
-        #region Fields
-
         private readonly ISettingsService _settingsService = settingsService;
         private readonly Dictionary<Window, FrameworkElement> _registeredWindows = [];
 
-        private bool _isCustomAccentApplied = false;
-
-        #endregion Fields
-
-        #region Methods
-
+        /// <inheritdoc/>
         public void Initialize()
         {
             _settingsService.ThemeChanged += OnThemeChanged;
@@ -33,6 +27,7 @@ namespace DeDupe.Services
             ApplyAccentColor(_settingsService.AccentColor);
         }
 
+        /// <inheritdoc/>
         public void RegisterWindow(Window window, FrameworkElement rootElement)
         {
             if (!_registeredWindows.ContainsKey(window))
@@ -44,11 +39,15 @@ namespace DeDupe.Services
             }
         }
 
+        /// <inheritdoc/>
         public void UnregisterWindow(Window window)
         {
             _registeredWindows.Remove(window);
         }
 
+        #region Theme
+
+        /// <inheritdoc/>
         public void ApplyTheme(Window window, FrameworkElement element)
         {
             element.RequestedTheme = _settingsService.Theme switch
@@ -93,6 +92,19 @@ namespace DeDupe.Services
             }
         }
 
+        private void OnThemeChanged(object? sender, AppTheme theme)
+        {
+            foreach ((Window? window, FrameworkElement? rootElement) in _registeredWindows)
+            {
+                ApplyTheme(window, rootElement);
+            }
+        }
+
+        #endregion Theme
+
+        #region Backdrop
+
+        /// <inheritdoc/>
         public void ApplyBackdrop(Window window)
         {
             window.SystemBackdrop = _settingsService.Backdrop switch
@@ -105,6 +117,21 @@ namespace DeDupe.Services
             };
         }
 
+        private void OnBackdropChanged(object? sender, AppBackdrop backdrop)
+        {
+            foreach (Window window in _registeredWindows.Keys)
+            {
+                ApplyBackdrop(window);
+            }
+        }
+
+        #endregion Backdrop
+
+        #region Accent Color
+
+        private bool _isCustomAccentApplied = false;
+
+        /// <inheritdoc/>
         public void ApplyAccentColor(AppAccentColor accentColor)
         {
             ResourceDictionary resources = Application.Current.Resources;
@@ -135,6 +162,17 @@ namespace DeDupe.Services
             RefreshAllWindows();
         }
 
+        private void RefreshAllWindows()
+        {
+            foreach ((_, FrameworkElement? rootElement) in _registeredWindows)
+            {
+                // Force resource refresh
+                ElementTheme currentTheme = rootElement.RequestedTheme;
+                rootElement.RequestedTheme = currentTheme == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
+                rootElement.RequestedTheme = currentTheme;
+            }
+        }
+
         private static void RemoveAccentColorOverrides(ResourceDictionary resources)
         {
             string[] accentKeys =
@@ -157,38 +195,11 @@ namespace DeDupe.Services
             }
         }
 
-        private void RefreshAllWindows()
-        {
-            foreach ((_, FrameworkElement? rootElement) in _registeredWindows)
-            {
-                // Force resource refresh
-                ElementTheme currentTheme = rootElement.RequestedTheme;
-                rootElement.RequestedTheme = currentTheme == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
-                rootElement.RequestedTheme = currentTheme;
-            }
-        }
-
-        private void OnThemeChanged(object? sender, AppTheme theme)
-        {
-            foreach ((Window? window, FrameworkElement? rootElement) in _registeredWindows)
-            {
-                ApplyTheme(window, rootElement);
-            }
-        }
-
-        private void OnBackdropChanged(object? sender, AppBackdrop backdrop)
-        {
-            foreach (Window window in _registeredWindows.Keys)
-            {
-                ApplyBackdrop(window);
-            }
-        }
-
         private void OnAccentColorChanged(object? sender, AppAccentColor accentColor)
         {
             ApplyAccentColor(accentColor);
         }
 
-        #endregion Methods
+        #endregion Accent Color
     }
 }

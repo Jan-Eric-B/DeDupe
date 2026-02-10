@@ -10,16 +10,14 @@ using Windows.Storage;
 
 namespace DeDupe.Services.Model
 {
-    /// <summary>
-    /// Progress info for model downloads.
-    /// </summary>
+    /// <inheritdoc/>
     public record ModelDownloadProgress(double Percentage, long BytesDownloaded, long TotalBytes, string StatusText);
 
     public class ModelDownloadService : IModelDownloadService
     {
-        private const int MaxRetries = 3;
+        private readonly int _maxRetries = _retryDelays.Length;
 
-        private static readonly TimeSpan[] RetryDelays =
+        private static readonly TimeSpan[] _retryDelays =
         [
             TimeSpan.FromSeconds(2),
             TimeSpan.FromSeconds(5),
@@ -39,69 +37,23 @@ namespace DeDupe.Services.Model
 
         public ModelDownloadService()
         {
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             _cacheDirectory = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Models");
         }
 
+        /// <inheritdoc/>
         public string? GetLocalModelPath(BundledModelInfo model)
         {
             string cachedPath = Path.Combine(_cacheDirectory, model.FileName);
             return File.Exists(cachedPath) ? cachedPath : null;
         }
 
+        /// <inheritdoc/>
         public bool IsModelAvailable(BundledModelInfo model)
         {
             return GetLocalModelPath(model) != null;
         }
 
-        public async Task<string> EnsureModelAvailableAsync(BundledModelInfo model, IProgress<ModelDownloadProgress>? progress = null, CancellationToken cancellationToken = default)
-        {
-            string? existingPath = GetLocalModelPath(model);
-            if (existingPath != null)
-            {
-                return existingPath;
-            }
-
-            if (model.DownloadUrl is null)
-            {
-                throw new InvalidOperationException($"Model '{model.DisplayName}' has no download URL and is not cached locally.");
-            }
-
-            Exception? lastException = null;
-
-            for (int attempt = 0; attempt <= MaxRetries; attempt++)
-            {
-                try
-                {
-                    if (attempt > 0)
-                    {
-                        TimeSpan delay = RetryDelays[Math.Min(attempt - 1, RetryDelays.Length - 1)];
-
-                        progress?.Report(new ModelDownloadProgress(0, 0, model.ExpectedFileSize, $"Retry {attempt}/{MaxRetries} — waiting {delay.TotalSeconds:F0}s..."));
-
-                        await Task.Delay(delay, cancellationToken);
-                    }
-
-                    await DownloadModelAsync(model, progress, cancellationToken);
-
-                    string downloadedPath = GetLocalModelPath(model) ?? throw new InvalidOperationException($"Model '{model.DisplayName}' was not found after download.");
-
-                    return downloadedPath;
-                }
-                catch (OperationCanceledException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    Debug.WriteLine($"Download attempt {attempt + 1}/{MaxRetries + 1} failed for '{model.DisplayName}': {ex.Message}");
-                }
-            }
-
-            throw new InvalidOperationException($"Failed to download '{model.DisplayName}' after {MaxRetries + 1} attempts.", lastException);
-        }
-
+        /// <inheritdoc/>
         public async Task DownloadModelAsync(BundledModelInfo model, IProgress<ModelDownloadProgress>? progress = null, CancellationToken cancellationToken = default)
         {
             if (model.DownloadUrl is null)
@@ -116,6 +68,7 @@ namespace DeDupe.Services.Model
 
             try
             {
+                // Stream response instead of buffering it memory
                 using HttpResponseMessage response = await _httpClient.GetAsync(model.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 response.EnsureSuccessStatusCode();
@@ -148,11 +101,13 @@ namespace DeDupe.Services.Model
                 await fileStream.FlushAsync(cancellationToken);
                 fileStream.Close();
 
+                // Remove stale target before moving.
                 if (File.Exists(targetPath))
                 {
                     File.Delete(targetPath);
                 }
 
+                // Verify integrity
                 if (model.ExpectedSha256 is not null)
                 {
                     string actualHash = await ComputeSha256Async(tempPath, cancellationToken);
@@ -173,22 +128,24 @@ namespace DeDupe.Services.Model
             {
                 Debug.WriteLine($"Error downloading model '{model.DisplayName}': {ex}");
 
-                // Clean up partial download
                 if (File.Exists(tempPath))
                 {
                     try
                     {
                         File.Delete(tempPath);
                     }
-                    catch (Exception exTwo)
+                    catch (Exception cleanupEx)
                     {
-                        Debug.WriteLine($"Error deleting model '{model.DisplayName}': {exTwo}");
+                        Debug.WriteLine($"Error deleting model '{model.DisplayName}': {cleanupEx}");
                     }
                 }
                 throw;
             }
         }
 
+        /// <summary>
+        /// Computes SHA-256 incrementally.
+        /// </summary>
         private static async Task<string> ComputeSha256Async(string filePath, CancellationToken ct)
         {
             using SHA256? sha256 = SHA256.Create();
@@ -205,6 +162,56 @@ namespace DeDupe.Services.Model
             return Convert.ToHexString(sha256.Hash!).ToLowerInvariant();
         }
 
+        /// <inheritdoc/>
+        public async Task<string> EnsureModelAvailableAsync(BundledModelInfo model, IProgress<ModelDownloadProgress>? progress = null, CancellationToken cancellationToken = default)
+        {
+            string? existingPath = GetLocalModelPath(model);
+            if (existingPath != null)
+            {
+                return existingPath;
+            }
+
+            if (model.DownloadUrl is null)
+            {
+                throw new InvalidOperationException($"Model '{model.DisplayName}' has no download URL and is not cached locally.");
+            }
+
+            Exception? lastException = null;
+
+            for (int attempt = 0; attempt <= _maxRetries; attempt++)
+            {
+                try
+                {
+                    if (attempt > 0)
+                    {
+                        TimeSpan delay = _retryDelays[Math.Min(attempt - 1, _retryDelays.Length - 1)];
+
+                        progress?.Report(new ModelDownloadProgress(0, 0, model.ExpectedFileSize, $"Retry {attempt}/{_maxRetries} — waiting {delay.TotalSeconds:F0}s..."));
+
+                        await Task.Delay(delay, cancellationToken);
+                    }
+
+                    await DownloadModelAsync(model, progress, cancellationToken);
+
+                    string downloadedPath = GetLocalModelPath(model) ?? throw new InvalidOperationException($"Model '{model.DisplayName}' was not found after download.");
+
+                    return downloadedPath;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    Debug.WriteLine($"Download attempt {attempt + 1}/{_maxRetries + 1} failed for '{model.DisplayName}': {ex.Message}");
+                }
+            }
+
+            throw new InvalidOperationException($"Failed to download '{model.DisplayName}' after {_maxRetries + 1} attempts.", lastException);
+        }
+
+        /// <inheritdoc/>
         public bool DeleteCachedModel(BundledModelInfo model)
         {
             string cachedPath = Path.Combine(_cacheDirectory, model.FileName);

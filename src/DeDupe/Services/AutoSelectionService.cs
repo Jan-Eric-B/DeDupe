@@ -5,11 +5,10 @@ using System.Linq;
 
 namespace DeDupe.Services
 {
-    /// <summary>
-    /// Implementation of auto selection service.
-    /// </summary>
+    /// <inheritdoc/>
     public class AutoSelectionService : IAutoSelectionService
     {
+        /// <inheritdoc/>
         public void ApplyStrategy(SimilarityGroup group, SelectionStrategy strategy)
         {
             if (group == null || group.SelectableItems.Count == 0)
@@ -65,8 +64,6 @@ namespace DeDupe.Services
                 ApplyStrategy(group, strategy);
             }
         }
-
-        #region Strategy Implementations
 
         private static void ApplyKeepHighestResolution(SimilarityGroup group)
         {
@@ -128,13 +125,6 @@ namespace DeDupe.Services
             SelectAllExcept(group, bestItem);
         }
 
-        #endregion Strategy Implementations
-
-        #region Helper Methods
-
-        /// <summary>
-        /// Select all items in group except specified one.
-        /// </summary>
         private static void SelectAllExcept(SimilarityGroup group, SelectableItem? itemToKeep)
         {
             foreach (SelectableItem item in group.SelectableItems)
@@ -142,7 +132,5 @@ namespace DeDupe.Services
                 item.IsSelected = item != itemToKeep;
             }
         }
-
-        #endregion Helper Methods
     }
 }

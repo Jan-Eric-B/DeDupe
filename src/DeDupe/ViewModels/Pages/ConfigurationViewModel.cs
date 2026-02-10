@@ -77,7 +77,7 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly Dictionary<string, SourceMedia> _loadedSourceMedia = new(StringComparer.OrdinalIgnoreCase);
 
-        public int TotalFileCount => _appStateService.SourceCount;
+        public int TotalFileCount => _appStateService.SourceMediaCount;
 
         public Visibility IsMediaListEmpty => InputListItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -471,7 +471,7 @@ namespace DeDupe.ViewModels.Pages
         {
             get
             {
-                if (IsBusy || _appStateService.SourceCount == 0)
+                if (IsBusy || _appStateService.SourceMediaCount == 0)
                     return false;
 
                 if (_settingsService.UseBundledModel)

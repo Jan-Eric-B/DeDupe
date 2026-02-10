@@ -5,63 +5,66 @@ using Windows.UI;
 
 namespace DeDupe.Services
 {
+    /// <summary>
+    /// Provides application settings backed by local storage.
+    /// </summary>
     public interface ISettingsService
     {
-        #region General
+        /// <summary>
+        /// Reads setting from local storage by key, returning <paramref name="defaultValue"/> .
+        /// </summary>
+        T GetValue<T>(string key, T defaultValue);
+
+        /// <summary>
+        /// Writes setting from local storage by key.
+        /// </summary>
+        void SetValue<T>(string key, T value);
+
+        #region Appearance
 
         AppTheme Theme { get; set; }
+
         AppBackdrop Backdrop { get; set; }
+
         AppAccentColor AccentColor { get; set; }
 
-        #endregion General
-
-        #region Processing
-
-        bool EnableResizing { get; set; }
-        uint ResizeSize { get; set; }
-        ResizeMethod ResizeMethod { get; set; }
-        Color PaddingColor { get; set; }
-        InterpolationMethod DownsamplingMethod { get; set; }
-        InterpolationMethod UpsamplingMethod { get; set; }
-        bool EnableBorderDetection { get; set; }
-        int BorderDetectionTolerance { get; set; }
-        OutputFormat OutputFormat { get; set; }
-        uint Dpi { get; set; }
-        ColorFormat ColorFormat { get; set; }
-        bool UseCustomTempFolder { get; set; }
-        string CustomTempFolderPath { get; set; }
-        string TempFolderPath { get; }
-        int ParallelProcessingCores { get; set; }
-
-        #endregion Processing
-
-        #region Model Configuration
-
-        bool UseBundledModel { get; set; }
-        string SelectedBundledModelId { get; set; }
-        string CustomModelFilePath { get; set; }
-        NormalizationSettings Normalization { get; set; }
-
-        #endregion Model Configuration
-
-        #region Feature Extraction
-
-        bool EnableGpuAcceleration { get; set; }
-        int InferenceBatchSize { get; set; }
-
-        #endregion Feature Extraction
-
-        #region Events
-
-        // General
         event EventHandler<AppTheme>? ThemeChanged;
 
         event EventHandler<AppBackdrop>? BackdropChanged;
 
         event EventHandler<AppAccentColor>? AccentColorChanged;
 
-        // Processing
-        event EventHandler? TempFolderPathChanged;
+        #endregion Appearance
+
+        #region Performance
+
+        int ParallelProcessingCores { get; set; }
+
+        bool EnableGpuAcceleration { get; set; }
+
+        int InferenceBatchSize { get; set; }
+
+        event EventHandler<int>? ParallelProcessingCoresChanged;
+
+        event EventHandler<bool>? EnableGpuAccelerationChanged;
+
+        event EventHandler<int>? InferenceBatchSizeChanged;
+
+        #endregion Performance
+
+        #region Resize
+
+        bool EnableResizing { get; set; }
+
+        uint ResizeSize { get; set; }
+
+        ResizeMethod ResizeMethod { get; set; }
+
+        Color PaddingColor { get; set; }
+
+        InterpolationMethod DownsamplingMethod { get; set; }
+
+        InterpolationMethod UpsamplingMethod { get; set; }
 
         event EventHandler<bool>? EnableResizingChanged;
 
@@ -75,9 +78,27 @@ namespace DeDupe.Services
 
         event EventHandler<InterpolationMethod>? UpsamplingMethodChanged;
 
+        #endregion Resize
+
+        #region Border Detection
+
+        bool EnableBorderDetection { get; set; }
+
+        int BorderDetectionTolerance { get; set; }
+
         event EventHandler<bool>? EnableBorderDetectionChanged;
 
         event EventHandler<int>? BorderDetectionToleranceChanged;
+
+        #endregion Border Detection
+
+        #region Output
+
+        OutputFormat OutputFormat { get; set; }
+
+        uint Dpi { get; set; }
+
+        ColorFormat ColorFormat { get; set; }
 
         event EventHandler<OutputFormat>? OutputFormatChanged;
 
@@ -85,32 +106,48 @@ namespace DeDupe.Services
 
         event EventHandler<ColorFormat>? ColorFormatChanged;
 
-        event EventHandler<int>? ParallelProcessingCoresChanged;
+        #endregion Output
 
-        // Model Configuration
+        #region Temp Folder
+
+        bool UseCustomTempFolder { get; set; }
+
+        string CustomTempFolderPath { get; set; }
+
+        string TempFolderPath { get; }
+
+        event EventHandler? TempFolderPathChanged;
+
+        #endregion Temp Folder
+
+        #region Model
+
+        bool UseBundledModel { get; set; }
+
+        string SelectedBundledModelId { get; set; }
+
+        string CustomModelFilePath { get; set; }
+
         event EventHandler<bool>? UseBundledModelChanged;
 
         event EventHandler<string>? SelectedBundledModelIdChanged;
 
         event EventHandler<string>? CustomModelFilePathChanged;
 
-        event EventHandler<NormalizationSettings>? NormalizationChanged;
-
+        /// <summary>
+        /// Raised when any setting that affects model loading or inference changes, including model selection, custom
+        /// paths, and normalization values.
+        /// </summary>
         event EventHandler? ModelConfigurationChanged;
 
-        // Feature Extraction Performance
-        event EventHandler<bool>? EnableGpuAccelerationChanged;
+        #endregion Model
 
-        event EventHandler<int>? InferenceBatchSizeChanged;
+        #region Normalization
 
-        #endregion Events
+        NormalizationSettings Normalization { get; set; }
 
-        #region Methods
+        event EventHandler<NormalizationSettings>? NormalizationChanged;
 
-        T GetValue<T>(string key, T defaultValue);
-
-        void SetValue<T>(string key, T value);
-
-        #endregion Methods
+        #endregion Normalization
     }
 }

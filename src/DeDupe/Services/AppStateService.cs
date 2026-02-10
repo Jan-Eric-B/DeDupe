@@ -8,74 +8,18 @@ using System.Runtime.CompilerServices;
 
 namespace DeDupe.Services
 {
-    /// <summary>
-    /// Centralized state management service for the application.
-    /// </summary>
+    /// <inheritdoc/>
     public partial class AppStateService() : IAppStateService
     {
-        #region Fields
+        #region Source Media
 
-        // Source media files (original images and videos)
         private readonly List<SourceMedia> _sourceMedia = [];
 
-        // Analysis items
-        private readonly List<AnalysisItem> _analysisItems = [];
-
-        #endregion Fields
-
-        #region Source Media Properties
-
-        /// <summary>
-        /// All source media files.
-        /// </summary>
+        /// <inheritdoc/>
         public IReadOnlyCollection<SourceMedia> SourceMedia => _sourceMedia.AsReadOnly();
 
-        /// <summary>
-        /// Number of source media files.
-        /// </summary>
-        public int SourceCount => _sourceMedia.Count;
+        public int SourceMediaCount => _sourceMedia.Count;
 
-        #endregion Source Media Properties
-
-        #region Analysis Items Properties
-
-        /// <summary>
-        /// All analysis items (images and video frames).
-        /// </summary>
-        public IReadOnlyCollection<AnalysisItem> AnalysisItems => _analysisItems.AsReadOnly();
-
-        /// <summary>
-        /// Number of analysis items.
-        /// </summary>
-        public int AnalysisItemCount => _analysisItems.Count;
-
-        /// <summary>
-        /// Analysis items that have been preprocessed.
-        /// </summary>
-        public IReadOnlyCollection<AnalysisItem> ProcessedItems => _analysisItems.Where(i => i.IsProcessed).ToList().AsReadOnly();
-
-        /// <summary>
-        /// Number of preprocessed items.
-        /// </summary>
-        public int ProcessedItemCount => _analysisItems.Count(i => i.IsProcessed);
-
-        /// <summary>
-        /// Analysis items that have features extracted.
-        /// </summary>
-        public IReadOnlyCollection<AnalysisItem> ItemsWithFeatures => _analysisItems.Where(i => i.HasFeatures).ToList().AsReadOnly();
-
-        /// <summary>
-        /// Number of items with features.
-        /// </summary>
-        public int ExtractedFeaturesCount => _analysisItems.Count(i => i.HasFeatures);
-
-        #endregion Analysis Items Properties
-
-        #region Source Media Methods
-
-        /// <summary>
-        /// Set source media from file paths.
-        /// </summary>
         public void SetSourceMedia(IEnumerable<SourceMedia> sources)
         {
             _sourceMedia.Clear();
@@ -87,8 +31,8 @@ namespace DeDupe.Services
                 {
                     _sourceMedia.Add(source);
 
-                    // For images create one AnalysisItem per source
-                    // For videos AnalysisItems will be created during frame extraction
+                    // Images - Create one AnalysisItem per source
+                    // Videos - AnalysisItems will be created during frame extraction
                     if (source.IsImage)
                     {
                         _analysisItems.Add(new AnalysisItem(source));
@@ -97,15 +41,12 @@ namespace DeDupe.Services
             }
 
             OnPropertyChanged(nameof(SourceMedia));
-            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(SourceMediaCount));
             OnPropertyChanged(nameof(AnalysisItems));
             OnPropertyChanged(nameof(AnalysisItemCount));
             SourceMediaChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Add source media.
-        /// </summary>
         public void AddSourceMedia(SourceMedia source)
         {
             if (source == null) return;
@@ -118,15 +59,13 @@ namespace DeDupe.Services
             }
 
             OnPropertyChanged(nameof(SourceMedia));
-            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(SourceMediaCount));
             OnPropertyChanged(nameof(AnalysisItems));
             OnPropertyChanged(nameof(AnalysisItemCount));
             SourceMediaChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Add video frames as analysis items.
-        /// </summary>
+        /// <inheritdoc/>
         public void AddVideoFrames(SourceMedia videoSource, IEnumerable<(int frameIndex, TimeSpan timestamp)> frames)
         {
             if (videoSource == null || !videoSource.IsVideo) return;
@@ -141,79 +80,32 @@ namespace DeDupe.Services
             AnalysisItemsChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        /// <summary>
-        /// Clear all source media and analysis items.
-        /// </summary>
         public void ClearSourceMedia()
         {
             _sourceMedia.Clear();
             _analysisItems.Clear();
 
             OnPropertyChanged(nameof(SourceMedia));
-            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(SourceMediaCount));
             OnPropertyChanged(nameof(AnalysisItems));
             OnPropertyChanged(nameof(AnalysisItemCount));
             SourceMediaChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        #endregion Source Media Methods
+        public event EventHandler? SourceMediaChanged;
 
-        #region State Methods
+        #endregion Source Media
 
-        /// <summary>
-        /// Reset processing state for all items.
-        /// </summary>
-        public void ClearProcessedState()
-        {
-            foreach (AnalysisItem item in _analysisItems)
-            {
-                item.ProcessedFilePath = null;
-            }
+        #region Analysis Items
 
-            OnPropertyChanged(nameof(ProcessedItems));
-            OnPropertyChanged(nameof(ProcessedItemCount));
-            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
-        }
+        private readonly List<AnalysisItem> _analysisItems = [];
 
-        /// <summary>
-        /// Reset feature extraction state for all items.
-        /// </summary>
-        public void ClearFeatureState()
-        {
-            foreach (AnalysisItem item in _analysisItems)
-            {
-                item.FeatureVector = null;
-                item.FeatureDimensions = null;
-            }
+        /// <inheritdoc/>
+        public IReadOnlyCollection<AnalysisItem> AnalysisItems => _analysisItems.AsReadOnly();
 
-            OnPropertyChanged(nameof(ItemsWithFeatures));
-            OnPropertyChanged(nameof(ExtractedFeaturesCount));
-            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
-        }
+        public int AnalysisItemCount => _analysisItems.Count;
 
-        /// <summary>
-        /// Notify processing state has changed.
-        /// </summary>
-        public void NotifyProcessingComplete()
-        {
-            OnPropertyChanged(nameof(ProcessedItems));
-            OnPropertyChanged(nameof(ProcessedItemCount));
-            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Notify feature extraction has completed.
-        /// </summary>
-        public void NotifyFeaturesExtracted()
-        {
-            OnPropertyChanged(nameof(ItemsWithFeatures));
-            OnPropertyChanged(nameof(ExtractedFeaturesCount));
-            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Remove analysis items by source file paths.
-        /// </summary>
+        /// <inheritdoc/>
         public int RemoveAnalysisItemsByPath(IEnumerable<string> filePaths)
         {
             if (filePaths == null)
@@ -256,7 +148,7 @@ namespace DeDupe.Services
             OnPropertyChanged(nameof(ItemsWithFeatures));
             OnPropertyChanged(nameof(ExtractedFeaturesCount));
             OnPropertyChanged(nameof(SourceMedia));
-            OnPropertyChanged(nameof(SourceCount));
+            OnPropertyChanged(nameof(SourceMediaCount));
 
             AnalysisItemsChanged?.Invoke(this, EventArgs.Empty);
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
@@ -265,17 +157,44 @@ namespace DeDupe.Services
             return itemsToRemove.Count;
         }
 
-        #endregion State Methods
-
-        #region Events
-
-        public event EventHandler? SourceMediaChanged;
-
         public event EventHandler? AnalysisItemsChanged;
+
+        #endregion Analysis Items
+
+        #region Processing State
+
+        public IReadOnlyCollection<AnalysisItem> ProcessedItems => _analysisItems.Where(i => i.IsProcessed).ToList().AsReadOnly();
+
+        public int ProcessedItemCount => _analysisItems.Count(i => i.IsProcessed);
+
+        public void NotifyProcessingComplete()
+        {
+            OnPropertyChanged(nameof(ProcessedItems));
+            OnPropertyChanged(nameof(ProcessedItemCount));
+            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ClearProcessedState()
+        {
+            foreach (AnalysisItem item in _analysisItems)
+            {
+                item.ProcessedFilePath = null;
+            }
+
+            OnPropertyChanged(nameof(ProcessedItems));
+            OnPropertyChanged(nameof(ProcessedItemCount));
+            ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
+        }
 
         public event EventHandler? ProcessingStateChanged;
 
-        public event EventHandler? ExtractedFeaturesChanged;
+        #endregion Processing State
+
+        #region Extracted Features
+
+        public IReadOnlyCollection<AnalysisItem> ItemsWithFeatures => _analysisItems.Where(i => i.HasFeatures).ToList().AsReadOnly();
+
+        public int ExtractedFeaturesCount => _analysisItems.Count(i => i.HasFeatures);
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -284,6 +203,28 @@ namespace DeDupe.Services
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        #endregion Events
+        public void NotifyFeaturesExtracted()
+        {
+            OnPropertyChanged(nameof(ItemsWithFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ClearFeatureState()
+        {
+            foreach (AnalysisItem item in _analysisItems)
+            {
+                item.FeatureVector = null;
+                item.FeatureDimensions = null;
+            }
+
+            OnPropertyChanged(nameof(ItemsWithFeatures));
+            OnPropertyChanged(nameof(ExtractedFeaturesCount));
+            ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public event EventHandler? ExtractedFeaturesChanged;
+
+        #endregion Extracted Features
     }
 }

@@ -3,12 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace DeDupe.Services
 {
-    /// <summary>
-    /// Service to enforce minimum window size constraints.
-    /// </summary>
-    /// <remarks>
-    /// Automatically adjusts display DPI scaling and intercepts sizing messages.
-    /// </remarks>
     public partial class WindowSizeService : IDisposable
     {
         // Windows message sent when the OS queries window size constraints

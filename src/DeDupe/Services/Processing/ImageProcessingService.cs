@@ -24,15 +24,9 @@ namespace DeDupe.Services.Processing
     /// </summary>
     public class ImageProcessingService
     {
-        #region Fields
-
         private readonly IAppStateService _appStateService;
         private readonly ISettingsService _settingsService;
         private readonly IBorderDetectionService _borderDetectionService;
-
-        #endregion Fields
-
-        #region Constructor
 
         public ImageProcessingService(IAppStateService appStateService, ISettingsService settingsService, IBorderDetectionService borderDetectionService)
         {
@@ -43,57 +37,6 @@ namespace DeDupe.Services.Processing
             InitializeTempFolder();
         }
 
-        #endregion Constructor
-
-        #region Initialization
-
-        public bool InitializeTempFolder()
-        {
-            try
-            {
-                string tempPath = _settingsService.TempFolderPath;
-
-                if (Directory.Exists(tempPath))
-                {
-                    ClearTempFolder();
-                }
-
-                Directory.CreateDirectory(tempPath);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to initialize temp folder: {ex.Message}");
-                return false;
-            }
-        }
-
-        public bool ClearTempFolder()
-        {
-            try
-            {
-                string tempPath = _settingsService.TempFolderPath;
-
-                if (Directory.Exists(tempPath))
-                {
-                    Directory.Delete(tempPath, true);
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to clear temp folder: {ex.Message}");
-                return false;
-            }
-        }
-
-        #endregion Initialization
-
-        #region Processing Methods
-
-        /// <summary>
-        /// Process all analysis items.
-        /// </summary>
         public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             // Clear processing state
@@ -181,9 +124,6 @@ namespace DeDupe.Services.Processing
             Debug.WriteLine($"Processing complete: {successCount}/{totalCount} successful");
         }
 
-        /// <summary>
-        /// Process a single analysis item using ImageSharp.
-        /// </summary>
         private async Task<string?> ProcessSingleItemAsync(AnalysisItem item, CancellationToken ct)
         {
             if (item == null || string.IsNullOrEmpty(_settingsService.TempFolderPath))
@@ -223,7 +163,7 @@ namespace DeDupe.Services.Processing
                     {
                         Size = new Size(targetSize, targetSize),
                         Mode = GetResizeMode(_settingsService.ResizeMethod),
-                        Sampler = GetResampler(),
+                        Sampler = GetResampler(image, targetSize),
                         PadColor = new Rgba32(
                             _settingsService.PaddingColor.R,
                             _settingsService.PaddingColor.G,
@@ -247,7 +187,46 @@ namespace DeDupe.Services.Processing
             }
         }
 
-        #endregion Processing Methods
+        #region Resize
+
+        private static ResizeMode GetResizeMode(ResizeMethod method)
+        {
+            // Map ResizeMethod enum to ImageSharp ResizeMode.
+            return method switch
+            {
+                ResizeMethod.Crop => ResizeMode.Crop,
+                ResizeMethod.Padding => ResizeMode.Pad,
+                ResizeMethod.Stretch => ResizeMode.Stretch,
+                _ => ResizeMode.Pad
+            };
+        }
+
+        private IResampler GetResampler(Image<Rgba32> image, int targetSize)
+        {
+            int currentSize = _settingsService.ResizeMethod switch
+            {
+                ResizeMethod.Padding => Math.Max(image.Width, image.Height),
+                ResizeMethod.Crop => Math.Min(image.Width, image.Height),
+                ResizeMethod.Stretch => Math.Max(image.Width, image.Height),
+                _ => Math.Max(image.Width, image.Height)
+            };
+
+            InterpolationMethod method = currentSize > targetSize
+                ? _settingsService.DownsamplingMethod
+                : _settingsService.UpsamplingMethod;
+
+            return method switch
+            {
+                InterpolationMethod.NearestNeighbor => KnownResamplers.NearestNeighbor,
+                InterpolationMethod.Bilinear => KnownResamplers.Triangle,
+                InterpolationMethod.Bicubic => KnownResamplers.Bicubic,
+                InterpolationMethod.Lanczos => KnownResamplers.Lanczos3,
+                InterpolationMethod.Fant => KnownResamplers.MitchellNetravali,
+                _ => KnownResamplers.Lanczos3
+            };
+        }
+
+        #endregion Resize
 
         #region Border Detection
 
@@ -274,11 +253,8 @@ namespace DeDupe.Services.Processing
 
         #endregion Border Detection
 
-        #region Image Format Helpers
+        #region Output
 
-        /// <summary>
-        /// Get file extension for output format.
-        /// </summary>
         private static string GetFileExtension(OutputFormat format)
         {
             return format switch
@@ -287,13 +263,11 @@ namespace DeDupe.Services.Processing
                 OutputFormat.JPEG => ".jpg",
                 OutputFormat.BMP => ".bmp",
                 OutputFormat.TIFF => ".tiff",
+                OutputFormat.WebP => ".webp",
                 _ => ".png"
             };
         }
 
-        /// <summary>
-        /// Save image in specified format.
-        /// </summary>
         private static async Task SaveImageAsync(Image<Rgba32> image, string path, OutputFormat format, CancellationToken ct)
         {
             switch (format)
@@ -320,37 +294,50 @@ namespace DeDupe.Services.Processing
             }
         }
 
-        /// <summary>
-        /// Map ResizeMethod enum to ImageSharp ResizeMode.
-        /// </summary>
-        private static ResizeMode GetResizeMode(ResizeMethod method)
+        #endregion Output
+
+        #region Temp Folder
+
+        public bool InitializeTempFolder()
         {
-            return method switch
+            try
             {
-                ResizeMethod.Crop => ResizeMode.Crop,
-                ResizeMethod.Padding => ResizeMode.Pad,
-                ResizeMethod.Stretch => ResizeMode.Stretch,
-                _ => ResizeMode.Pad
-            };
+                string tempPath = _settingsService.TempFolderPath;
+
+                if (Directory.Exists(tempPath))
+                {
+                    ClearTempFolder();
+                }
+
+                Directory.CreateDirectory(tempPath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to initialize temp folder: {ex.Message}");
+                return false;
+            }
         }
 
-        /// <summary>
-        /// Get ImageSharp resampler based on settings.
-        /// </summary>
-        private IResampler GetResampler()
+        public bool ClearTempFolder()
         {
-            // Use downsampling method
-            return _settingsService.DownsamplingMethod switch
+            try
             {
-                InterpolationMethod.NearestNeighbor => KnownResamplers.NearestNeighbor,
-                InterpolationMethod.Bilinear => KnownResamplers.Triangle,
-                InterpolationMethod.Bicubic => KnownResamplers.Bicubic,
-                InterpolationMethod.Lanczos => KnownResamplers.Lanczos3,
-                InterpolationMethod.Fant => KnownResamplers.MitchellNetravali,
-                _ => KnownResamplers.Lanczos3
-            };
+                string tempPath = _settingsService.TempFolderPath;
+
+                if (Directory.Exists(tempPath))
+                {
+                    Directory.Delete(tempPath, true);
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to clear temp folder: {ex.Message}");
+                return false;
+            }
         }
 
-        #endregion Image Format Helpers
+        #endregion Temp Folder
     }
 }

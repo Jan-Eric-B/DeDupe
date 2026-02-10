@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace DeDupe.Services.Model
 {
     /// <summary>
-    /// Service interface for accessing bundled ONNX models.
+    /// Service for accessing bundled ONNX models.
     /// </summary>
     public interface IBundledModelService
     {

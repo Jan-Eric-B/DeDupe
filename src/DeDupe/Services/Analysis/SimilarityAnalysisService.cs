@@ -34,7 +34,7 @@ namespace DeDupe.Services.Analysis
                 List<SimilarityGroup> clusters = await PerformHierarchicalClusteringAsync(itemList, similarityMatrix, similarityThreshold, cancellationToken);
 
                 // Step 3 - Calculate cluster statistics
-                CalculateClusterStatistics(clusters);
+                CalculateClusterStatistics(clusters, itemList, similarityMatrix);
 
                 return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
             }
@@ -267,16 +267,19 @@ namespace DeDupe.Services.Analysis
             return pairCount > 0 ? totalSimilarity / pairCount : 0.0;
         }
 
-        /// <summary>
-        /// Calculate average similarity within each cluster.
-        /// </summary>
-        private void CalculateClusterStatistics(List<SimilarityGroup> groups)
+        private static void CalculateClusterStatistics(List<SimilarityGroup> groups, List<AnalysisItem> originalItems, double[,] similarityMatrix)
         {
+            Dictionary<AnalysisItem, int> indexMap = [];
+            for (int i = 0; i < originalItems.Count; i++)
+            {
+                indexMap[originalItems[i]] = i;
+            }
+
             foreach (SimilarityGroup group in groups)
             {
                 if (group.Count <= 1)
                 {
-                    group.AverageSimilarity = 1.0; // Single image clusters
+                    group.AverageSimilarity = 1.0;
                     continue;
                 }
 
@@ -287,11 +290,10 @@ namespace DeDupe.Services.Analysis
                 {
                     for (int j = i + 1; j < group.Items.Count; j++)
                     {
-                        // Find indices of images in original similarity matrix
-                        // TODO - Maintain index mappings
-                        double similarity = CalculateCosineSimilarity(group.Items[i].FeatureVector!, group.Items[j].FeatureVector!);
+                        int idxI = indexMap[group.Items[i]];
+                        int idxJ = indexMap[group.Items[j]];
 
-                        totalSimilarity += similarity;
+                        totalSimilarity += similarityMatrix[idxI, idxJ];
                         pairCount++;
                     }
                 }

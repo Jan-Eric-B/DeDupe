@@ -5,31 +5,34 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Model
 {
+    /// <summary>
+    /// Service for managing downloading and caching of bundled model files.
+    /// </summary>
     public interface IModelDownloadService
     {
         /// <summary>
-        /// Get local file path for model.
+        /// Returns local cache path if model file exists.
         /// </summary>
         string? GetLocalModelPath(BundledModelInfo model);
 
         /// <summary>
-        /// Check if model file exists.
+        /// Checks if model file exists in local cache.
         /// </summary>
         bool IsModelAvailable(BundledModelInfo model);
 
         /// <summary>
-        /// Download model to local cache.
+        /// Downloads model to local cache. Verifies SHA-256 hash if provided.
         /// </summary>
         Task DownloadModelAsync(BundledModelInfo model, IProgress<ModelDownloadProgress>? progress = null, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Delete cached model.
-        /// </summary>
-        bool DeleteCachedModel(BundledModelInfo model);
-
-        /// <summary>
-        /// Ensure model is available, downloading if needed.
+        /// Returns local model path, downloading model first if not already cached.
         /// </summary>
         Task<string> EnsureModelAvailableAsync(BundledModelInfo model, IProgress<ModelDownloadProgress>? progress = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes cached model file.
+        /// </summary>
+        bool DeleteCachedModel(BundledModelInfo model);
     }
 }

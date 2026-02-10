@@ -6,6 +6,14 @@ namespace DeDupe.Services.Processing
 {
     public class BorderDetectionService : IBorderDetectionService
     {
+        private enum EdgeSide { Top, Bottom, Left, Right }
+
+        private readonly struct BorderColor(byte r, byte g, byte b)
+        {
+            public readonly byte R = r, G = g, B = b;
+        }
+
+        /// <inheritdoc />
         public Rectangle DetectBorders(Image<Rgba32> image, int tolerance = 30)
         {
             int width = image.Width;
@@ -17,6 +25,7 @@ namespace DeDupe.Services.Processing
                 return new Rectangle(0, 0, width, height);
             }
 
+            // Ignore borders thinner than 1% of the shortest side
             uint minBorderSize = (uint)Math.Max(2, Math.Min(width, height) / 100);
 
             // Sample edge colors
@@ -63,6 +72,10 @@ namespace DeDupe.Services.Processing
             return new Rectangle(leftBorder, topBorder, newWidth, newHeight);
         }
 
+        /// <summary>
+        /// Samples 20 evenly spaced pixels along the outermost row/column of the edge and returns their average color
+        /// as the reference border color for that side.
+        /// </summary>
         private static BorderColor GetAverageEdgeColor(Image<Rgba32> image, EdgeSide side)
         {
             int r = 0, g = 0, b = 0, count = 0;
@@ -123,6 +136,9 @@ namespace DeDupe.Services.Processing
                 : new BorderColor(0, 0, 0);
         }
 
+        /// <summary>
+        /// Scans rows inward from the top, returning how many consecutive rows match the border color.
+        /// </summary>
         private static int ScanFromTop(Image<Rgba32> image, BorderColor borderColor, int tolerance)
         {
             int maxScan = image.Height / 2;
@@ -177,6 +193,7 @@ namespace DeDupe.Services.Processing
             return 0;
         }
 
+        // A row/column is considered a border if at least 85% of sampled pixels match the border color.
         private static bool IsRowUniform(Image<Rgba32> image, int row, BorderColor borderColor, int tolerance)
         {
             int sampleStep = Math.Max(1, image.Width / 20);
@@ -221,17 +238,5 @@ namespace DeDupe.Services.Processing
                    Math.Abs(pixel.G - target.G) <= tolerance &&
                    Math.Abs(pixel.B - target.B) <= tolerance;
         }
-
-        #region Types
-
-        private enum EdgeSide
-        { Top, Bottom, Left, Right }
-
-        private readonly struct BorderColor(byte r, byte g, byte b)
-        {
-            public readonly byte R = r, G = g, B = b;
-        }
-
-        #endregion Types
     }
 }
