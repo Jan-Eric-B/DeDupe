@@ -1,23 +1,17 @@
 ﻿namespace DeDupe.Models
 {
-    /// <summary>
-    /// Represents progress information.
-    /// </summary>
     public record ProgressInfo(int CurrentItem, int TotalItems, string OperationName, string? CurrentItemName = null)
     {
         /// <summary>
-        /// Progress percentage from 0 to 100.
+        /// Progress percentage (0 to 100).
         /// </summary>
         public double Percentage => TotalItems > 0 ? (double)CurrentItem / TotalItems * 100 : 0;
 
         /// <summary>
-        /// Progress value from 0.0 to 1.0.
+        /// Progress value (0.0 to 1.0).
         /// </summary>
         public double NormalizedValue => TotalItems > 0 ? (double)CurrentItem / TotalItems : 0;
 
-        /// <summary>
-        /// Operation is complete.
-        /// </summary>
         public bool IsComplete => CurrentItem >= TotalItems;
 
         /// <summary>

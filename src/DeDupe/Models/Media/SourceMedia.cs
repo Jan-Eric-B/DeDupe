@@ -8,20 +8,21 @@ using System.Threading.Tasks;
 namespace DeDupe.Models.Media
 {
     /// <summary>
-    /// Represents an original source file (image or video).
+    /// Represents an source file (image or video).
     /// </summary>
     public class SourceMedia
     {
-        #region Properties
+        private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata)
+        {
+            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
-        /// <summary>
-        /// Unique identifier for this source.
-        /// </summary>
+            FilePath = filePath;
+            MediaType = mediaType;
+            Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+        }
+
         public Guid Id { get; } = Guid.NewGuid();
 
-        /// <summary>
-        /// Full path to original file.
-        /// </summary>
         public string FilePath { get; }
 
         /// <summary>
@@ -29,29 +30,31 @@ namespace DeDupe.Models.Media
         /// </summary>
         public MediaType MediaType { get; }
 
-        /// <summary>
-        /// Metadata for media file (owns all file/media data).
-        /// </summary>
         public MediaMetadata Metadata { get; }
 
-        /// <summary>
-        /// File name without path.
-        /// </summary>
         public string FileName => Metadata.FileName;
 
-        /// <summary>
-        /// File size in bytes.
-        /// </summary>
         public long FileSize => Metadata.FileSize;
 
-        /// <summary>
-        /// Last modified date.
-        /// </summary>
         public DateTime LastModified => Metadata.LastModifiedDate;
 
-        #endregion Properties
+        #region Image
 
-        #region Loading State (delegated to typed metadata)
+        public ImageMetadata? AsImage => Metadata as ImageMetadata;
+
+        public bool IsImage => MediaType == MediaType.Image;
+
+        #endregion Image
+
+        #region Video
+
+        public VideoMetadata? AsVideo => Metadata as VideoMetadata;
+
+        public bool IsVideo => MediaType == MediaType.Video;
+
+        #endregion Video
+
+        #region Loading
 
         /// <summary>
         /// Whether dimensions have been loaded.
@@ -73,50 +76,6 @@ namespace DeDupe.Models.Media
             _ => false
         };
 
-        #endregion Loading State (delegated to typed metadata)
-
-        #region Type-Specific Access
-
-        /// <summary>
-        /// Get as ImageMetadata.
-        /// </summary>
-        public ImageMetadata? AsImage => Metadata as ImageMetadata;
-
-        /// <summary>
-        /// Get as VideoMetadata.
-        /// </summary>
-        public VideoMetadata? AsVideo => Metadata as VideoMetadata;
-
-        /// <summary>
-        /// Is an image file.
-        /// </summary>
-        public bool IsImage => MediaType == MediaType.Image;
-
-        /// <summary>
-        /// Is a video file.
-        /// </summary>
-        public bool IsVideo => MediaType == MediaType.Video;
-
-        #endregion Type-Specific Access
-
-        #region Constructors
-
-        private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata)
-        {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
-
-            FilePath = filePath;
-            MediaType = mediaType;
-            Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
-        }
-
-        #endregion Constructors
-
-        #region Factory Methods
-
-        /// <summary>
-        /// Create SourceMedia with basic file info.
-        /// </summary>
         public static SourceMedia CreateLightweight(string filePath)
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
@@ -146,9 +105,6 @@ namespace DeDupe.Models.Media
             return new SourceMedia(filePath, mediaType, metadata);
         }
 
-        /// <summary>
-        /// Create SourceMedia for image file.
-        /// </summary>
         public static async Task<SourceMedia> CreateImageAsync(string filePath, bool loadFullMetadata = true)
         {
             ImageMetadata metadata = new(filePath, MediaType.Image);
@@ -162,9 +118,6 @@ namespace DeDupe.Models.Media
             return new SourceMedia(filePath, MediaType.Image, metadata);
         }
 
-        /// <summary>
-        /// Create SourceMedia for video file.
-        /// </summary>
         public static async Task<SourceMedia> CreateVideoAsync(string filePath, bool loadFullMetadata = true)
         {
             VideoMetadata metadata = new(filePath, MediaType.Video);
@@ -176,27 +129,6 @@ namespace DeDupe.Models.Media
             }
 
             return new SourceMedia(filePath, MediaType.Video, metadata);
-        }
-
-        /// <summary>
-        /// Create SourceMedia and detect type from file extension.
-        /// </summary>
-        public static async Task<SourceMedia?> CreateAsync(string filePath, bool loadFullMetadata = true)
-        {
-            ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
-
-            string extension = Path.GetExtension(filePath).ToLowerInvariant();
-
-            if (SupportedFileExtensions.IsImageFile(extension))
-            {
-                return await CreateImageAsync(filePath, loadFullMetadata);
-            }
-            else if (SupportedFileExtensions.IsVideoFile(extension))
-            {
-                return await CreateVideoAsync(filePath, loadFullMetadata);
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -251,11 +183,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        public override string ToString()
-        {
-            return $"{MediaType}: {FileName}";
-        }
-
-        #endregion Factory Methods
+        #endregion Loading
     }
 }

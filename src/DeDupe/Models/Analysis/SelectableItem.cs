@@ -2,7 +2,6 @@
 using DeDupe.Models.Media;
 using DeDupe.Models.Results;
 using System;
-using System.ComponentModel;
 
 namespace DeDupe.Models.Analysis
 {
@@ -82,7 +81,7 @@ namespace DeDupe.Models.Analysis
         /// <summary>
         /// Display name for the item.
         /// </summary>
-        public string DisplayName => Item.Source.Metadata.GetDisplayName();
+        public string DisplayName => Item.Source.Metadata.FileName;
 
         /// <summary>
         /// Whether this item is a video frame.

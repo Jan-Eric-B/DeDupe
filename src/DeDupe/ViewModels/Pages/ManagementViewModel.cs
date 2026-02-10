@@ -56,7 +56,7 @@ namespace DeDupe.ViewModels.Pages
         public partial bool HasSimilarityResults { get; set; }
 
         [ObservableProperty]
-        public partial double SimilarityThreshold { get; set; } = 0.95;
+        public partial double SimilarityThreshold { get; set; } = 0.90;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TotalGroups), nameof(DuplicateGroupsCount), nameof(TotalItems), nameof(ResultSummary))]

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <summary>
-    /// Service for analyzing similarity between items and clustering them.
+    /// Service for analyzing similarity between items and clustering/grouping them.
     /// </summary>
     public interface ISimilarityAnalysisService
     {

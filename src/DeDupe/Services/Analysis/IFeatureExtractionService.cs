@@ -9,47 +9,32 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <summary>
-    /// Interface for extracting feature vectors from images.
+    /// Extracts feature vectors from images using an ONNX model for duplicate detection.
     /// </summary>
     public interface IFeatureExtractionService : IDisposable
     {
-        /// <summary>
-        /// Path to loaded model.
-        /// </summary>
         string ModelPath { get; }
 
-        /// <summary>
-        /// Service is initialized with model.
-        /// </summary>
         bool IsInitialized { get; }
 
-        /// <summary>
-        /// Whether GPU acceleration is enabled.
-        /// </summary>
         bool IsGpuEnabled { get; }
 
-        /// <summary>
-        /// Batch size for inference.
-        /// </summary>
         int BatchSize { get; }
 
         /// <summary>
-        /// Expected input dimensions from the model.
+        /// Expected model input dimensions.
         /// </summary>
         (int Channels, int Height, int Width)? ExpectedDimensions { get; }
 
         /// <summary>
-        /// Initialize service with ONNX model.
+        /// Loads a model and prepares the inference session. Disposes any previously loaded session.
         /// </summary>
         Task InitializeAsync(string modelPath, bool preferGpu = true, int batchSize = 16);
 
-        /// <summary>
-        /// Initialize service with default settings.
-        /// </summary>
         Task InitializeAsync(string modelPath);
 
         /// <summary>
-        /// Extract features from processed items.
+        /// Extracts feature vectors from items that have been processed.
         /// </summary>
         Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
     }

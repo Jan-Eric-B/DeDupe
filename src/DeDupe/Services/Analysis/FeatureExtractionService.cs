@@ -15,12 +15,10 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Analysis
 {
-    /// <summary>
-    /// Service for extracting feature vectors from preprocessed images.
-    /// </summary>
+    /// <inheritdoc/>
     public sealed partial class FeatureExtractionService : IFeatureExtractionService, IDisposable
     {
-        #region Fields
+        #region State
 
         private InferenceSession? _session;
         private string? _inputName;
@@ -37,7 +35,7 @@ namespace DeDupe.Services.Analysis
         private const int MaxIoConcurrency = 4;
         private readonly SemaphoreSlim _ioSemaphore = new(MaxIoConcurrency, MaxIoConcurrency);
 
-        #endregion Fields
+        #endregion State
 
         #region Properties
 
@@ -174,9 +172,16 @@ namespace DeDupe.Services.Analysis
             }
         }
 
+        #endregion Initialization
+
+        #region Buffer Management
+
         private void AllocateTensorBuffers(int batchSize)
         {
-            if (_inputDimensions == null || _inputDimensions.Length < 4) return;
+            if (_inputDimensions == null || _inputDimensions.Length < 4)
+            {
+                return;
+            }
 
             int channels = _inputDimensions[1];
             int height = _inputDimensions[2];
@@ -192,7 +197,10 @@ namespace DeDupe.Services.Analysis
 
         private DenseTensor<float> GetOrCreateTensor(int requiredBatchSize, bool useBufferA)
         {
-            if (_inputDimensions == null) throw new InvalidOperationException("Model not initialized");
+            if (_inputDimensions == null)
+            {
+                throw new InvalidOperationException("Model not initialized");
+            }
 
             int channels = _inputDimensions[1];
             int height = _inputDimensions[2];
@@ -214,7 +222,7 @@ namespace DeDupe.Services.Analysis
             return new DenseTensor<float>([requiredBatchSize, channels, height, width]);
         }
 
-        #endregion Initialization
+        #endregion Buffer Management
 
         #region Feature Extraction
 

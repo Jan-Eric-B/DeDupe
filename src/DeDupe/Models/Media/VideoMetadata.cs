@@ -13,200 +13,20 @@ namespace DeDupe.Models.Media
     /// </summary>
     public partial class VideoMetadata : MediaMetadata
     {
-        #region Loading State
-
         /// <summary>
-        /// Whether dimensions have been loaded.
-        /// </summary>
-        public bool AreDimensionsLoaded { get; private set; }
-
-        /// <summary>
-        /// Whether full metadata has been loaded.
-        /// </summary>
-        public bool IsFullMetadataLoaded { get; private set; }
-
-        #endregion Loading State
-
-        #region Video Properties
-
-        /// <summary>
-        /// Video duration
-        /// </summary>
-        public TimeSpan Duration { get; protected set; }
-
-        /// <summary>
-        /// Formatted duration
-        /// </summary>
-        public string FormattedDuration
-        {
-            get
-            {
-                if (Duration.TotalHours >= 1)
-                {
-                    return Duration.ToString(@"h\:mm\:ss");
-                }
-
-                return Duration.ToString(@"m\:ss");
-            }
-        }
-
-        /// <summary>
-        /// Frame rate
-        /// </summary>
-        public double FrameRate { get; protected set; }
-
-        /// <summary>
-        /// Total frame count
-        /// </summary>
-        public long TotalFrames => (long)(Duration.TotalSeconds * FrameRate);
-
-        /// <summary>
-        /// Video bitrate
-        /// </summary>
-        public uint VideoBitrate { get; protected set; }
-
-        /// <summary>
-        /// Formatted video bitrate
-        /// </summary>
-        public string FormattedVideoBitrate => FormatBitrate(VideoBitrate);
-
-        /// <summary>
-        /// Audio bitrate
-        /// </summary>
-        public uint AudioBitrate { get; protected set; }
-
-        /// <summary>
-        /// Formatted audio bitrate
-        /// </summary>
-        public string FormattedAudioBitrate => FormatBitrate(AudioBitrate);
-
-        /// <summary>
-        /// Total bitrate (video + audio)
-        /// </summary>
-        public uint TotalBitrate { get; protected set; }
-
-        /// <summary>
-        /// Video codec
-        /// </summary>
-        public string VideoCodec { get; protected set; } = string.Empty;
-
-        /// <summary>
-        /// Audio codec
-        /// </summary>
-        public string AudioCodec { get; protected set; } = string.Empty;
-
-        /// <summary>
-        /// Container format
-        /// </summary>
-        public string ContainerFormat { get; protected set; } = string.Empty;
-
-        #endregion Video Properties
-
-        #region Audio Properties
-
-        /// <summary>
-        /// Whether video has audio track
-        /// </summary>
-        public bool HasAudio { get; protected set; }
-
-        /// <summary>
-        /// Audio sample rate
-        /// </summary>
-        public uint AudioSampleRate { get; protected set; }
-
-        /// <summary>
-        /// Audio channel count
-        /// </summary>
-        public uint AudioChannels { get; protected set; }
-
-        /// <summary>
-        /// Formatted audio channels
-        /// </summary>
-        public string FormattedAudioChannels
-        {
-            get
-            {
-                return AudioChannels switch
-                {
-                    0 => "No Audio",
-                    1 => "Mono",
-                    2 => "Stereo",
-                    3 => "2.1 Surround",
-                    4 => "Quadraphonic",
-                    5 => "4.1 Surround",
-                    6 => "5.1 Surround",
-                    7 => "6.1 Surround",
-                    8 => "7.1 Surround",
-                    10 => "7.1.2 Surround",
-                    12 => "9.1.2 Surround",
-                    _ => $"{AudioChannels} channels"
-                };
-            }
-        }
-
-        #endregion Audio Properties
-
-        #region Recording Metadata
-
-        /// <summary>
-        /// Date the video was recorded
-        /// </summary>
-        public DateTime? DateRecorded { get; protected set; }
-
-        /// <summary>
-        /// Video title
-        /// </summary>
-        public string? Title { get; protected set; }
-
-        /// <summary>
-        /// Video description
-        /// </summary>
-        public string? Description { get; protected set; }
-
-        /// <summary>
-        /// Director/creator
-        /// </summary>
-        public string? Director { get; protected set; }
-
-        /// <summary>
-        /// Copyright information
-        /// </summary>
-        public string? Copyright { get; protected set; }
-
-        /// <summary>
-        /// GPS latitude
-        /// </summary>
-        public double? GpsLatitude { get; protected set; }
-
-        /// <summary>
-        /// GPS longitude
-        /// </summary>
-        public double? GpsLongitude { get; protected set; }
-
-        /// <summary>
-        /// Whether GPS coordinates are available
-        /// </summary>
-        public bool HasGpsCoordinates => GpsLatitude.HasValue && GpsLongitude.HasValue;
-
-        #endregion Recording Metadata
-
-        #region Constructor
-
-        /// <summary>
-        /// Create video metadata from file path. Protected internal to allow inheritance by VideoSource.
+        /// Create video metadata from file path.
         /// </summary>
         protected internal VideoMetadata(string filePath, MediaType mediaType) : base(filePath, mediaType)
         {
             MediaType = MediaType.Video;
         }
 
-        #endregion Constructor
+        #region Loading
 
-        #region Factory Methods
+        public bool AreDimensionsLoaded { get; private set; }
 
-        /// <summary>
-        /// Create and load video metadata.
-        /// </summary>
+        public bool IsFullMetadataLoaded { get; private set; }
+
         public static async Task<VideoMetadata> CreateAsync(string filePath, bool loadFullMetadata = true)
         {
             VideoMetadata metadata = new(filePath, MediaType.Video);
@@ -220,13 +40,6 @@ namespace DeDupe.Models.Media
             return metadata;
         }
 
-        #endregion Factory Methods
-
-        #region Methods
-
-        /// <summary>
-        /// Load only dimensions & duration.
-        /// </summary>
         public async Task LoadDimensionsOnlyAsync()
         {
             if (AreDimensionsLoaded)
@@ -252,9 +65,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Load all video metadata
-        /// </summary>
         public async Task LoadMetadataAsync()
         {
             if (IsFullMetadataLoaded)
@@ -267,9 +77,6 @@ namespace DeDupe.Models.Media
             IsFullMetadataLoaded = true;
         }
 
-        /// <summary>
-        /// Load video properties from file
-        /// </summary>
         public async Task LoadVideoPropertiesAsync()
         {
             try
@@ -306,9 +113,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Loads extended video properties
-        /// </summary>
         private async Task LoadExtendedVideoPropertiesAsync(StorageFile file)
         {
             try
@@ -376,9 +180,47 @@ namespace DeDupe.Models.Media
             }
         }
 
-        #endregion Methods
+        #endregion Loading
 
-        #region Helpers
+        #region Video Properties
+
+        public TimeSpan Duration { get; protected set; }
+
+        public string FormattedDuration
+        {
+            get
+            {
+                if (Duration.TotalHours >= 1)
+                {
+                    return Duration.ToString(@"h\:mm\:ss");
+                }
+
+                return Duration.ToString(@"m\:ss");
+            }
+        }
+
+        public double FrameRate { get; protected set; }
+
+        public long TotalFrames => (long)(Duration.TotalSeconds * FrameRate);
+
+        public uint VideoBitrate { get; protected set; }
+
+        public string FormattedVideoBitrate => FormatBitrate(VideoBitrate);
+
+        public uint AudioBitrate { get; protected set; }
+
+        public string FormattedAudioBitrate => FormatBitrate(AudioBitrate);
+
+        /// <summary>
+        /// Total bitrate (video + audio)
+        /// </summary>
+        public uint TotalBitrate { get; protected set; }
+
+        public string VideoCodec { get; protected set; } = string.Empty;
+
+        public string AudioCodec { get; protected set; } = string.Empty;
+
+        public string ContainerFormat { get; protected set; } = string.Empty;
 
         private static string FormatBitrate(uint bitsPerSecond)
         {
@@ -392,6 +234,58 @@ namespace DeDupe.Models.Media
             return $"{mbps:F1} Mbps";
         }
 
-        #endregion Helpers
+        #endregion Video Properties
+
+        #region Audio Properties
+
+        public bool HasAudio { get; protected set; }
+
+        public uint AudioSampleRate { get; protected set; }
+
+        public uint AudioChannels { get; protected set; }
+
+        public string FormattedAudioChannels
+        {
+            get
+            {
+                return AudioChannels switch
+                {
+                    0 => "No Audio",
+                    1 => "Mono",
+                    2 => "Stereo",
+                    3 => "2.1 Surround",
+                    4 => "Quadraphonic",
+                    5 => "4.1 Surround",
+                    6 => "5.1 Surround",
+                    7 => "6.1 Surround",
+                    8 => "7.1 Surround",
+                    10 => "7.1.2 Surround",
+                    12 => "9.1.2 Surround",
+                    _ => $"{AudioChannels} channels"
+                };
+            }
+        }
+
+        #endregion Audio Properties
+
+        #region Recording Metadata
+
+        public DateTime? DateRecorded { get; protected set; }
+
+        public string? Title { get; protected set; }
+
+        public string? Description { get; protected set; }
+
+        public string? Director { get; protected set; }
+
+        public string? Copyright { get; protected set; }
+
+        public double? GpsLatitude { get; protected set; }
+
+        public double? GpsLongitude { get; protected set; }
+
+        public bool HasGpsCoordinates => GpsLatitude.HasValue && GpsLongitude.HasValue;
+
+        #endregion Recording Metadata
     }
 }

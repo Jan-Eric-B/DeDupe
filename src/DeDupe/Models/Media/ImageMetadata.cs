@@ -16,261 +16,17 @@ namespace DeDupe.Models.Media
     /// </summary>
     public partial class ImageMetadata : MediaMetadata
     {
-        #region Loading State
-
-        /// <summary>
-        /// Whether dimensions have been loaded.
-        /// </summary>
-        public bool AreDimensionsLoaded { get; private set; }
-
-        /// <summary>
-        /// Whether full EXIF metadata has been loaded.
-        /// </summary>
-        public bool IsFullMetadataLoaded { get; private set; }
-
-        #endregion Loading State
-
-        #region Image Properties
-
-        /// <summary>
-        /// Horizontal DPI
-        /// </summary>
-        public double DpiX { get; protected set; }
-
-        /// <summary>
-        /// Vertical DPI
-        /// </summary>
-        public double DpiY { get; protected set; }
-
-        /// <summary>
-        /// Bit depth
-        /// </summary>
-        public int BitsPerPixel { get; protected set; }
-
-        /// <summary>
-        /// Pixel format name
-        /// </summary>
-        public string PixelFormat { get; protected set; } = string.Empty;
-
-        /// <summary>
-        /// Has alpha channel
-        /// </summary>
-        public bool HasAlphaChannel { get; protected set; }
-
-        /// <summary>
-        /// Color space
-        /// </summary>
-        public string ColorSpace { get; protected set; } = string.Empty;
-
-        #endregion Image Properties
-
-        #region EXIF Properties
-
-        /// <summary>
-        /// Date photo was taken
-        /// </summary>
-        public DateTime? DateTaken { get; protected set; }
-
-        /// <summary>
-        /// Camera manufacturer
-        /// </summary>
-        public string? CameraMake { get; protected set; }
-
-        /// <summary>
-        /// Camera model
-        /// </summary>
-        public string? CameraModel { get; protected set; }
-
-        /// <summary>
-        /// Camera info (Make + Model)
-        /// </summary>
-        public string CameraInfo
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(CameraMake) && string.IsNullOrEmpty(CameraModel))
-                {
-                    return string.Empty;
-                }
-
-                if (string.IsNullOrEmpty(CameraMake))
-                {
-                    return CameraModel ?? string.Empty;
-                }
-
-                return string.IsNullOrEmpty(CameraModel) ? CameraMake : $"{CameraMake} {CameraModel}";
-            }
-        }
-
-        /// <summary>
-        /// Lens
-        /// </summary>
-        public string? LensModel { get; protected set; }
-
-        /// <summary>
-        /// Focal length in mm
-        /// </summary>
-        public double? FocalLength { get; protected set; }
-
-        /// <summary>
-        /// Formatted focal length
-        /// </summary>
-        public string FormattedFocalLength => FocalLength.HasValue ? $"{FocalLength:F0}mm" : string.Empty;
-
-        /// <summary>
-        /// F-stop / aperture
-        /// </summary>
-        public double? FNumber { get; protected set; }
-
-        /// <summary>
-        /// Formatted aperture
-        /// </summary>
-        public string FormattedAperture => FNumber.HasValue ? $"f/{FNumber:F1}" : string.Empty;
-
-        /// <summary>
-        /// Exposure time
-        /// </summary>
-        public double? ExposureTime { get; protected set; }
-
-        /// <summary>
-        /// Formatted exposure time
-        /// </summary>
-        public string FormattedExposureTime
-        {
-            get
-            {
-                if (!ExposureTime.HasValue)
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return ExposureTime.Value >= 1 ? $"{ExposureTime.Value:F1}s" : $"1/{(int)(1 / ExposureTime.Value)}s";
-                }
-            }
-        }
-
-        /// <summary>
-        /// ISO
-        /// </summary>
-        public int? IsoSpeed { get; protected set; }
-
-        /// <summary>
-        /// Formatted ISO
-        /// </summary>
-        public string FormattedIso => IsoSpeed.HasValue ? $"ISO {IsoSpeed}" : string.Empty;
-
-        /// <summary>
-        /// Exposure bias
-        /// </summary>
-        public double? ExposureBias { get; protected set; }
-
-        /// <summary>
-        /// Flash mode
-        /// </summary>
-        public string? FlashMode { get; protected set; }
-
-        /// <summary>
-        /// Flash was fired
-        /// </summary>
-        public bool? FlashFired { get; protected set; }
-
-        /// <summary>
-        /// White balance mode
-        /// </summary>
-        public string? WhiteBalance { get; protected set; }
-
-        /// <summary>
-        /// EXIF orientation value (1-8)
-        /// </summary>
-        public int ExifOrientation { get; protected set; } = 1;
-
-        /// <summary>
-        /// Image title from metadata
-        /// </summary>
-        public string? Title { get; protected set; }
-
-        /// <summary>
-        /// Image description
-        /// </summary>
-        public string? Description { get; protected set; }
-
-        /// <summary>
-        /// Copyright
-        /// </summary>
-        public string? Copyright { get; protected set; }
-
-        /// <summary>
-        /// Used software
-        /// </summary>
-        public string? Software { get; protected set; }
-
-        /// <summary>
-        /// Author
-        /// </summary>
-        public string? Author { get; protected set; }
-
-        #endregion EXIF Properties
-
-        #region GPS Properties
-
-        /// <summary>
-        /// GPS latitude
-        /// </summary>
-        public double? GpsLatitude { get; protected set; }
-
-        /// <summary>
-        /// GPS longitude
-        /// </summary>
-        public double? GpsLongitude { get; protected set; }
-
-        /// <summary>
-        /// GPS altitude in meters
-        /// </summary>
-        public double? GpsAltitude { get; protected set; }
-
-        /// <summary>
-        /// GPS coordinates are available
-        /// </summary>
-        public bool HasGpsCoordinates => GpsLatitude.HasValue && GpsLongitude.HasValue;
-
-        /// <summary>
-        /// Formatted GPS coordinates
-        /// </summary>
-        public string FormattedGpsCoordinates
-        {
-            get
-            {
-                if (!HasGpsCoordinates)
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return $"{GpsLatitude:F6}, {GpsLongitude:F6}";
-                }
-            }
-        }
-
-        #endregion GPS Properties
-
-        #region Constructors
-
-        /// <summary>
-        /// Create image metadata from file path.
-        /// </summary>
         protected internal ImageMetadata(string filePath, MediaType mediaType) : base(filePath, mediaType)
         {
             MediaType = MediaType.Image;
         }
 
-        #endregion Constructors
+        #region Loading
 
-        #region Factory Methods
+        public bool AreDimensionsLoaded { get; private set; }
 
-        /// <summary>
-        /// Create and load image metadata.
-        /// </summary>
+        public bool IsFullMetadataLoaded { get; private set; }
+
         public static async Task<ImageMetadata> CreateAsync(string filePath, bool loadFullMetadata = true)
         {
             ImageMetadata metadata = new(filePath, MediaType.Image);
@@ -284,13 +40,6 @@ namespace DeDupe.Models.Media
             return metadata;
         }
 
-        #endregion Factory Methods
-
-        #region Methods
-
-        /// <summary>
-        /// Load only dimensions (width & height).
-        /// </summary>
         public async Task LoadDimensionsOnlyAsync()
         {
             if (AreDimensionsLoaded)
@@ -334,9 +83,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Load dimensions using Windows Imaging.
-        /// </summary>
         private async Task LoadDimensionsViaWindowsImagingAsync()
         {
             try
@@ -354,9 +100,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Load full metadata.
-        /// </summary>
         public async Task LoadMetadataAsync()
         {
             if (IsFullMetadataLoaded)
@@ -372,9 +115,6 @@ namespace DeDupe.Models.Media
             IsFullMetadataLoaded = true;
         }
 
-        /// <summary>
-        /// Load basic image properties
-        /// </summary>
         public async Task LoadImagePropertiesAsync()
         {
             try
@@ -411,9 +151,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Load EXIF metadata from image
-        /// </summary>
         public async Task LoadExifDataAsync()
         {
             try
@@ -455,9 +192,6 @@ namespace DeDupe.Models.Media
             }
         }
 
-        /// <summary>
-        /// Load more EXIF properties
-        /// </summary>
         private async Task LoadExifDataPropertiesAsync(StorageFile file)
         {
             try
@@ -572,6 +306,113 @@ namespace DeDupe.Models.Media
             };
         }
 
-        #endregion Methods
+        #endregion Loading
+
+        #region Image Properties
+
+        public double DpiX { get; protected set; }
+
+        public double DpiY { get; protected set; }
+
+        public int BitsPerPixel { get; protected set; }
+
+        public string PixelFormat { get; protected set; } = string.Empty;
+
+        public bool HasAlphaChannel { get; protected set; }
+
+        public string ColorSpace { get; protected set; } = string.Empty;
+
+        #endregion Image Properties
+
+        #region EXIF Properties
+
+        public DateTime? DateTaken { get; protected set; }
+
+        public string? CameraMake { get; protected set; }
+
+        public string? CameraModel { get; protected set; }
+
+        public string? LensModel { get; protected set; }
+
+        public double? FocalLength { get; protected set; }
+
+        public string FormattedFocalLength => FocalLength.HasValue ? $"{FocalLength:F0}mm" : string.Empty;
+
+        /// <summary>
+        /// F-stop / aperture
+        /// </summary>
+        public double? FNumber { get; protected set; }
+
+        public string FormattedAperture => FNumber.HasValue ? $"f/{FNumber:F1}" : string.Empty;
+
+        public double? ExposureTime { get; protected set; }
+
+        public string FormattedExposureTime
+        {
+            get
+            {
+                if (!ExposureTime.HasValue)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return ExposureTime.Value >= 1 ? $"{ExposureTime.Value:F1}s" : $"1/{(int)(1 / ExposureTime.Value)}s";
+                }
+            }
+        }
+
+        public int? IsoSpeed { get; protected set; }
+
+        public string FormattedIso => IsoSpeed.HasValue ? $"ISO {IsoSpeed}" : string.Empty;
+
+        public double? ExposureBias { get; protected set; }
+
+        public string? FlashMode { get; protected set; }
+
+        public bool? FlashFired { get; protected set; }
+
+        public string? WhiteBalance { get; protected set; }
+
+        public int ExifOrientation { get; protected set; } = 1;
+
+        public string? Title { get; protected set; }
+
+        public string? Description { get; protected set; }
+
+        public string? Copyright { get; protected set; }
+
+        public string? Software { get; protected set; }
+
+        public string? Author { get; protected set; }
+
+        #endregion EXIF Properties
+
+        #region GPS Properties
+
+        public double? GpsLatitude { get; protected set; }
+
+        public double? GpsLongitude { get; protected set; }
+
+        public double? GpsAltitude { get; protected set; }
+
+        public bool HasGpsCoordinates => GpsLatitude.HasValue && GpsLongitude.HasValue;
+
+        public string FormattedGpsCoordinates
+        {
+            get
+            {
+                if (!HasGpsCoordinates)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return $"{GpsLatitude:F6}, {GpsLongitude:F6}";
+                }
+            }
+        }
+
+        #endregion GPS Properties
     }
 }

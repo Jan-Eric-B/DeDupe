@@ -9,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Analysis
 {
-    /// <summary>
-    /// Service for analyzing similarity between items and clustering them.
-    /// </summary>
+    /// <inheritdoc />
     public class SimilarityAnalysisService : ISimilarityAnalysisService
     {
+        /// <inheritdoc />
         public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(items);
@@ -27,13 +26,13 @@ namespace DeDupe.Services.Analysis
 
             try
             {
-                // Step 1 - Build similarity matrix
-                double[,] similarityMatrix = await CalculateSimilarityMatrixAsync(itemList, cancellationToken);
+                // Build similarity matrix
+                double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, cancellationToken), cancellationToken);
 
-                // Step 2 - Hierarchical clustering
-                List<SimilarityGroup> clusters = await PerformHierarchicalClusteringAsync(itemList, similarityMatrix, similarityThreshold, cancellationToken);
+                // Hierarchical clustering
+                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, cancellationToken), cancellationToken);
 
-                // Step 3 - Calculate cluster statistics
+                // Calculate cluster statistics
                 CalculateClusterStatistics(clusters, itemList, similarityMatrix);
 
                 return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
@@ -82,10 +81,7 @@ namespace DeDupe.Services.Analysis
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
-        /// <summary>
-        /// Calculate cosine similarity matrix for all items.
-        /// </summary>
-        private async Task<double[,]> CalculateSimilarityMatrixAsync(List<AnalysisItem> items, CancellationToken cancellationToken)
+        private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, CancellationToken cancellationToken)
         {
             int count = items.Count;
             double[,] matrix = new double[count, count];
@@ -115,12 +111,6 @@ namespace DeDupe.Services.Analysis
                     }
 
                     completedComparisons++;
-
-                    // Yield for UI updates and cancellation checks
-                    if (completedComparisons % 1000 == 0)
-                    {
-                        await Task.Delay(1, cancellationToken);
-                    }
                 }
             }
 
@@ -130,11 +120,11 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform agglomerative hierarchical clustering.
         /// </summary>
-        private static async Task<List<SimilarityGroup>> PerformHierarchicalClusteringAsync(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
+        private static List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
         {
             int count = items.Count;
 
-            // Initialize each item as its own cluster
+            // Initialize item as its own cluster
             List<List<int>> groups = [];
             for (int i = 0; i < count; i++)
             {
@@ -197,11 +187,6 @@ namespace DeDupe.Services.Analysis
                 activeClusters[clusterJ] = false;
 
                 mergeOperations++;
-
-                if (mergeOperations % 10 == 0)
-                {
-                    await Task.Delay(1, cancellationToken);
-                }
             }
 
             // Convert to SimilarityGroup objects
@@ -247,9 +232,6 @@ namespace DeDupe.Services.Analysis
             return false;
         }
 
-        /// <summary>
-        /// Calculate similarity between two clusters using average linkage.
-        /// </summary>
         private static double CalculateClusterSimilarity(List<int> groupA, List<int> groupB, double[,] similarityMatrix)
         {
             double totalSimilarity = 0.0;
