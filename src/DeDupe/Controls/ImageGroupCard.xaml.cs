@@ -15,8 +15,6 @@ namespace DeDupe.Controls
 {
     public sealed partial class ImageGroupCard : UserControl
     {
-        #region Properties
-
         public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupCard), new PropertyMetadata(null, OnGroupChanged));
 
         public SimilarityGroup? Group
@@ -25,16 +23,10 @@ namespace DeDupe.Controls
             set => SetValue(GroupProperty, value);
         }
 
-        #endregion Properties
-
-        #region Constructor
-
         public ImageGroupCard()
         {
             InitializeComponent();
         }
-
-        #endregion Constructor
 
         private static void OnGroupChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {

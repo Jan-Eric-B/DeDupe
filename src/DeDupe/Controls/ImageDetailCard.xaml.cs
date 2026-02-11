@@ -17,64 +17,54 @@ namespace DeDupe.Controls
 {
     public sealed partial class ImageDetailCard : UserControl
     {
-        #region Properties
-
-        public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register(nameof(SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
-
-        public SelectableItem? SelectableItem
-        {
-            get => (SelectableItem?)GetValue(SelectableItemProperty);
-            set => SetValue(SelectableItemProperty, value);
-        }
-
-        #endregion Properties
-
-        #region Constructor
-
         public ImageDetailCard()
         {
             InitializeComponent();
         }
 
-        #endregion Constructor
+        #region Loading
 
-        #region Property Changed Handlers
-
-        private static void OnSelectableItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if (d is not ImageDetailCard control)
-                return;
+            SelectionCheckBox.Checked += SelectionCheckBox_CheckedChanged;
+            SelectionCheckBox.Unchecked += SelectionCheckBox_CheckedChanged;
+        }
 
-            // Unsubscribe from old item
-            if (e.OldValue is SelectableItem oldItem)
-            {
-                oldItem.PropertyChanged -= control.OnSelectableItemPropertyChanged;
-            }
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
+            SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
 
-            // Subscribe to new item
-            if (e.NewValue is SelectableItem newItem)
+            // Unsubscribe from event
+            SelectableItem?.PropertyChanged -= OnSelectableItemPropertyChanged;
+        }
+
+        private async Task LoadThumbnailAsync(string imagePath)
+        {
+            try
             {
-                newItem.PropertyChanged += control.OnSelectableItemPropertyChanged;
-                control.UpdateDisplay(newItem);
-                control.UpdateSelection(newItem.IsSelected);
+                StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
+                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
+
+                BitmapImage bitmap = new()
+                {
+                    DecodePixelWidth = 320,
+                    DecodePixelType = DecodePixelType.Logical
+                };
+
+                await bitmap.SetSourceAsync(stream);
+                ImageThumbnail.Source = bitmap;
+                PlaceholderIcon.Visibility = Visibility.Collapsed;
             }
-            else
+            catch (Exception ex)
             {
-                control.ClearDisplay();
+                Debug.WriteLine($"Failed to load thumbnail: {imagePath}, Error: {ex.Message}");
+                PlaceholderIcon.Visibility = Visibility.Visible;
             }
         }
 
-        private void OnSelectableItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (sender is SelectableItem item && e.PropertyName == nameof(SelectableItem.IsSelected))
-            {
-                UpdateSelection(item.IsSelected);
-            }
-        }
 
-        #endregion Property Changed Handlers
-
-        #region Display Updates
+        #endregion Loading
 
         private void UpdateDisplay(SelectableItem item)
         {
@@ -90,6 +80,18 @@ namespace DeDupe.Controls
 
             _ = LoadThumbnailAsync(metadata.FilePath);
             _ = EnsureDimensionsAndUpdateAsync(item);
+        }
+
+        private void ClearDisplay()
+        {
+            FileNameTextBlock.Text = string.Empty;
+            ResolutionTextBlock.Text = string.Empty;
+            FileSizeTextBlock.Text = string.Empty;
+            FormatTextBlock.Text = string.Empty;
+            CreatedDateTextBlock.Text = string.Empty;
+            ImageThumbnail.Source = null;
+            PlaceholderIcon.Visibility = Visibility.Visible;
+            SelectionCheckBox.IsChecked = false;
         }
 
         private void UpdateResolutionDisplay(MediaMetadata metadata)
@@ -149,64 +151,6 @@ namespace DeDupe.Controls
             return formatter.Format(date);
         }
 
-        private void ClearDisplay()
-        {
-            FileNameTextBlock.Text = string.Empty;
-            ResolutionTextBlock.Text = string.Empty;
-            FileSizeTextBlock.Text = string.Empty;
-            FormatTextBlock.Text = string.Empty;
-            CreatedDateTextBlock.Text = string.Empty;
-            ImageThumbnail.Source = null;
-            PlaceholderIcon.Visibility = Visibility.Visible;
-            SelectionCheckBox.IsChecked = false;
-        }
-
-        private async Task LoadThumbnailAsync(string imagePath)
-        {
-            try
-            {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
-                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
-
-                BitmapImage bitmap = new()
-                {
-                    DecodePixelWidth = 320,
-                    DecodePixelType = DecodePixelType.Logical
-                };
-
-                await bitmap.SetSourceAsync(stream);
-                ImageThumbnail.Source = bitmap;
-                PlaceholderIcon.Visibility = Visibility.Collapsed;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to load thumbnail: {imagePath}, Error: {ex.Message}");
-                PlaceholderIcon.Visibility = Visibility.Visible;
-            }
-        }
-
-        private void UpdateSelection(bool isSelected)
-        {
-            if (SelectionCheckBox.IsChecked != isSelected)
-            {
-                SelectionCheckBox.IsChecked = isSelected;
-            }
-
-            VisualStateManager.GoToState(this, isSelected ? "Selected" : "Unselected", true);
-        }
-
-        #endregion Display Updates
-
-        #region Event Handlers
-
-        private void SelectionCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (SelectableItem != null && SelectionCheckBox.IsChecked.HasValue)
-            {
-                SelectableItem.IsSelected = SelectionCheckBox.IsChecked.Value;
-            }
-        }
-
         private async void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             if (SelectableItem == null)
@@ -247,28 +191,67 @@ namespace DeDupe.Controls
             }
         }
 
-        #endregion Event Handlers
+        #region Selection
 
-        #region Lifecycle
+        public static readonly DependencyProperty SelectableItemProperty = DependencyProperty.Register(nameof(SelectableItem), typeof(SelectableItem), typeof(ImageDetailCard), new PropertyMetadata(null, OnSelectableItemChanged));
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        public SelectableItem? SelectableItem
         {
-            SelectionCheckBox.Checked += SelectionCheckBox_CheckedChanged;
-            SelectionCheckBox.Unchecked += SelectionCheckBox_CheckedChanged;
+            get => (SelectableItem?)GetValue(SelectableItemProperty);
+            set => SetValue(SelectableItemProperty, value);
         }
 
-        private void OnUnloaded(object sender, RoutedEventArgs e)
+        private static void OnSelectableItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
-            SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
+            if (d is not ImageDetailCard control)
+                return;
 
-            // Unsubscribe from event
-            if (SelectableItem != null)
+            // Unsubscribe from old item
+            if (e.OldValue is SelectableItem oldItem)
             {
-                SelectableItem.PropertyChanged -= OnSelectableItemPropertyChanged;
+                oldItem.PropertyChanged -= control.OnSelectableItemPropertyChanged;
+            }
+
+            // Subscribe to new item
+            if (e.NewValue is SelectableItem newItem)
+            {
+                newItem.PropertyChanged += control.OnSelectableItemPropertyChanged;
+                control.UpdateDisplay(newItem);
+                control.UpdateSelection(newItem.IsSelected);
+            }
+            else
+            {
+                control.ClearDisplay();
             }
         }
 
-        #endregion Lifecycle
+        private void OnSelectableItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is SelectableItem item && e.PropertyName == nameof(SelectableItem.IsSelected))
+            {
+                UpdateSelection(item.IsSelected);
+            }
+        }
+
+        private void UpdateSelection(bool isSelected)
+        {
+            if (SelectionCheckBox.IsChecked != isSelected)
+            {
+                SelectionCheckBox.IsChecked = isSelected;
+            }
+
+            VisualStateManager.GoToState(this, isSelected ? "Selected" : "Unselected", true);
+        }
+
+        private void SelectionCheckBox_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (SelectableItem != null && SelectionCheckBox.IsChecked.HasValue)
+            {
+                SelectableItem.IsSelected = SelectionCheckBox.IsChecked.Value;
+            }
+        }
+
+        #endregion Selection
+
     }
 }

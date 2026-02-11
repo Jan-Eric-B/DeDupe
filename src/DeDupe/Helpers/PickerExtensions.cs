@@ -5,9 +5,6 @@ namespace DeDupe.Helpers
 {
     public static class PickerExtensions
     {
-        /// <summary>
-        /// Initialize picker for current window.
-        /// </summary>
         public static void InitializeForCurrentWindow(this object picker)
         {
             nint hwnd = App.Window is not null ? WindowNative.GetWindowHandle(App.Window) : GetActiveWindow();

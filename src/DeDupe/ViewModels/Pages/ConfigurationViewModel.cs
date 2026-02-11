@@ -307,7 +307,7 @@ namespace DeDupe.ViewModels.Pages
 
                         if (count % batchSize == 0)
                         {
-                            App.Window.DispatcherQueue.TryEnqueue(() =>
+                            DispatchToUI(() =>
                             {
                                 Status = $"Found {count:N0} images...";
                             });
@@ -531,7 +531,7 @@ namespace DeDupe.ViewModels.Pages
 
                         Progress<ModelDownloadProgress> downloadProgress = new(info =>
                         {
-                            App.Window.DispatcherQueue.TryEnqueue(() =>
+                            DispatchToUI(() =>
                             {
                                 ProgressPercentage = info.Percentage * 100;
                                 Status = info.StatusText;
@@ -565,8 +565,8 @@ namespace DeDupe.ViewModels.Pages
                 // Create progress handler for image processing
                 Progress<ProgressInfo> imageProcessingProgress = new(info =>
                 {
-                    // Update on UI thread via dispatcher
-                    App.Window.DispatcherQueue.TryEnqueue(() =>
+                    // Update on UI thread
+                    DispatchToUI(() =>
                     {
                         CurrentOperation = info.OperationName;
                         CurrentProcessedCount = info.CurrentItem;
@@ -624,7 +624,7 @@ namespace DeDupe.ViewModels.Pages
                 // Create progress handler for feature extraction
                 Progress<ProgressInfo> featureExtractionProgress = new(info =>
                 {
-                    App.Window.DispatcherQueue.TryEnqueue(() =>
+                    DispatchToUI(() =>
                     {
                         CurrentOperation = info.OperationName;
                         CurrentProcessedCount = info.CurrentItem;

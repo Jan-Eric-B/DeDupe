@@ -89,11 +89,8 @@ namespace DeDupe.Views.Pages
 
         private void UnsubscribeFromGroup()
         {
-            if (_subscribedGroup != null)
-            {
-                _subscribedGroup.PropertyChanged -= OnGroupPropertyChanged;
-                _subscribedGroup = null;
-            }
+            _subscribedGroup?.PropertyChanged -= OnGroupPropertyChanged;
+            _subscribedGroup = null;
         }
 
         private void CloseGroupContentPanel_Click(object sender, RoutedEventArgs e)

@@ -4,36 +4,18 @@ using System.Linq;
 
 namespace DeDupe.Models.Analysis
 {
-    /// <summary>
-    /// Immutable result of similarity analysis and clustering.
-    /// </summary>
     public sealed class SimilarityResult
     {
         #region Properties
 
-        /// <summary>
-        /// All clusters (immutable).
-        /// </summary>
         public IReadOnlyList<SimilarityGroup> Groups { get; }
 
-        /// <summary>
-        /// Similarity threshold used for clustering.
-        /// </summary>
         public double SimilarityThreshold { get; }
 
-        /// <summary>
-        /// Total number of items that were analyzed.
-        /// </summary>
         public int TotalItemsAnalyzed { get; }
 
-        /// <summary>
-        /// Timestamp when analysis was completed.
-        /// </summary>
         public DateTime AnalysisCompletedAt { get; }
 
-        /// <summary>
-        /// Total number of clusters.
-        /// </summary>
         public int TotalClusters => Groups.Count;
 
         /// <summary>
@@ -46,35 +28,15 @@ namespace DeDupe.Models.Analysis
         /// </summary>
         public int SingletonGroupCount => Groups.Count(c => !c.IsDuplicateGroup);
 
-        /// <summary>
-        /// Total number of items in duplicate groups.
-        /// </summary>
         public int TotalDuplicateItems => Groups.Where(c => c.IsDuplicateGroup).Sum(c => c.Count);
 
-        /// <summary>
-        /// Clusters that contain potential duplicates, ordered by similarity.
-        /// </summary>
         public IReadOnlyList<SimilarityGroup> DuplicateGroups { get; }
 
-        /// <summary>
-        /// Whether this result contains any data.
-        /// </summary>
         public bool IsEmpty => TotalItemsAnalyzed == 0;
 
         #endregion Properties
 
-        #region Constructors
-
-        /// <summary>
-        /// Create a new similarity result.
-        /// </summary>
-        /// <param name="clusters">Clusters found during analysis.</param>
-        /// <param name="similarityThreshold">Threshold used for grouping.</param>
-        /// <param name="totalItemsAnalyzed">Number of items that were analyzed.</param>
-        public SimilarityResult(
-            IEnumerable<SimilarityGroup> clusters,
-            double similarityThreshold,
-            int totalItemsAnalyzed)
+        public SimilarityResult(IEnumerable<SimilarityGroup> clusters, double similarityThreshold, int totalItemsAnalyzed)
         {
             ArgumentNullException.ThrowIfNull(clusters);
 
@@ -93,9 +55,6 @@ namespace DeDupe.Models.Analysis
             AnalysisCompletedAt = DateTime.Now;
         }
 
-        /// <summary>
-        /// Private constructor for creating empty results.
-        /// </summary>
         private SimilarityResult(double similarityThreshold)
         {
             Groups = [];
@@ -105,25 +64,11 @@ namespace DeDupe.Models.Analysis
             AnalysisCompletedAt = DateTime.Now;
         }
 
-        #endregion Constructors
-
-        #region Factory Methods
-
-        /// <summary>
-        /// Create an empty result.
-        /// </summary>
         public static SimilarityResult Empty(double similarityThreshold = 0.0)
         {
             return new SimilarityResult(similarityThreshold);
         }
 
-        #endregion Factory Methods
-
-        #region Methods
-
-        /// <summary>
-        /// Get a human-readable summary of the results.
-        /// </summary>
         public string GetSummary()
         {
             if (IsEmpty)
@@ -136,16 +81,7 @@ namespace DeDupe.Models.Analysis
                 return $"No duplicate groups found. All {TotalItemsAnalyzed} items are unique.";
             }
 
-            return $"Found {DuplicateGroupsCount} duplicate group{(DuplicateGroupsCount == 1 ? "" : "s")} " +
-                   $"containing {TotalDuplicateItems} item{(TotalDuplicateItems == 1 ? "" : "s")}. " +
-                   $"{SingletonGroupCount} item{(SingletonGroupCount == 1 ? "" : "s")} unique.";
+            return $"Found {DuplicateGroupsCount} duplicate group{(DuplicateGroupsCount == 1 ? "" : "s")} containing {TotalDuplicateItems} item{(TotalDuplicateItems == 1 ? "" : "s")}. {SingletonGroupCount} item{(SingletonGroupCount == 1 ? "" : "s")} unique.";
         }
-
-        public override string ToString()
-        {
-            return $"SimilarityResult: {GetSummary()}";
-        }
-
-        #endregion Methods
     }
 }

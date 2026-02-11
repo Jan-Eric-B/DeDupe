@@ -1,4 +1,4 @@
-﻿using DeDupe.Helper;
+﻿using DeDupe.Helpers;
 using Microsoft.UI.Xaml.Data;
 using System;
 

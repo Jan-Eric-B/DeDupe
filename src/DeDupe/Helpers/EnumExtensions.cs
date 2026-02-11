@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Reflection;
 
-namespace DeDupe.Helper
+namespace DeDupe.Helpers
 {
     public static class EnumExtensions
     {

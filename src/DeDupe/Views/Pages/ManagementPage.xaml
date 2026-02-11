@@ -7,7 +7,7 @@
     xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enums="using:DeDupe.Enums"
-    xmlns:helpers="using:DeDupe.Helper"
+    xmlns:helpers="using:DeDupe.Helpers"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
     xmlns:pages="using:DeDupe.ViewModels.Pages"

@@ -3,9 +3,6 @@ using System;
 
 namespace DeDupe.Converters
 {
-    /// <summary>
-    /// Converts a double value (0-100) to a percentage string like "16.8%"
-    /// </summary>
     public partial class PercentageConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)

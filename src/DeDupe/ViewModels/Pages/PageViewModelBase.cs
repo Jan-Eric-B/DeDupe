@@ -24,6 +24,14 @@ namespace DeDupe.ViewModels
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);
         }
 
+        public static void DispatchToUI(Action action)
+        {
+            if (App.Window?.DispatcherQueue is { } dispatcher)
+            {
+                dispatcher.TryEnqueue(() => action());
+            }
+        }
+
         #region Navigation
 
         protected virtual void NavigateToNext()

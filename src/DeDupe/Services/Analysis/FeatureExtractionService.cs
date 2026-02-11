@@ -316,7 +316,7 @@ namespace DeDupe.Services.Analysis
                         Debug.WriteLine($"Batch inference failed, falling back to individual processing: {ex.Message}");
 
                         // Fallback - Process items individually
-                        List<AnalysisItem> failedItems = validIndices.Select(i => batchItems[i]).ToList();
+                        List<AnalysisItem> failedItems = [.. validIndices.Select(i => batchItems[i])];
                         await ProcessItemsIndividuallyAsync(failedItems, normalization, ct);
                     }
                 }

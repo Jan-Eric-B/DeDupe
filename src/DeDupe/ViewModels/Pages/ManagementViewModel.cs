@@ -545,7 +545,16 @@ namespace DeDupe.ViewModels.Pages
 
                     foreach (KeyValuePair<string, List<string>> groupEntry in filesByGroup)
                     {
-                        string groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
+                        string? groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
+
+                        if (string.IsNullOrEmpty(groupName))
+                        {
+                            _logger.LogWarning("Group name '{OriginalName}' produced invalid folder name, skipping group", groupEntry.Key);
+                            totalFailed += groupEntry.Value.Count;
+                            failedPaths.AddRange(groupEntry.Value);
+                            continue;
+                        }
+
                         string groupFolder = Path.Combine(rootFolder, groupName);
 
                         // Create group folder if it doesn't exist
@@ -842,10 +851,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
 
-                if (SelectedGroup != null)
-                {
-                    SelectedGroup.GroupSelectionChanged -= OnGroupSelectionChanged;
-                }
+                SelectedGroup?.GroupSelectionChanged -= OnGroupSelectionChanged;
 
                 foreach (SimilarityGroup group in SimilarityGroups)
                 {
