@@ -28,6 +28,7 @@
     <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-48.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\GitHub_Invertocat_Black_Clearspace.png" />
     <None Remove="Assets\GitHub_Invertocat_White_Clearspace.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-100.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-125.png" />
@@ -109,8 +110,11 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
   <ItemGroup>
+    <Content Update="Assets\GitHub_Invertocat_Black_Clearspace.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\GitHub_Invertocat_White_Clearspace.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
