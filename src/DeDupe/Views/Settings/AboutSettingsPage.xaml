@@ -7,6 +7,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:DeDupe.Models"
     xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
@@ -193,6 +194,63 @@
                         </controls:SettingsCard.Header>
                     </controls:SettingsCard>
                 </controls:SettingsExpander.ItemsFooter>
+            </controls:SettingsExpander>
+
+            <controls:SettingsExpander
+                Header="Third-party Dependencies"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE946;}">
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <ListView ItemsSource="{x:Bind ViewModel.Dependencies, Mode=OneWay}" SelectionMode="None">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Padding" Value="0,2" />
+                                        <Setter Property="MinHeight" Value="30" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="400" />
+                                                <ColumnDefinition Width="200" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock FontWeight="Bold" Text="Package ID" />
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                FontWeight="Bold"
+                                                Text="Version" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.HeaderTemplate>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="models:DependencyPackageEntry">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="400" />
+                                                <ColumnDefinition Width="200" />
+                                            </Grid.ColumnDefinitions>
+                                            <HyperlinkButton
+                                                Grid.Column="0"
+                                                NavigateUri="{x:Bind NuGetUrl}"
+                                                ToolTipService.ToolTip="{x:Bind NuGetUrl}">
+                                                <TextBlock VerticalAlignment="Center" Text="{x:Bind Id}" />
+                                            </HyperlinkButton>
+
+                                            <TextBlock
+                                                Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{x:Bind ResolvedVersion}" />
+                                        </Grid>
+
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
         </StackPanel>
     </ScrollViewer>

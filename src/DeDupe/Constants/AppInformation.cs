@@ -12,5 +12,7 @@ namespace DeDupe.Constants
         public static readonly string Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0";
 
         public static readonly string UserAgent = $"{AppName}/{Version} ({GitHubRepo})";
+
+        public const string DependenciesJsonUri = $"ms-appx:///Assets/dependencies.json";
     }
 }

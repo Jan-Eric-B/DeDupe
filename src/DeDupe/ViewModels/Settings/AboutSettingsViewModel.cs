@@ -1,14 +1,19 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
+using DeDupe.Models;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
 
 namespace DeDupe.ViewModels.Settings
 {
@@ -20,8 +25,6 @@ namespace DeDupe.ViewModels.Settings
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             Title = "About";
-
-            LoadInformation();
         }
 
         [ObservableProperty]
@@ -42,7 +45,15 @@ namespace DeDupe.ViewModels.Settings
         [ObservableProperty]
         public partial string CommitId { get; set; } = string.Empty;
 
-        private void LoadInformation()
+        [ObservableProperty]
+        public partial List<DependencyPackageEntry> Dependencies { get; set; } = [];
+
+        private static readonly JsonSerializerOptions jsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        private async Task LoadInformation()
         {
             try
             {
@@ -60,6 +71,8 @@ namespace DeDupe.ViewModels.Settings
                 string? infoVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
                 CommitId = infoVersion?.Split('+').LastOrDefault() ?? "Unknown";
 
+                Dependencies = await GetDependencies();
+
                 LogInformationLoaded(AppName, Publisher, AppVersion, DotNetVersion, CommitId);
             }
             catch (InvalidOperationException ex)
@@ -70,10 +83,28 @@ namespace DeDupe.ViewModels.Settings
             }
         }
 
+        private async Task<List<DependencyPackageEntry>> GetDependencies()
+        {
+            try
+            {
+                StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri(AppInformation.DependenciesJsonUri));
+                string json = await FileIO.ReadTextAsync(file);
+
+                List<DependencyPackageEntry>? dependencies = JsonSerializer.Deserialize<List<DependencyPackageEntry>>(json, jsonOptions);
+
+                return dependencies ?? [];
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse dependencies.json");
+                return [];
+            }
+        }
+
         [RelayCommand]
         private void CopyToClipboard()
         {
-            StringBuilder? builder = new();
+            StringBuilder builder = new();
             builder.AppendLine($"App: {AppName}");
             builder.AppendLine($"Publisher: {Publisher}");
             builder.AppendLine($"Version: {AppVersion}");
@@ -81,18 +112,18 @@ namespace DeDupe.ViewModels.Settings
             builder.AppendLine($".NET Version: {DotNetVersion}");
             builder.AppendLine($"Model Release Version: {ModelReleaseTag}");
 
-            DataPackage? dataPackage = new();
+            DataPackage dataPackage = new();
             dataPackage.SetText(builder.ToString());
             Clipboard.SetContent(dataPackage);
         }
 
         #region Navigation
 
-        public override void OnNavigatedTo()
+        public override async void OnNavigatedTo()
         {
             base.OnNavigatedTo();
 
-            LoadInformation();
+            await LoadInformation();
         }
 
         #endregion Navigation

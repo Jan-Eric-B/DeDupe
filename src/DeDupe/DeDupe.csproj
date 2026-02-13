@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
@@ -171,4 +171,23 @@
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <Target Name="GenerateDependenciesJson" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <_DepsOutputPath>$(ProjectDir)Assets\dependencies.json</_DepsOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_PkgLine Include="@(PackageReference->'{&quot;id&quot;:&quot;%(Identity)&quot;,&quot;resolvedVersion&quot;:&quot;%(Version)&quot;}')" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_PkgJson>@(_PkgLine, ',')</_PkgJson>
+    </PropertyGroup>
+
+    <WriteLinesToFile
+      File="$(_DepsOutputPath)"
+      Lines="[%0A$(_PkgJson)%0A]"
+      Overwrite="true" />
+  </Target>
 </Project>
