@@ -11,6 +11,19 @@
     xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/GitHub_Invertocat_Black_Clearspace.svg" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/GitHub_Invertocat_White_Clearspace.svg" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <SvgImageSource x:Key="HuggingFaceIcon" UriSource="ms-appx:///Assets/huggingface_logo-noborder.svg" />
+        </ResourceDictionary>
+    </Page.Resources>
     <ScrollViewer>
         <StackPanel Spacing="4">
             <TextBlock
@@ -143,13 +156,29 @@
                         <HyperlinkButton
                             Command="{x:Bind ViewModel.OpenLinkCommand}"
                             CommandParameter="{x:Bind constants:ModelLinks.HuggingFace}"
-                            Content="Hugging Face"
-                            ToolTipService.ToolTip="{x:Bind constants:ModelLinks.HuggingFace}" />
+                            ToolTipService.ToolTip="{x:Bind constants:ModelLinks.HuggingFace}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    VerticalAlignment="Center"
+                                    Source="{StaticResource HuggingFaceIcon}" />
+                                <TextBlock VerticalAlignment="Center" Text="Hugging Face" />
+                            </StackPanel>
+                        </HyperlinkButton>
                         <HyperlinkButton
                             Command="{x:Bind ViewModel.OpenLinkCommand}"
                             CommandParameter="{x:Bind constants:ModelLinks.OnnxModelZoo}"
-                            Content="ONNX Model Zoo"
-                            ToolTipService.ToolTip="{x:Bind constants:ModelLinks.OnnxModelZoo}" />
+                            ToolTipService.ToolTip="{x:Bind constants:ModelLinks.OnnxModelZoo}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    VerticalAlignment="Center"
+                                    Source="{ThemeResource GitHubIcon}" />
+                                <TextBlock VerticalAlignment="Center" Text="ONNX Model Zoo" />
+                            </StackPanel>
+                        </HyperlinkButton>
                     </StackPanel>
                 </controls:SettingsCard>
             </StackPanel>
