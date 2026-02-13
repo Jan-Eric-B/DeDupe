@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Models;
+using DeDupe.Models.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -47,6 +48,9 @@ namespace DeDupe.ViewModels.Settings
 
         [ObservableProperty]
         public partial List<DependencyPackageEntry> Dependencies { get; set; } = [];
+
+        [ObservableProperty]
+        public partial List<BundledModelInfo> BundledModels { get; set; } = [.. BundledModelRegistry.All];
 
         private static readonly JsonSerializerOptions jsonOptions = new()
         {

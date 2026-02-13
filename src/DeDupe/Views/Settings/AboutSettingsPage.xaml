@@ -8,6 +8,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models"
+    xmlns:configuration="using:DeDupe.Models.Configuration"
     xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
@@ -240,6 +241,7 @@
 
                                             <TextBlock
                                                 Grid.Column="1"
+                                                Padding="10,0"
                                                 VerticalAlignment="Center"
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 Text="{x:Bind ResolvedVersion}" />
@@ -248,6 +250,79 @@
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                             </ListView>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+
+            <controls:SettingsExpander
+                Header="Bundled Models"
+                HeaderIcon="{ui:FontIcon Glyph=&#xF0B9;}">
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" >
+                                <ListView ItemsSource="{x:Bind ViewModel.BundledModels, Mode=OneWay}" SelectionMode="None">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="Padding" Value="0,2" />
+                                            <Setter Property="MinHeight" Value="30" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.HeaderTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="250" />
+                                                    <ColumnDefinition Width="200" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock FontWeight="Bold" Text="Model" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    FontWeight="Bold"
+                                                    Text="License" />
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    FontWeight="Bold"
+                                                    Text="Developer" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.HeaderTemplate>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="configuration:BundledModelInfo">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="250" />
+                                                    <ColumnDefinition Width="200" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <HyperlinkButton
+                                                    Grid.Column="0"
+                                                    Command="{Binding DataContext.OpenLinkCommand, ElementName=BundledModelsListView}"
+                                                    CommandParameter="{x:Bind Url}"
+                                                    ToolTipService.ToolTip="{x:Bind Url}">
+                                                    <TextBlock VerticalAlignment="Center" Text="{x:Bind DisplayName}" />
+                                                </HyperlinkButton>
+
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Padding="10,0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Text="{x:Bind License}" />
+
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    Padding="10,0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Text="{x:Bind Developers}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </ScrollViewer>
                         </controls:SettingsCard.Header>
                     </controls:SettingsCard>
                 </controls:SettingsExpander.Items>
