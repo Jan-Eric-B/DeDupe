@@ -1,5 +1,6 @@
 ﻿using DeDupe.Models.Media;
 using DeDupe.Models.Results;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,8 +10,10 @@ using System.Runtime.CompilerServices;
 namespace DeDupe.Services
 {
     /// <inheritdoc/>
-    public partial class AppStateService() : IAppStateService
+    public partial class AppStateService(ILogger<AppStateService> logger) : IAppStateService
     {
+        private readonly ILogger<AppStateService> _logger = logger;
+
         #region Source Media
 
         private readonly List<SourceMedia> _sourceMedia = [];
@@ -40,6 +43,10 @@ namespace DeDupe.Services
                 }
             }
 
+            int imageCount = _analysisItems.Count;
+            int videoCount = _sourceMedia.Count - imageCount;
+            LogSourceMediaSet(_sourceMedia.Count, imageCount, videoCount);
+
             OnPropertyChanged(nameof(SourceMedia));
             OnPropertyChanged(nameof(SourceMediaCount));
             OnPropertyChanged(nameof(AnalysisItems));
@@ -58,6 +65,8 @@ namespace DeDupe.Services
                 _analysisItems.Add(new AnalysisItem(source));
             }
 
+            LogSourceMediaAdded(source.IsImage ? "image" : "video", _sourceMedia.Count);
+
             OnPropertyChanged(nameof(SourceMedia));
             OnPropertyChanged(nameof(SourceMediaCount));
             OnPropertyChanged(nameof(AnalysisItems));
@@ -70,10 +79,14 @@ namespace DeDupe.Services
         {
             if (videoSource == null || !videoSource.IsVideo) return;
 
+            int addedCount = 0;
             foreach ((int frameIndex, TimeSpan timestamp) in frames)
             {
                 _analysisItems.Add(new AnalysisItem(videoSource, frameIndex, timestamp));
+                addedCount++;
             }
+
+            LogVideoFramesAdded(addedCount, _analysisItems.Count);
 
             OnPropertyChanged(nameof(AnalysisItems));
             OnPropertyChanged(nameof(AnalysisItemCount));
@@ -82,8 +95,11 @@ namespace DeDupe.Services
 
         public void ClearSourceMedia()
         {
+            int previousCount = _sourceMedia.Count;
             _sourceMedia.Clear();
             _analysisItems.Clear();
+
+            LogSourceMediaCleared(previousCount);
 
             OnPropertyChanged(nameof(SourceMedia));
             OnPropertyChanged(nameof(SourceMediaCount));
@@ -140,6 +156,8 @@ namespace DeDupe.Services
                 }
             }
 
+            LogAnalysisItemsRemoved(itemsToRemove.Count, _analysisItems.Count);
+
             // Notify changes
             OnPropertyChanged(nameof(AnalysisItems));
             OnPropertyChanged(nameof(AnalysisItemCount));
@@ -169,6 +187,8 @@ namespace DeDupe.Services
 
         public void NotifyProcessingComplete()
         {
+            LogProcessingStateCompleted(ProcessedItemCount, _analysisItems.Count);
+
             OnPropertyChanged(nameof(ProcessedItems));
             OnPropertyChanged(nameof(ProcessedItemCount));
             ProcessingStateChanged?.Invoke(this, EventArgs.Empty);
@@ -180,6 +200,8 @@ namespace DeDupe.Services
             {
                 item.ProcessedFilePath = null;
             }
+
+            LogProcessingStateCleared(_analysisItems.Count);
 
             OnPropertyChanged(nameof(ProcessedItems));
             OnPropertyChanged(nameof(ProcessedItemCount));
@@ -205,6 +227,8 @@ namespace DeDupe.Services
 
         public void NotifyFeaturesExtracted()
         {
+            LogFeatureExtractionNotified(ExtractedFeaturesCount, _analysisItems.Count);
+
             OnPropertyChanged(nameof(ItemsWithFeatures));
             OnPropertyChanged(nameof(ExtractedFeaturesCount));
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
@@ -218,6 +242,8 @@ namespace DeDupe.Services
                 item.FeatureDimensions = null;
             }
 
+            LogFeatureStateCleared(_analysisItems.Count);
+
             OnPropertyChanged(nameof(ItemsWithFeatures));
             OnPropertyChanged(nameof(ExtractedFeaturesCount));
             ExtractedFeaturesChanged?.Invoke(this, EventArgs.Empty);
@@ -226,5 +252,36 @@ namespace DeDupe.Services
         public event EventHandler? ExtractedFeaturesChanged;
 
         #endregion Extracted Features
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Source media set: {TotalCount} item(s) ({ImageCount} images, {VideoCount} videos)")]
+        private partial void LogSourceMediaSet(int totalCount, int imageCount, int videoCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Source media added ({MediaType}), total count: {TotalCount}")]
+        private partial void LogSourceMediaAdded(string mediaType, int totalCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Video frames added: {FrameCount} frames, total analysis items: {TotalItemCount}")]
+        private partial void LogVideoFramesAdded(int frameCount, int totalItemCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Source media cleared, removed {PreviousCount} item(s)")]
+        private partial void LogSourceMediaCleared(int previousCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Analysis items removed: {RemovedCount} item(s), {RemainingCount} remaining")]
+        private partial void LogAnalysisItemsRemoved(int removedCount, int remainingCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Processing state completed: {ProcessedCount} of {TotalCount} items processed")]
+        private partial void LogProcessingStateCompleted(int processedCount, int totalCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Processing state cleared for {ItemCount} item(s)")]
+        private partial void LogProcessingStateCleared(int itemCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Feature extraction notified: {ExtractedCount} of {TotalCount} items have features")]
+        private partial void LogFeatureExtractionNotified(int extractedCount, int totalCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Feature state cleared for {ItemCount} item(s)")]
+        private partial void LogFeatureStateCleared(int itemCount);
+
+        #endregion Logging
     }
 }

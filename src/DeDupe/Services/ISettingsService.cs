@@ -128,6 +128,8 @@ namespace DeDupe.Services
 
         string CustomModelFilePath { get; set; }
 
+        string ModelFolderPath { get; }
+
         event EventHandler<bool>? UseBundledModelChanged;
 
         event EventHandler<string>? SelectedBundledModelIdChanged;
@@ -149,5 +151,17 @@ namespace DeDupe.Services
         event EventHandler<NormalizationSettings>? NormalizationChanged;
 
         #endregion Normalization
+
+        #region Similarity
+
+        double SimilarityThreshold { get; set; }
+
+        bool AutoAnalyzeSimilarity { get; set; }
+
+        event EventHandler<double>? SimilarityThresholdChanged;
+
+        event EventHandler<bool>? AutoAnalyzeSimilarityChanged;
+
+        #endregion Similarity
     }
 }

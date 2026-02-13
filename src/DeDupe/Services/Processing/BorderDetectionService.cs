@@ -1,17 +1,21 @@
-﻿using SixLabors.ImageSharp;
+﻿using Microsoft.Extensions.Logging;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System;
 
 namespace DeDupe.Services.Processing
 {
-    public class BorderDetectionService : IBorderDetectionService
+    public partial class BorderDetectionService(ILogger<BorderDetectionService> logger) : IBorderDetectionService
     {
-        private enum EdgeSide { Top, Bottom, Left, Right }
+        private enum EdgeSide
+        { Top, Bottom, Left, Right }
 
         private readonly struct BorderColor(byte r, byte g, byte b)
         {
             public readonly byte R = r, G = g, B = b;
         }
+
+        private readonly ILogger<BorderDetectionService> _logger = logger;
 
         /// <inheritdoc />
         public Rectangle DetectBorders(Image<Rgba32> image, int tolerance = 30)
@@ -22,6 +26,7 @@ namespace DeDupe.Services.Processing
             // Too small to process
             if (width < 20 || height < 20)
             {
+                LogBorderDetectionSkipped(width, height);
                 return new Rectangle(0, 0, width, height);
             }
 
@@ -67,6 +72,11 @@ namespace DeDupe.Services.Processing
             if (newWidth < 10 || newHeight < 10)
             {
                 return new Rectangle(0, 0, width, height);
+            }
+
+            if (topBorder > 0 || bottomBorder > 0 || leftBorder > 0 || rightBorder > 0)
+            {
+                LogBordersDetected(width, height, topBorder, bottomBorder, leftBorder, rightBorder);
             }
 
             return new Rectangle(leftBorder, topBorder, newWidth, newHeight);
@@ -238,5 +248,15 @@ namespace DeDupe.Services.Processing
                    Math.Abs(pixel.G - target.G) <= tolerance &&
                    Math.Abs(pixel.B - target.B) <= tolerance;
         }
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Border detection skipped, image too small ({Width}x{Height})")]
+        private partial void LogBorderDetectionSkipped(int width, int height);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Borders detected on {Width}x{Height} image — top:{TopPx}px bottom:{BottomPx}px left:{LeftPx}px right:{RightPx}px")]
+        private partial void LogBordersDetected(int width, int height, int topPx, int bottomPx, int leftPx, int rightPx);
+
+        #endregion Logging
     }
 }

@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DeDupe.Enums;
+using DeDupe.Helpers;
 using DeDupe.Services;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 
@@ -9,10 +11,12 @@ namespace DeDupe.ViewModels.Settings
     public partial class GeneralSettingsViewModel : SettingsPageViewModelBase
     {
         private readonly ISettingsService _settingsService;
+        private readonly ILogger<GeneralSettingsViewModel> _logger;
 
-        public GeneralSettingsViewModel(ISettingsService settingsService)
+        public GeneralSettingsViewModel(ISettingsService settingsService, ILogger<GeneralSettingsViewModel> logger)
         {
             _settingsService = settingsService;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "General";
         }
@@ -22,6 +26,11 @@ namespace DeDupe.ViewModels.Settings
             SelectedThemeIndex = (int)_settingsService.Theme;
             SelectedBackdropIndex = (int)_settingsService.Backdrop;
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
+
+            string themeDescripion = EnumExtensions.GetDescription(_settingsService.Theme);
+            string backdropDescription = EnumExtensions.GetDescription(_settingsService.Backdrop);
+            string accentColorDescription = EnumExtensions.GetDescription(_settingsService.AccentColor);
+            LogSettingsLoaded(themeDescripion, backdropDescription, accentColorDescription);
         }
 
         #region Appearance
@@ -44,16 +53,22 @@ namespace DeDupe.ViewModels.Settings
         partial void OnSelectedThemeIndexChanged(int value)
         {
             _settingsService.Theme = (AppTheme)value;
+
+            LogSelectedThemeIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
         }
 
         partial void OnSelectedBackdropIndexChanged(int value)
         {
             _settingsService.Backdrop = (AppBackdrop)value;
+
+            LogSelectedBackdropIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
         }
 
         partial void OnSelectedAccentColorIndexChanged(int value)
         {
             _settingsService.AccentColor = (AppAccentColor)value;
+
+            LogSelectedAccentColorIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
         }
 
         #endregion Appearance
@@ -68,5 +83,21 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Navigation
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "General settings loaded: Theme={SelectedTheme}; Backdrop={SelectedBackdrop}; Accent color={SelectedAccentColor}")]
+        private partial void LogSettingsLoaded(string selectedTheme, string selectedBackdrop, string selectedAccentColor);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Theme changed to {SelectedTheme}")]
+        private partial void LogSelectedThemeIndexChanged(string selectedTheme);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Backdrop changed to {SelectedBackdrop}")]
+        private partial void LogSelectedBackdropIndexChanged(string selectedBackdrop);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "AccentColor changed to {SelectedAccentColor}")]
+        private partial void LogSelectedAccentColorIndexChanged(string selectedAccentColor);
+
+        #endregion Logging
     }
 }

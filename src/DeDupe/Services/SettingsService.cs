@@ -1,7 +1,7 @@
 ﻿using DeDupe.Enums;
 using DeDupe.Models.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 using Windows.UI;
@@ -9,16 +9,12 @@ using Windows.UI;
 namespace DeDupe.Services
 {
     /// <inheritdoc/>
-    public class SettingsService : ISettingsService
+    public partial class SettingsService(ILogger<SettingsService> logger) : ISettingsService
     {
-        private readonly ApplicationDataContainer _localSettings;
-        private readonly string _defaultTempFolderPath;
-
-        public SettingsService()
-        {
-            _localSettings = ApplicationData.Current.LocalSettings;
-            _defaultTempFolderPath = Path.Combine(ApplicationData.Current.TemporaryFolder.Path, "ProcessedImages");
-        }
+        private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
+        private readonly string _defaultTempFolderPath = Path.Combine(ApplicationData.Current.TemporaryFolder.Path, "ProcessedImages");
+        private readonly string _defaultModelFolderPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Models");
+        private readonly ILogger<SettingsService> _logger = logger;
 
         /// <inheritdoc/>
         public T GetValue<T>(string key, T defaultValue)
@@ -32,7 +28,7 @@ namespace DeDupe.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error reading setting '{key}': {ex.Message}");
+                LogSettingReadFailed(key, ex);
             }
 
             return defaultValue;
@@ -47,7 +43,7 @@ namespace DeDupe.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error saving setting '{key}': {ex.Message}");
+                LogSettingWriteFailed(key, ex);
             }
         }
 
@@ -154,7 +150,6 @@ namespace DeDupe.Services
                 }
             }
         }
-
 
         public event EventHandler<int>? ParallelProcessingCoresChanged;
 
@@ -269,7 +264,6 @@ namespace DeDupe.Services
                 }
             }
         }
-
 
         public event EventHandler<bool>? EnableResizingChanged;
 
@@ -476,6 +470,8 @@ namespace DeDupe.Services
             }
         }
 
+        public string ModelFolderPath => _defaultModelFolderPath;
+
         public event EventHandler<bool>? UseBundledModelChanged;
 
         public event EventHandler<string>? SelectedBundledModelIdChanged;
@@ -531,5 +527,54 @@ namespace DeDupe.Services
         public event EventHandler<NormalizationSettings>? NormalizationChanged;
 
         #endregion Normalization
+
+        #region Similarity
+
+        private const string SimilarityThresholdKey = "SimilarityThreshold";
+
+        private const string AutoAnalyzeSimilarityKey = "AutoAnalyzeSimilarity";
+
+        public double SimilarityThreshold
+        {
+            get => GetValue(SimilarityThresholdKey, 0.90);
+            set
+            {
+                double clamped = Math.Clamp(value, 0.3, 1.0);
+                if (Math.Abs(SimilarityThreshold - clamped) > 0.001)
+                {
+                    SetValue(SimilarityThresholdKey, clamped);
+                    SimilarityThresholdChanged?.Invoke(this, clamped);
+                }
+            }
+        }
+
+        public bool AutoAnalyzeSimilarity
+        {
+            get => GetValue(AutoAnalyzeSimilarityKey, false);
+            set
+            {
+                if (AutoAnalyzeSimilarity != value)
+                {
+                    SetValue(AutoAnalyzeSimilarityKey, value);
+                    AutoAnalyzeSimilarityChanged?.Invoke(this, value);
+                }
+            }
+        }
+
+        public event EventHandler<double>? SimilarityThresholdChanged;
+
+        public event EventHandler<bool>? AutoAnalyzeSimilarityChanged;
+
+        #endregion Similarity
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Setting read failed for key {SettingKey}, using default value")]
+        private partial void LogSettingReadFailed(string settingKey, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Setting write failed for key {SettingKey}")]
+        private partial void LogSettingWriteFailed(string settingKey, Exception ex);
+
+        #endregion Logging
     }
 }

@@ -1,13 +1,16 @@
 ﻿using DeDupe.Enums;
 using DeDupe.Models.Analysis;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace DeDupe.Services
 {
     /// <inheritdoc/>
-    public class AutoSelectionService : IAutoSelectionService
+    public partial class AutoSelectionService(ILogger<AutoSelectionService> logger) : IAutoSelectionService
     {
+        private readonly ILogger<AutoSelectionService> _logger = logger;
+
         /// <inheritdoc/>
         public void ApplyStrategy(SimilarityGroup group, SelectionStrategy strategy)
         {
@@ -50,6 +53,8 @@ namespace DeDupe.Services
                     group.SelectAll();
                     break;
             }
+
+            LogStrategyAppliedToGroup(strategy.ToString(), group.SelectableItems.Count);
         }
 
         public void ApplyStrategyToAll(IEnumerable<SimilarityGroup> groups, SelectionStrategy strategy)
@@ -59,10 +64,14 @@ namespace DeDupe.Services
                 return;
             }
 
+            int groupCount = 0;
             foreach (SimilarityGroup group in groups)
             {
                 ApplyStrategy(group, strategy);
+                groupCount++;
             }
+
+            LogStrategyAppliedToAllGroups(strategy.ToString(), groupCount);
         }
 
         private static void ApplyKeepHighestResolution(SimilarityGroup group)
@@ -132,5 +141,15 @@ namespace DeDupe.Services
                 item.IsSelected = item != itemToKeep;
             }
         }
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Selection strategy {StrategyName} applied to group with {ItemCount} item(s)")]
+        private partial void LogStrategyAppliedToGroup(string strategyName, int itemCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Selection strategy {StrategyName} applied to {GroupCount} group(s)")]
+        private partial void LogStrategyAppliedToAllGroups(string strategyName, int groupCount);
+
+        #endregion Logging
     }
 }

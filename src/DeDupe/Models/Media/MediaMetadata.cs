@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using DeDupe.Enums;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
-using System.Diagnostics;
 using System.IO;
 
 namespace DeDupe.Models.Media
@@ -11,12 +12,15 @@ namespace DeDupe.Models.Media
     /// </summary>
     public partial class MediaMetadata : ObservableObject
     {
-        public MediaMetadata(string filePath, MediaType mediaType)
+        protected readonly ILogger _logger;
+
+        public MediaMetadata(string filePath, MediaType mediaType, ILogger? logger = null)
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             FilePath = filePath;
             MediaType = mediaType;
+            _logger = logger ?? NullLogger.Instance;
         }
 
         #region Loading
@@ -38,7 +42,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"MediaMetadata.LoadBasicFileInfo error for {FilePath}: {ex.Message}");
+                LogBasicFileInfoFailed(FilePath, ex);
             }
         }
 
@@ -141,5 +145,12 @@ namespace DeDupe.Models.Media
         }
 
         #endregion Media
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Basic file info load skipped for {FilePath}")]
+        private partial void LogBasicFileInfoFailed(string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

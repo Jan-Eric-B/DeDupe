@@ -1,11 +1,11 @@
 using DeDupe.Models.Analysis;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -15,6 +15,8 @@ namespace DeDupe.Controls
 {
     public sealed partial class ImageGroupCard : UserControl
     {
+        private static readonly ILogger<ImageGroupCard> _logger = App.Current.GetService<ILogger<ImageGroupCard>>();
+
         public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupCard), new PropertyMetadata(null, OnGroupChanged));
 
         public SimilarityGroup? Group
@@ -95,7 +97,6 @@ namespace DeDupe.Controls
 
                 using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
 
-                // Create BitmapImage thumbnail
                 BitmapImage bitmap = new()
                 {
                     DecodePixelWidth = 280, // Card width
@@ -107,7 +108,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load image: {imagePath}, Error: {ex.Message}");
+                LogGroupThumbnailLoadFailed(_logger, imagePath, ex);
             }
         }
 
@@ -133,5 +134,12 @@ namespace DeDupe.Controls
             placeholderBorder.Child = placeholderIcon;
             StackedThumbnails.Children.Add(placeholderBorder);
         }
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Group card thumbnail load skipped for {FilePath}")]
+        private static partial void LogGroupThumbnailLoadFailed(ILogger logger, string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DeDupe.Models;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
+using Microsoft.Extensions.Logging;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SixLabors.ImageSharp;
@@ -18,6 +19,13 @@ namespace DeDupe.Services.Analysis
     /// <inheritdoc/>
     public sealed partial class FeatureExtractionService : IFeatureExtractionService, IDisposable
     {
+        private readonly ILogger<FeatureExtractionService> _logger;
+
+        public FeatureExtractionService(ILogger<FeatureExtractionService> logger)
+        {
+            _logger = logger;
+        }
+
         #region State
 
         private InferenceSession? _session;
@@ -89,17 +97,18 @@ namespace DeDupe.Services.Analysis
                     int modelBatchSize = _inputDimensions[0];
                     if (_batchSize > modelBatchSize)
                     {
-                        Debug.WriteLine($"Model has fixed batch dimension of {modelBatchSize}, overriding configured batch size {_batchSize}");
+                        LogBatchSizeOverridden(modelBatchSize, _batchSize);
                         _batchSize = modelBatchSize;
                     }
                 }
 
                 AllocateTensorBuffers(_batchSize);
 
-                Debug.WriteLine($"FeatureExtractionService initialized: GPU={_isGpuEnabled}, BatchSize={_batchSize}");
+                LogModelInitialized(_modelPath, _isGpuEnabled, _batchSize);
             }
             catch (Exception ex) when (ex is not ArgumentException)
             {
+                LogModelInitializationFailed(_modelPath, ex);
                 throw new InvalidOperationException($"Failed to initialize ONNX model: {ex.Message}", ex);
             }
         }
@@ -129,11 +138,11 @@ namespace DeDupe.Services.Analysis
                     // Sequential execution for GPU
                     sessionOptions.ExecutionMode = ExecutionMode.ORT_SEQUENTIAL;
 
-                    Debug.WriteLine("GPU acceleration enabled via DirectML");
+                    LogGpuAccelerationEnabled();
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"GPU acceleration not available, using CPU: {ex.Message}");
+                    LogGpuAccelerationUnavailable(ex.Message);
                 }
             }
 
@@ -159,7 +168,7 @@ namespace DeDupe.Services.Analysis
                 _inputName = firstInput.Key;
                 _inputDimensions = [.. firstInput.Value.Dimensions];
 
-                Debug.WriteLine($"Model input: {_inputName}, dimensions: [{string.Join(", ", _inputDimensions)}]");
+                LogModelInputMetadata(_inputName, string.Join(", ", _inputDimensions));
             }
 
             IReadOnlyDictionary<string, NodeMetadata> outputMetadata = _session.OutputMetadata;
@@ -168,7 +177,7 @@ namespace DeDupe.Services.Analysis
                 KeyValuePair<string, NodeMetadata> firstOutput = outputMetadata.First();
                 _outputName = firstOutput.Key;
 
-                Debug.WriteLine($"Model output: {_outputName}");
+                LogModelOutputMetadata(_outputName);
             }
         }
 
@@ -191,8 +200,8 @@ namespace DeDupe.Services.Analysis
             _tensorBufferB = new DenseTensor<float>([batchSize, channels, height, width]);
             _allocatedBatchSize = batchSize;
 
-            Debug.WriteLine($"Allocated tensor buffers: {batchSize}x{channels}x{height}x{width} " +
-                          $"(~{batchSize * channels * height * width * 4 / 1024 / 1024:F1} MB each)");
+            double bufferSizeMb = batchSize * channels * height * width * 4 / 1024.0 / 1024.0;
+            LogTensorBuffersAllocated(batchSize, channels, height, width, bufferSizeMb);
         }
 
         private DenseTensor<float> GetOrCreateTensor(int requiredBatchSize, bool useBufferA)
@@ -273,6 +282,9 @@ namespace DeDupe.Services.Analysis
             int totalItems = items.Count;
             int processedItems = 0;
 
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            LogFeatureExtractionStarting(totalItems, batches.Count, _batchSize);
+
             progress?.Report(new ProgressInfo(0, totalItems, "Extracting features"));
 
             // Track using buffer
@@ -313,7 +325,7 @@ namespace DeDupe.Services.Analysis
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Batch inference failed, falling back to individual processing: {ex.Message}");
+                        LogBatchInferenceFallback(batchIndex + 1, validIndices.Count, ex.Message);
 
                         // Fallback - Process items individually
                         List<AnalysisItem> failedItems = [.. validIndices.Select(i => batchItems[i])];
@@ -331,6 +343,10 @@ namespace DeDupe.Services.Analysis
                     prepareTask = nextPrepareTask;
                 }
             }
+
+            stopwatch.Stop();
+            int successCount = items.Count(i => i.HasFeatures);
+            LogFeatureExtractionCompleted(successCount, totalItems, stopwatch.Elapsed.TotalSeconds);
 
             progress?.Report(new ProgressInfo(totalItems, totalItems, "Feature extraction complete"));
         }
@@ -357,7 +373,7 @@ namespace DeDupe.Services.Analysis
                     {
                         if (string.IsNullOrEmpty(item.ProcessedFilePath))
                         {
-                            Debug.WriteLine($"Skipping item with no processed file path");
+                            LogItemSkippedNoProcessedPath(item.Source.FileName);
                             return;
                         }
 
@@ -367,7 +383,7 @@ namespace DeDupe.Services.Analysis
                         // Validate dimensions
                         if (image.Width != width || image.Height != height)
                         {
-                            Debug.WriteLine($"Dimension mismatch for {item.ProcessedFilePath}: expected {width}x{height}, got {image.Width}x{image.Height}");
+                            LogImageDimensionMismatch(item.ProcessedFilePath, width, height, image.Width, image.Height);
                             return;
                         }
 
@@ -385,7 +401,7 @@ namespace DeDupe.Services.Analysis
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Error loading image {item.ProcessedFilePath}: {ex.Message}");
+                        LogImageLoadFailed(item.ProcessedFilePath, ex);
                     }
                     finally
                     {
@@ -486,7 +502,7 @@ namespace DeDupe.Services.Analysis
                     // Validate dimensions
                     if (image.Width != width || image.Height != height)
                     {
-                        Debug.WriteLine($"Skipping {item.ProcessedFilePath}: dimension mismatch");
+                        LogImageDimensionMismatch(item.ProcessedFilePath, width, height, image.Width, image.Height);
                         continue;
                     }
 
@@ -514,7 +530,7 @@ namespace DeDupe.Services.Analysis
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to extract features from {item.ProcessedFilePath}: {ex.Message}");
+                    LogIndividualFeatureExtractionFailed(item.ProcessedFilePath, ex);
                 }
             }
         }
@@ -543,5 +559,60 @@ namespace DeDupe.Services.Analysis
         }
 
         #endregion Cleanup
+
+        #region Logging
+
+        // Initialization
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "ONNX model initialized from {ModelPath} (GPU={IsGpuEnabled}, BatchSize={BatchSize})")]
+        private partial void LogModelInitialized(string modelPath, bool isGpuEnabled, int batchSize);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "ONNX model initialization failed for {ModelPath}")]
+        private partial void LogModelInitializationFailed(string modelPath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "GPU acceleration enabled via DirectML")]
+        private partial void LogGpuAccelerationEnabled();
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "GPU acceleration unavailable, falling back to CPU: {Reason}")]
+        private partial void LogGpuAccelerationUnavailable(string reason);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model batch dimension {ModelBatchSize} smaller than configured {ConfiguredBatchSize}, overriding")]
+        private partial void LogBatchSizeOverridden(int modelBatchSize, int configuredBatchSize);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model input: {InputName}, dimensions: [{Dimensions}]")]
+        private partial void LogModelInputMetadata(string inputName, string dimensions);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model output: {OutputName}")]
+        private partial void LogModelOutputMetadata(string outputName);
+
+        // Buffers
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Tensor buffers allocated: {BatchSize}x{Channels}x{Height}x{Width} (~{BufferSizeMb:F1} MB each)")]
+        private partial void LogTensorBuffersAllocated(int batchSize, int channels, int height, int width, double bufferSizeMb);
+
+        // Feature extraction
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Feature extraction starting for {TotalItems} items in {BatchCount} batches (BatchSize={BatchSize})")]
+        private partial void LogFeatureExtractionStarting(int totalItems, int batchCount, int batchSize);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Feature extraction completed for {SuccessCount} of {TotalCount} items in {ElapsedSeconds:F1}s")]
+        private partial void LogFeatureExtractionCompleted(int successCount, int totalCount, double elapsedSeconds);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Batch {BatchNumber} inference failed ({ItemCount} items), falling back to individual processing: {Reason}")]
+        private partial void LogBatchInferenceFallback(int batchNumber, int itemCount, string reason);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Item skipped, no processed file path for {FileName}")]
+        private partial void LogItemSkippedNoProcessedPath(string fileName);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Image dimension mismatch for {FilePath}: expected {ExpectedWidth}x{ExpectedHeight}, got {ActualWidth}x{ActualHeight}")]
+        private partial void LogImageDimensionMismatch(string filePath, int expectedWidth, int expectedHeight, int actualWidth, int actualHeight);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Image load failed for tensor fill: {FilePath}")]
+        private partial void LogImageLoadFailed(string? filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Individual feature extraction failed for {FilePath}")]
+        private partial void LogIndividualFeatureExtractionFailed(string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

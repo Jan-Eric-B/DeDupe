@@ -5,6 +5,7 @@ using DeDupe.Helpers;
 using DeDupe.Models.Configuration;
 using DeDupe.Services;
 using DeDupe.Services.Model;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +13,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {
@@ -20,12 +22,14 @@ namespace DeDupe.ViewModels.Settings
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
         private readonly IModelDownloadService _downloadService;
+        private readonly ILogger<ModelSettingsViewModel> _logger;
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, IModelDownloadService downloadService)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, IModelDownloadService downloadService, ILogger<ModelSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Model Configuration";
         }
@@ -36,6 +40,8 @@ namespace DeDupe.ViewModels.Settings
             SelectedBundledModelId = _settingsService.SelectedBundledModelId;
             CustomModelFilePath = _settingsService.CustomModelFilePath;
             Normalization = _settingsService.Normalization;
+
+            LogSettingsLoaded(ModelDisplayName, UseBundledModel ? "bundled" : "custom");
         }
 
         #region Model Selection
@@ -119,16 +125,18 @@ namespace DeDupe.ViewModels.Settings
         {
             string pathToOpen = ActiveModelPath;
 
-            if (!string.IsNullOrEmpty(pathToOpen) && File.Exists(pathToOpen))
+            if (string.IsNullOrEmpty(pathToOpen) || !File.Exists(pathToOpen))
             {
-                try
-                {
-                    Process.Start("explorer.exe", $"/select,\"{pathToOpen}\"");
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error opening folder: {ex.Message}");
-                }
+                return;
+            }
+
+            try
+            {
+                Process.Start("explorer.exe", $"/select,\"{pathToOpen}\"");
+            }
+            catch (Exception ex)
+            {
+                LogModelLocationOpenFailed(pathToOpen, ex);
             }
         }
 
@@ -154,17 +162,21 @@ namespace DeDupe.ViewModels.Settings
                 {
                     CustomModelFilePath = file.Path;
                     UseBundledModel = false;
+
+                    LogCustomModelFileSelected(file.Path);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error selecting model file: {ex.Message}");
+                LogCustomModelFileSelectionFailed(ex);
             }
         }
 
         partial void OnUseBundledModelChanged(bool value)
         {
             _settingsService.UseBundledModel = value;
+
+            LogModelSourceChanged(value ? "bundled" : "custom");
         }
 
         // Syncs normalization when bundled model is changed
@@ -178,6 +190,7 @@ namespace DeDupe.ViewModels.Settings
                 if (model != null)
                 {
                     Normalization = model.Normalization;
+                    LogBundledModelSelected(model.DisplayName, value);
                 }
             }
 
@@ -190,6 +203,35 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Model Selection
+
+        #region Model Folder
+
+        [RelayCommand]
+        private async Task OpenModelFolderAsync()
+        {
+            try
+            {
+                string path = _settingsService.ModelFolderPath;
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                    LogModelFolderCreated(path);
+                }
+
+                await Launcher.LaunchFolderPathAsync(path);
+            }
+            catch (Exception ex)
+            {
+                LogModelFolderOpenFailed(ex);
+            }
+        }
+
+        #endregion Model Folder
 
         #region Normalization
 
@@ -242,6 +284,7 @@ namespace DeDupe.ViewModels.Settings
         private void ResetNormalization()
         {
             Normalization = NormalizationSettings.ImageNet;
+            LogNormalizationReset("ImageNet");
         }
 
         [RelayCommand]
@@ -250,6 +293,7 @@ namespace DeDupe.ViewModels.Settings
             if (SelectedBundledModel != null)
             {
                 Normalization = SelectedBundledModel.Normalization;
+                LogNormalizationReset(SelectedBundledModel.DisplayName);
             }
         }
 
@@ -274,5 +318,36 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Navigation
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model settings loaded, active model: {ModelName} ({ModelSource})")]
+        private partial void LogSettingsLoaded(string modelName, string modelSource);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Model source changed to {ModelSource}")]
+        private partial void LogModelSourceChanged(string modelSource);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Bundled model selected: {ModelName} ({ModelId})")]
+        private partial void LogBundledModelSelected(string modelName, string modelId);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Custom model file selected: {FilePath}")]
+        private partial void LogCustomModelFileSelected(string filePath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Normalization reset to {Preset} defaults")]
+        private partial void LogNormalizationReset(string preset);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Custom model file selection picker failed")]
+        private partial void LogCustomModelFileSelectionFailed(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Model location open failed for {FilePath}")]
+        private partial void LogModelLocationOpenFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model folder created at {FolderPath}")]
+        private partial void LogModelFolderCreated(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Model folder open failed")]
+        private partial void LogModelFolderOpenFailed(Exception ex);
+
+        #endregion Logging
     }
 }

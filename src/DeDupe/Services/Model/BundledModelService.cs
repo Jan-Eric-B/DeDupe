@@ -1,12 +1,14 @@
 ﻿using DeDupe.Models.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 
 namespace DeDupe.Services.Model
 {
     /// <inheritdoc/>
-    public class BundledModelService(IModelDownloadService downloadService) : IBundledModelService
+    public partial class BundledModelService(IModelDownloadService downloadService, ILogger<BundledModelService> logger) : IBundledModelService
     {
         private readonly IModelDownloadService _downloadService = downloadService;
+        private readonly ILogger<BundledModelService> _logger = logger;
 
         /// <inheritdoc/>
         public IReadOnlyList<BundledModelInfo> AvailableModels => BundledModelRegistry.All;
@@ -17,6 +19,7 @@ namespace DeDupe.Services.Model
             BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
             if (model is null)
             {
+                LogModelNotFound(modelId);
                 return string.Empty;
             }
 
@@ -29,6 +32,7 @@ namespace DeDupe.Services.Model
             BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
             if (model is null)
             {
+                LogModelNotFound(modelId);
                 return false;
             }
 
@@ -41,6 +45,7 @@ namespace DeDupe.Services.Model
             BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
             if (model is null)
             {
+                LogModelNotFound(modelId);
                 return false;
             }
 
@@ -49,5 +54,12 @@ namespace DeDupe.Services.Model
 
         /// <inheritdoc/>
         public BundledModelInfo? GetModelInfo(string modelId) => BundledModelRegistry.GetById(modelId);
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Bundled model lookup failed, unknown ModelId '{ModelId}'")]
+        private partial void LogModelNotFound(string modelId);
+
+        #endregion Logging
     }
 }

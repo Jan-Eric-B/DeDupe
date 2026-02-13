@@ -3,9 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
 using DeDupe.Helpers;
 using DeDupe.Services;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -18,10 +18,12 @@ namespace DeDupe.ViewModels.Settings
     public partial class ImageProcessingSettingsViewModel : SettingsPageViewModelBase
     {
         private readonly ISettingsService _settingsService;
+        private readonly ILogger<ImageProcessingSettingsViewModel> _logger;
 
-        public ImageProcessingSettingsViewModel(ISettingsService settingsService)
+        public ImageProcessingSettingsViewModel(ISettingsService settingsService, ILogger<ImageProcessingSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Image Processing";
         }
@@ -53,6 +55,8 @@ namespace DeDupe.ViewModels.Settings
             // Temp Folder
             UseCustomTempFolder = _settingsService.UseCustomTempFolder;
             CustomTempFolderPath = _settingsService.CustomTempFolderPath;
+
+            LogSettingsLoaded();
         }
 
         #region Performance
@@ -88,6 +92,8 @@ namespace DeDupe.ViewModels.Settings
         {
             _settingsService.EnableGpuAcceleration = value;
             OnPropertyChanged(nameof(GpuAccelerationDescription));
+
+            LogGpuAccelerationChanged(value);
         }
 
         #endregion Performance
@@ -246,11 +252,12 @@ namespace DeDupe.ViewModels.Settings
                 if (folder != null)
                 {
                     CustomTempFolderPath = folder.Path;
+                    LogTempFolderSelected(folder.Path);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error browsing for folder: {ex.Message}");
+                LogTempFolderBrowseFailed(ex);
             }
         }
 
@@ -260,18 +267,22 @@ namespace DeDupe.ViewModels.Settings
             try
             {
                 string path = _settingsService.TempFolderPath;
-                if (!string.IsNullOrEmpty(path))
+                if (string.IsNullOrEmpty(path))
                 {
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                    await Launcher.LaunchFolderPathAsync(path);
+                    return;
                 }
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                    LogTempFolderCreated(path);
+                }
+
+                await Launcher.LaunchFolderPathAsync(path);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error opening temp folder: {ex.Message}");
+                LogTempFolderOpenFailed(ex);
             }
         }
 
@@ -296,5 +307,27 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Navigation
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Image processing settings loaded")]
+        private partial void LogSettingsLoaded();
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "GPU acceleration changed to {Enabled}")]
+        private partial void LogGpuAccelerationChanged(bool enabled);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Custom temp folder selected: {FolderPath}")]
+        private partial void LogTempFolderSelected(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Temp folder created at {FolderPath}")]
+        private partial void LogTempFolderCreated(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Temp folder browse picker failed")]
+        private partial void LogTempFolderBrowseFailed(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Temp folder open failed")]
+        private partial void LogTempFolderOpenFailed(Exception ex);
+
+        #endregion Logging
     }
 }

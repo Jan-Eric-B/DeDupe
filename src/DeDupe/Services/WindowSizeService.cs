@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Runtime.InteropServices;
 
 namespace DeDupe.Services
@@ -13,6 +14,7 @@ namespace DeDupe.Services
 
         // Minimum pixel size (before DPI scaling)
         private readonly int _minWidth;
+
         private readonly int _minHeight;
 
         // ID for subclass
@@ -21,19 +23,25 @@ namespace DeDupe.Services
         // Delegate instance
         private readonly SUBCLASSPROC _subclassProcDelegate;
 
-        public WindowSizeService(IntPtr hWnd, int minWidth, int minHeight, uint subclassId = 1)
+        private readonly ILogger<WindowSizeService> _logger;
+
+        public WindowSizeService(IntPtr hWnd, int minWidth, int minHeight, ILogger<WindowSizeService> logger, uint subclassId = 1)
         {
             _hWnd = hWnd;
             _minWidth = minWidth;
             _minHeight = minHeight;
             _subclassId = subclassId;
             _subclassProcDelegate = SubclassProc;
+            _logger = logger;
 
             // Install subclass using API
             if (!SetWindowSubclass(_hWnd, _subclassProcDelegate, _subclassId, IntPtr.Zero))
             {
+                LogWindowSubclassInstallFailed(minWidth, minHeight);
                 throw new InvalidOperationException("Failed to set window subclass");
             }
+
+            LogWindowSubclassInstalled(minWidth, minHeight);
         }
 
         private IntPtr SubclassProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam, IntPtr uIdSubclass, IntPtr dwRefData)
@@ -115,6 +123,7 @@ namespace DeDupe.Services
             if (!_disposed)
             {
                 RemoveWindowSubclass(_hWnd, _subclassProcDelegate, _subclassId);
+                LogWindowSubclassRemoved();
                 _disposed = true;
             }
         }
@@ -135,5 +144,18 @@ namespace DeDupe.Services
         private static extern bool RemoveWindowSubclass(IntPtr hWnd, SUBCLASSPROC pfnSubclass, uint uIdSubclass);
 
         #endregion Cleanup
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Window subclass installed with minimum size {MinWidth}x{MinHeight}")]
+        private partial void LogWindowSubclassInstalled(int minWidth, int minHeight);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Window subclass install failed for minimum size {MinWidth}x{MinHeight}")]
+        private partial void LogWindowSubclassInstallFailed(int minWidth, int minHeight);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Window subclass removed")]
+        private partial void LogWindowSubclassRemoved();
+
+        #endregion Logging
     }
 }

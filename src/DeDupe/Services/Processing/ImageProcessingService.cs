@@ -1,6 +1,7 @@
 ﻿using DeDupe.Enums;
 using DeDupe.Models;
 using DeDupe.Models.Results;
+using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -22,17 +23,19 @@ namespace DeDupe.Services.Processing
     /// <summary>
     /// Service for processing images before feature extraction.
     /// </summary>
-    public class ImageProcessingService
+    public partial class ImageProcessingService
     {
         private readonly IAppStateService _appStateService;
         private readonly ISettingsService _settingsService;
         private readonly IBorderDetectionService _borderDetectionService;
+        private readonly ILogger<ImageProcessingService> _logger;
 
-        public ImageProcessingService(IAppStateService appStateService, ISettingsService settingsService, IBorderDetectionService borderDetectionService)
+        public ImageProcessingService(IAppStateService appStateService, ISettingsService settingsService, IBorderDetectionService borderDetectionService, ILogger<ImageProcessingService> logger)
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _borderDetectionService = borderDetectionService ?? throw new ArgumentNullException(nameof(borderDetectionService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             InitializeTempFolder();
         }
@@ -51,15 +54,17 @@ namespace DeDupe.Services.Processing
                 return;
             }
 
+            int maxParallelism = Math.Max(1, _settingsService.ParallelProcessingCores);
+
+            LogImageProcessingStarting(totalCount, maxParallelism);
+
             // Track progress
             int processedCount = 0;
             int successCount = 0;
             int failedCount = 0;
             object progressLock = new();
 
-            int maxParallelism = Math.Max(1, _settingsService.ParallelProcessingCores);
-
-            Debug.WriteLine($"Processing {totalCount} images with parallelism {maxParallelism}");
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Report initial progress
             progress?.Report(new ProgressInfo(0, totalCount, "Processing images"));
@@ -114,14 +119,16 @@ namespace DeDupe.Services.Processing
                                 progress?.Report(new ProgressInfo(processedCount, totalCount, "Processing images"));
                             }
                         }
-                        Debug.WriteLine($"Error processing item: {ex.Message}");
+                        LogImageItemFailed(item.Source?.Metadata?.FileName ?? "unknown", ex);
                     }
                 });
+
+            stopwatch.Stop();
 
             // Final progress report
             progress?.Report(new ProgressInfo(totalCount, totalCount, "Processing complete"));
 
-            Debug.WriteLine($"Processing complete: {successCount}/{totalCount} successful");
+            LogImageProcessingCompleted(successCount, totalCount, failedCount, stopwatch.Elapsed.TotalSeconds);
         }
 
         private async Task<string?> ProcessSingleItemAsync(AnalysisItem item, CancellationToken ct)
@@ -182,7 +189,7 @@ namespace DeDupe.Services.Processing
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error processing image {sourcePath}: {ex.Message}");
+                LogImageItemFailed(sourcePath, ex);
                 return null;
             }
         }
@@ -247,7 +254,7 @@ namespace DeDupe.Services.Processing
             if (bounds.Width < originalWidth || bounds.Height < originalHeight)
             {
                 image.Mutate(x => x.Crop(bounds));
-                Debug.WriteLine($"Border removed: {originalWidth}x{originalHeight} -> {image.Width}x{image.Height}");
+                LogBorderRemoved(originalWidth, originalHeight, image.Width, image.Height);
             }
         }
 
@@ -314,7 +321,7 @@ namespace DeDupe.Services.Processing
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to initialize temp folder: {ex.Message}");
+                LogTempFolderInitFailed(ex);
                 return false;
             }
         }
@@ -333,11 +340,33 @@ namespace DeDupe.Services.Processing
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to clear temp folder: {ex.Message}");
+                LogTempFolderClearFailed(ex);
                 return false;
             }
         }
 
         #endregion Temp Folder
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Image processing starting for {TotalCount} items (parallelism: {MaxParallelism})")]
+        private partial void LogImageProcessingStarting(int totalCount, int maxParallelism);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Image processing completed, {SuccessCount}/{TotalCount} successful ({FailedCount} failed) in {ElapsedSeconds:F1}s")]
+        private partial void LogImageProcessingCompleted(int successCount, int totalCount, int failedCount, double elapsedSeconds);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Image processing failed for '{SourcePath}'")]
+        private partial void LogImageItemFailed(string sourcePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Border removed, {OriginalWidth}x{OriginalHeight} cropped to {NewWidth}x{NewHeight}")]
+        private partial void LogBorderRemoved(int originalWidth, int originalHeight, int newWidth, int newHeight);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Temp folder initialization failed")]
+        private partial void LogTempFolderInitFailed(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Temp folder cleanup failed")]
+        private partial void LogTempFolderClearFailed(Exception ex);
+
+        #endregion Logging
     }
 }

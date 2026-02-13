@@ -41,6 +41,8 @@ namespace DeDupe.ViewModels.Pages
 
             _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
 
+            SimilarityThreshold = _settingsService.SimilarityThreshold;
+
             UpdateCanAnalyze();
         }
 
@@ -56,7 +58,7 @@ namespace DeDupe.ViewModels.Pages
         public partial bool HasSimilarityResults { get; set; }
 
         [ObservableProperty]
-        public partial double SimilarityThreshold { get; set; } = 0.90;
+        public partial double SimilarityThreshold { get; set; }
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(TotalGroups), nameof(DuplicateGroupsCount), nameof(TotalItems), nameof(ResultSummary))]
@@ -118,18 +120,20 @@ namespace DeDupe.ViewModels.Pages
                     return;
                 }
 
+                LogSimilarityAnalysisStarting(itemsWithFeatures.Count, SimilarityThreshold);
+
                 // Perform clustering
                 SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold);
 
                 HasSimilarityResults = true;
                 Status = $"Analysis complete: {ResultSummary}";
 
-                _logger.LogInformation("Similarity analysis completed: {Summary}", ResultSummary);
+                LogSimilarityAnalysisCompleted(ResultSummary);
             }
             catch (Exception ex)
             {
                 Status = $"Error during similarity analysis: {ex.Message}";
-                _logger.LogError(ex, "Error during similarity analysis");
+                LogSimilarityAnalysisAborted(ex);
                 HasSimilarityResults = false;
             }
             finally
@@ -191,6 +195,14 @@ namespace DeDupe.ViewModels.Pages
             UpdateSimilarityGroups();
         }
 
+        public async Task TryAutoAnalyzeAsync()
+        {
+            if (_settingsService.AutoAnalyzeSimilarity && CanStartSimilarityAnalysis && !HasSimilarityResults)
+            {
+                await AnalyzeSimilarityAsync();
+            }
+        }
+
         #endregion Similarity Analysis
 
         #region Selection
@@ -233,7 +245,7 @@ namespace DeDupe.ViewModels.Pages
             _autoSelectionService.ApplyStrategy(SelectedGroup, strategy);
             UpdateSelectionSummary();
 
-            _logger.LogInformation("Applied strategy {Strategy} to group {GroupId}", strategy, SelectedGroup.Id);
+            LogStrategyAppliedToGroup(strategy, SelectedGroup.Id);
         }
 
         /// <summary>
@@ -250,7 +262,7 @@ namespace DeDupe.ViewModels.Pages
             _autoSelectionService.ApplyStrategyToAll(SimilarityGroups, strategy);
             UpdateSelectionSummary();
 
-            _logger.LogInformation("Applied strategy {Strategy} to all {Count} groups", strategy, SimilarityGroups.Count);
+            LogStrategyAppliedToAll(strategy, SimilarityGroups.Count);
         }
 
         /// <summary>
@@ -364,7 +376,7 @@ namespace DeDupe.ViewModels.Pages
                 SimilarityGroups.Add(group);
             }
 
-            _logger.LogInformation("Sorted groups by {SortOption}", CurrentSortOption);
+            LogGroupsSorted(CurrentSortOption);
         }
 
         partial void OnCurrentSortOptionChanged(GroupSortingOption value)
@@ -464,6 +476,7 @@ namespace DeDupe.ViewModels.Pages
 
                 string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
                 Status = $"{operationName} {filePaths.Count} files...";
+                LogFileOperationStarting(operationType, filePaths.Count);
 
                 // Ensure destination folder exists
                 if (!Directory.Exists(destinationFolder))
@@ -490,7 +503,7 @@ namespace DeDupe.ViewModels.Pages
                         {
                             failCount++;
                             failedPaths.Add(sourcePath);
-                            _logger.LogWarning("Failed to {Operation} file {Path}: {Error}", operationType, sourcePath, error);
+                            LogFileOperationSkipped(operationType, sourcePath, error);
                         }
                     }
 
@@ -509,7 +522,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error during {operationType.ToString().ToLower()} operation: {ex.Message}";
-                _logger.LogError(ex, "Error during {Operation} operation", operationType);
+                LogFileOperationAborted(ex, operationType);
                 return new FileOperationResult(0, filePaths.Count, [], filePaths);
             }
             finally
@@ -535,6 +548,7 @@ namespace DeDupe.ViewModels.Pages
                 Dictionary<string, List<string>> filesByGroup = GetSelectedFilePathsByGroup();
                 string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
                 Status = $"{operationName} files to group folders...";
+                LogFileOperationStarting(operationType, filesByGroup.Values.Sum(v => v.Count));
 
                 FileOperationResult result = await Task.Run(() =>
                 {
@@ -549,7 +563,7 @@ namespace DeDupe.ViewModels.Pages
 
                         if (string.IsNullOrEmpty(groupName))
                         {
-                            _logger.LogWarning("Group name '{OriginalName}' produced invalid folder name, skipping group", groupEntry.Key);
+                            LogInvalidGroupName(groupEntry.Key);
                             totalFailed += groupEntry.Value.Count;
                             failedPaths.AddRange(groupEntry.Value);
                             continue;
@@ -567,7 +581,7 @@ namespace DeDupe.ViewModels.Pages
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Failed to create group folder: {FolderPath}", groupFolder);
+                            LogGroupFolderCreationFailed(ex, groupFolder);
                             totalFailed += groupEntry.Value.Count;
                             failedPaths.AddRange(groupEntry.Value);
                             continue;
@@ -586,7 +600,7 @@ namespace DeDupe.ViewModels.Pages
                             {
                                 totalFailed++;
                                 failedPaths.Add(sourcePath);
-                                _logger.LogWarning("Failed to {Operation} file {Path}: {Error}", operationType, sourcePath, error);
+                                LogFileOperationSkipped(operationType, sourcePath, error);
                             }
                         }
                     }
@@ -606,7 +620,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error during {operationType.ToString().ToLower()} operation: {ex.Message}";
-                _logger.LogError(ex, "Error during {Operation} operation", operationType);
+                LogFileOperationAborted(ex, operationType);
                 return new FileOperationResult(0, TotalSelectedCount, [], GetAllSelectedFilePaths());
             }
             finally
@@ -688,7 +702,7 @@ namespace DeDupe.ViewModels.Pages
                 Status = $"{operationPastTense.First().ToString().ToUpper() + operationPastTense[1..]} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
             }
 
-            _logger.LogInformation("{Operation} completed: {Success} succeeded, {Failed} failed", operationType, result.SuccessCount, result.FailedCount);
+            LogFileOperationCompleted(operationType, result.SuccessCount, result.FailedCount);
         }
 
         private async Task ExecuteFileDeletionAsync(bool permanentDelete)
@@ -717,6 +731,7 @@ namespace DeDupe.ViewModels.Pages
 
                 string deletionType = permanentDelete ? "Permanently deleting" : "Moving to Recycle Bin";
                 Status = $"{deletionType} {filesToDelete.Count} files...";
+                LogDeletionStarting(permanentDelete, filesToDelete.Count);
 
                 // Perform file deletion on background thread
                 (int successCount, int failCount, List<string> successfullyDeleted) = await Task.Run(() =>
@@ -747,13 +762,13 @@ namespace DeDupe.ViewModels.Pages
                             }
                             else
                             {
-                                _logger.LogWarning("File not found for deletion: {FilePath}", filePath);
+                                LogFileNotFoundForDeletion(filePath);
                                 fail++;
                             }
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, "Failed to delete file: {FilePath}", filePath);
+                            LogFileDeletionFailed(ex, filePath);
                             fail++;
                         }
                     }
@@ -778,12 +793,12 @@ namespace DeDupe.ViewModels.Pages
                     Status = $"{(permanentDelete ? "Deleted" : "Moved")} {successCount} file{(successCount == 1 ? "" : "s")}, {failCount} failed";
                 }
 
-                _logger.LogInformation("Deletion completed (permanent={Permanent}): {Success} succeeded, {Failed} failed", permanentDelete, successCount, failCount);
+                LogDeletionCompleted(permanentDelete, successCount, failCount);
             }
             catch (Exception ex)
             {
                 Status = $"Error during deletion: {ex.Message}";
-                _logger.LogError(ex, "Error during file deletion");
+                LogDeletionAborted(ex);
             }
             finally
             {
@@ -838,7 +853,7 @@ namespace DeDupe.ViewModels.Pages
             OnPropertyChanged(nameof(DuplicateGroupsCount));
             UpdateSelectionSummary();
 
-            _logger.LogInformation("Refreshed after deletion: Removed {ItemCount} items from UI groups, {GroupCount} groups removed, {StateCount} items removed from state", totalItemsRemoved, groupsToRemove.Count, removedFromState);
+            LogPostDeletionRefresh(totalItemsRemoved, groupsToRemove.Count, removedFromState);
         }
 
         #endregion File Operations
@@ -863,5 +878,71 @@ namespace DeDupe.ViewModels.Pages
         }
 
         #endregion Cleanup
+
+        #region Logging
+
+        // Similarity Analysis
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Similarity analysis starting for {ItemCount} items at {Threshold} threshold")]
+        private partial void LogSimilarityAnalysisStarting(int itemCount, double threshold);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Similarity analysis completed: {Summary}")]
+        private partial void LogSimilarityAnalysisCompleted(string summary);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Similarity analysis aborted")]
+        private partial void LogSimilarityAnalysisAborted(Exception ex);
+
+        // Selection
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Selection strategy {Strategy} applied to group {GroupId}")]
+        private partial void LogStrategyAppliedToGroup(SelectionStrategy strategy, int groupId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Selection strategy {Strategy} applied to all {GroupCount} groups")]
+        private partial void LogStrategyAppliedToAll(SelectionStrategy strategy, int groupCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Groups sorted by {SortOption}")]
+        private partial void LogGroupsSorted(GroupSortingOption sortOption);
+
+        // File Operations - Move/Copy
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "{Operation} starting for {FileCount} files")]
+        private partial void LogFileOperationStarting(FileOperationType operation, int fileCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "{Operation} completed, {SuccessCount} succeeded, {FailedCount} failed")]
+        private partial void LogFileOperationCompleted(FileOperationType operation, int successCount, int failedCount);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "{Operation} operation aborted")]
+        private partial void LogFileOperationAborted(Exception ex, FileOperationType operation);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "File {Operation} skipped for {FilePath}: {Reason}")]
+        private partial void LogFileOperationSkipped(FileOperationType operation, string filePath, string? reason);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Group folder creation failed for {FolderPath}")]
+        private partial void LogGroupFolderCreationFailed(Exception ex, string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Group name '{OriginalName}' produced invalid folder name, group skipped")]
+        private partial void LogInvalidGroupName(string originalName);
+
+        // File Operations - Deletion
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Deletion starting (Permanent: {Permanent}) for {FileCount} files")]
+        private partial void LogDeletionStarting(bool permanent, int fileCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Deletion completed (Permanent: {Permanent}), {SuccessCount} succeeded, {FailedCount} failed")]
+        private partial void LogDeletionCompleted(bool permanent, int successCount, int failedCount);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Deletion operation aborted")]
+        private partial void LogDeletionAborted(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "File not found for deletion: {FilePath}")]
+        private partial void LogFileNotFoundForDeletion(string filePath);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "File deletion failed for {FilePath}")]
+        private partial void LogFileDeletionFailed(Exception ex, string filePath);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Post-deletion refresh, {ItemCount} items removed from groups, {GroupCount} groups dissolved, {StateCount} items removed from state")]
+        private partial void LogPostDeletionRefresh(int itemCount, int groupCount, int stateCount);
+
+        #endregion Logging
     }
 }

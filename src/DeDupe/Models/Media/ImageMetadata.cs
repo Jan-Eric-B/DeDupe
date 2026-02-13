@@ -1,8 +1,8 @@
 ﻿using DeDupe.Enums;
+using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -16,7 +16,7 @@ namespace DeDupe.Models.Media
     /// </summary>
     public partial class ImageMetadata : MediaMetadata
     {
-        protected internal ImageMetadata(string filePath, MediaType mediaType) : base(filePath, mediaType)
+        protected internal ImageMetadata(string filePath, MediaType mediaType, ILogger? logger = null) : base(filePath, mediaType, logger)
         {
             MediaType = MediaType.Image;
         }
@@ -27,9 +27,9 @@ namespace DeDupe.Models.Media
 
         public bool IsFullMetadataLoaded { get; private set; }
 
-        public static async Task<ImageMetadata> CreateAsync(string filePath, bool loadFullMetadata = true)
+        public static async Task<ImageMetadata> CreateAsync(string filePath, bool loadFullMetadata = true, ILogger? logger = null)
         {
-            ImageMetadata metadata = new(filePath, MediaType.Image);
+            ImageMetadata metadata = new(filePath, MediaType.Image, logger);
             metadata.LoadBasicFileInfo();
 
             if (loadFullMetadata)
@@ -60,7 +60,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ImageMetadata.LoadDimensionsOnlyAsync error for {FilePath}: {ex.Message}");
+                LogImageDimensionLoadFailed(FilePath, ex);
             }
         }
 
@@ -96,7 +96,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"LoadDimensionsViaWindowsImagingAsync error: {ex.Message}");
+                LogWindowsImagingFallbackFailed(FilePath, ex);
             }
         }
 
@@ -147,7 +147,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ImageMetadata.LoadImagePropertiesAsync error: {ex.Message}");
+                LogImagePropertiesLoadFailed(FilePath, ex);
             }
         }
 
@@ -188,7 +188,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ImageMetadata.LoadExifDataAsync warning: {ex.Message}");
+                LogExifDataLoadSkipped(FilePath, ex);
             }
         }
 
@@ -266,7 +266,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ImageMetadata.LoadExtendedExifPropertiesAsync warning: {ex.Message}");
+                LogExtendedExifLoadSkipped(FilePath, ex);
             }
         }
 
@@ -414,5 +414,24 @@ namespace DeDupe.Models.Media
         }
 
         #endregion GPS Properties
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Image dimension load failed for {FilePath}")]
+        private partial void LogImageDimensionLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Windows Imaging dimension fallback failed for {FilePath}")]
+        private partial void LogWindowsImagingFallbackFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Image properties load failed for {FilePath}")]
+        private partial void LogImagePropertiesLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "EXIF metadata load skipped for {FilePath}")]
+        private partial void LogExifDataLoadSkipped(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Extended EXIF properties load skipped for {FilePath}")]
+        private partial void LogExtendedExifLoadSkipped(string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

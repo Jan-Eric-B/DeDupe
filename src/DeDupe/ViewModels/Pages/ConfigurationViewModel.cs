@@ -11,6 +11,7 @@ using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using DeDupe.Services.Model;
 using DeDupe.Services.Processing;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using SixLabors.ImageSharp;
 using System;
@@ -18,7 +19,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -37,18 +37,20 @@ namespace DeDupe.ViewModels.Pages
         private readonly IFeatureExtractionService _featureExtractionService;
         private readonly IModelDownloadService _modelDownloadService;
         private readonly ImageProcessingService _imageProcessingService;
+        private readonly ILogger<ConfigurationViewModel> _logger;
 
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IBorderDetectionService borderDetectionService, IModelDownloadService modelDownloadService, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, IBorderDetectionService borderDetectionService, IModelDownloadService modelDownloadService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
             _modelDownloadService = modelDownloadService ?? throw new ArgumentNullException(nameof(modelDownloadService));
-            _imageProcessingService = new ImageProcessingService(_appStateService, _settingsService, borderDetectionService);
+            _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "File Input";
             Status = "No files added";
@@ -176,6 +178,7 @@ namespace DeDupe.ViewModels.Pages
                     if (newSources.Count > 0)
                     {
                         UpdateAppStateSourceMedia();
+                        LogFilesAdded(newSources.Count);
                     }
                 }
                 finally
@@ -251,6 +254,7 @@ namespace DeDupe.ViewModels.Pages
             IsBusy = true;
             IsScanning = true;
             Status = "Scanning folder...";
+            LogFolderScanStarting(folderItem.Path);
 
             try
             {
@@ -272,6 +276,7 @@ namespace DeDupe.ViewModels.Pages
                     }
                     catch (UnauthorizedAccessException)
                     {
+                        LogSubdirectoryAccessDenied(folderItem.Path);
                         files = Directory.EnumerateFiles(folderItem.Path, "*.*", SearchOption.TopDirectoryOnly)
                             .Where(f => SupportedFileExtensions.IsImageFile(Path.GetExtension(f)));
                     }
@@ -301,7 +306,7 @@ namespace DeDupe.ViewModels.Pages
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"Failed to create source for {filePath}: {ex.Message}");
+                            LogSourceMediaCreationSkipped(ex, filePath);
                             continue;
                         }
 
@@ -317,10 +322,12 @@ namespace DeDupe.ViewModels.Pages
 
                 // Scan completed successfully
                 UpdateAppStateSourceMedia();
+                LogFolderScanCompleted(count, folderItem.Path);
                 Status = $"Found {count:N0} images";
             }
             catch (OperationCanceledException)
             {
+                LogFolderScanCancelled(folderItem.Path);
                 RemoveSource(folderItem.Path);
                 InputListItems.Remove(folderItem);
 
@@ -331,7 +338,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error scanning folder: {ex.Message}";
-                Debug.WriteLine($"Error processing folder {folderItem.Path}: {ex.Message}");
+                LogFolderScanAborted(ex, folderItem.Path);
             }
             finally
             {
@@ -363,7 +370,7 @@ namespace DeDupe.ViewModels.Pages
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Failed to load source media for {filePath}: {ex.Message}");
+                    LogSourceMediaLoadSkipped(ex, filePath);
                 }
             }
 
@@ -579,6 +586,7 @@ namespace DeDupe.ViewModels.Pages
                 CurrentOperation = "Processing images";
                 TotalItemsToProcess = analysisItems.Count;
                 Status = $"Processing {analysisItems.Count} images...";
+                LogProcessingPipelineStarting(analysisItems.Count);
 
                 await _imageProcessingService.ProcessItemsAsync(analysisItems, imageProcessingProgress, ct);
 
@@ -655,6 +663,7 @@ namespace DeDupe.ViewModels.Pages
                     HasExtractedFeatures = true;
                     ProgressPercentage = 100;
                     Status = $"Ready! Extracted {ExtractedFeaturesCount} feature vectors. Click 'Find Duplicates' to continue.";
+                    LogProcessingPipelineCompleted(_appStateService.ProcessedItemCount, ExtractedFeaturesCount);
                 }
                 else
                 {
@@ -663,12 +672,13 @@ namespace DeDupe.ViewModels.Pages
             }
             catch (OperationCanceledException)
             {
+                LogProcessingPipelineCancelled();
                 Status = "Processing cancelled";
             }
             catch (Exception ex)
             {
                 Status = $"Error during processing: {ex.Message}";
-                Debug.WriteLine($"Processing error: {ex}");
+                LogProcessingPipelineAborted(ex);
             }
             finally
             {
@@ -772,17 +782,9 @@ namespace DeDupe.ViewModels.Pages
                     bool useGpu = _settingsService.EnableGpuAcceleration;
                     int batchSize = _settingsService.InferenceBatchSize;
 
+                    LogFeatureExtractionModelInitializing(modelPath);
                     await _featureExtractionService.InitializeAsync(modelPath, useGpu, batchSize);
-
-                    // Optionally update status to show GPU state
-                    if (_featureExtractionService.IsGpuEnabled)
-                    {
-                        Debug.WriteLine("Feature extraction initialized with GPU acceleration");
-                    }
-                    else
-                    {
-                        Debug.WriteLine("Feature extraction initialized with CPU (GPU not available or disabled)");
-                    }
+                    LogFeatureExtractionModelInitialized(_featureExtractionService.IsGpuEnabled);
                 }
                 else
                 {
@@ -792,7 +794,7 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error initializing model: {ex.Message}";
-                Debug.WriteLine($"Model initialization error: {ex}");
+                LogFeatureExtractionModelFailed(ex);
             }
         }
 
@@ -824,5 +826,58 @@ namespace DeDupe.ViewModels.Pages
         }
 
         #endregion Cleanup
+
+        #region Logging
+
+        // Scanning
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Folder scan starting for {FolderPath}")]
+        private partial void LogFolderScanStarting(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Folder scan completed, found {FileCount} images in {FolderPath}")]
+        private partial void LogFolderScanCompleted(int fileCount, string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Folder scan cancelled for {FolderPath}")]
+        private partial void LogFolderScanCancelled(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Source media creation skipped for {FilePath}")]
+        private partial void LogSourceMediaCreationSkipped(Exception ex, string filePath);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Folder scan aborted for {FolderPath}")]
+        private partial void LogFolderScanAborted(Exception ex, string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Source media load skipped for {FilePath}")]
+        private partial void LogSourceMediaLoadSkipped(Exception ex, string filePath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Individual files added, {FileCount} new items")]
+        private partial void LogFilesAdded(int fileCount);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Subdirectory access denied for {FolderPath}, falling back to top-level scan")]
+        private partial void LogSubdirectoryAccessDenied(string folderPath);
+
+        // Processing
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Processing pipeline starting for {ItemCount} items")]
+        private partial void LogProcessingPipelineStarting(int itemCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Processing pipeline completed, {ProcessedCount} items preprocessed, {ExtractedCount} features extracted")]
+        private partial void LogProcessingPipelineCompleted(int processedCount, int extractedCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Processing pipeline cancelled by user")]
+        private partial void LogProcessingPipelineCancelled();
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Processing pipeline aborted")]
+        private partial void LogProcessingPipelineAborted(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Feature extraction model initializing from {ModelPath}")]
+        private partial void LogFeatureExtractionModelInitializing(string modelPath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Feature extraction model initialized (GPU: {GpuEnabled})")]
+        private partial void LogFeatureExtractionModelInitialized(bool gpuEnabled);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Feature extraction model initialization failed")]
+        private partial void LogFeatureExtractionModelFailed(Exception ex);
+
+        #endregion Logging
     }
 }

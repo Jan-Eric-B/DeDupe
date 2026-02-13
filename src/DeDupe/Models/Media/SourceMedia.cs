@@ -1,7 +1,8 @@
 ﻿using DeDupe.Constants;
 using DeDupe.Enums;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -10,15 +11,18 @@ namespace DeDupe.Models.Media
     /// <summary>
     /// Represents an source file (image or video).
     /// </summary>
-    public class SourceMedia
+    public partial class SourceMedia
     {
-        private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata)
+        private readonly ILogger _logger;
+
+        private SourceMedia(string filePath, MediaType mediaType, MediaMetadata metadata, ILogger? logger = null)
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
             FilePath = filePath;
             MediaType = mediaType;
             Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
+            _logger = logger ?? NullLogger.Instance;
         }
 
         public Guid Id { get; } = Guid.NewGuid();
@@ -76,7 +80,7 @@ namespace DeDupe.Models.Media
             _ => false
         };
 
-        public static SourceMedia CreateLightweight(string filePath)
+        public static SourceMedia CreateLightweight(string filePath, ILogger? logger = null)
         {
             ArgumentNullException.ThrowIfNullOrWhiteSpace(filePath);
 
@@ -87,12 +91,12 @@ namespace DeDupe.Models.Media
             if (SupportedFileExtensions.IsImageFile(extension))
             {
                 mediaType = MediaType.Image;
-                metadata = new ImageMetadata(filePath, mediaType);
+                metadata = new ImageMetadata(filePath, mediaType, logger);
             }
             else if (SupportedFileExtensions.IsVideoFile(extension))
             {
                 mediaType = MediaType.Video;
-                metadata = new VideoMetadata(filePath, mediaType);
+                metadata = new VideoMetadata(filePath, mediaType, logger);
             }
             else
             {
@@ -102,12 +106,12 @@ namespace DeDupe.Models.Media
             // Load basic file system info
             metadata.LoadBasicFileInfo();
 
-            return new SourceMedia(filePath, mediaType, metadata);
+            return new SourceMedia(filePath, mediaType, metadata, logger);
         }
 
-        public static async Task<SourceMedia> CreateImageAsync(string filePath, bool loadFullMetadata = true)
+        public static async Task<SourceMedia> CreateImageAsync(string filePath, bool loadFullMetadata = true, ILogger? logger = null)
         {
-            ImageMetadata metadata = new(filePath, MediaType.Image);
+            ImageMetadata metadata = new(filePath, MediaType.Image, logger);
             metadata.LoadBasicFileInfo();
 
             if (loadFullMetadata)
@@ -115,12 +119,12 @@ namespace DeDupe.Models.Media
                 await metadata.LoadMetadataAsync();
             }
 
-            return new SourceMedia(filePath, MediaType.Image, metadata);
+            return new SourceMedia(filePath, MediaType.Image, metadata, logger);
         }
 
-        public static async Task<SourceMedia> CreateVideoAsync(string filePath, bool loadFullMetadata = true)
+        public static async Task<SourceMedia> CreateVideoAsync(string filePath, bool loadFullMetadata = true, ILogger? logger = null)
         {
-            VideoMetadata metadata = new(filePath, MediaType.Video);
+            VideoMetadata metadata = new(filePath, MediaType.Video, logger);
             metadata.LoadBasicFileInfo();
 
             if (loadFullMetadata)
@@ -128,7 +132,7 @@ namespace DeDupe.Models.Media
                 await metadata.LoadMetadataAsync();
             }
 
-            return new SourceMedia(filePath, MediaType.Video, metadata);
+            return new SourceMedia(filePath, MediaType.Video, metadata, logger);
         }
 
         /// <summary>
@@ -152,7 +156,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load dimensions for {FilePath}: {ex.Message}");
+                LogDimensionLoadFailed(FilePath, ex);
             }
         }
 
@@ -179,10 +183,20 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load metadata for {FilePath}: {ex.Message}");
+                LogFullMetadataLoadFailed(FilePath, ex);
             }
         }
 
         #endregion Loading
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Dimension load failed for {FilePath}")]
+        private partial void LogDimensionLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Full metadata load failed for {FilePath}")]
+        private partial void LogFullMetadataLoadFailed(string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

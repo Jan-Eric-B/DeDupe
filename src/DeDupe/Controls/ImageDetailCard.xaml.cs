@@ -1,12 +1,12 @@
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Media;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.Storage;
@@ -17,6 +17,8 @@ namespace DeDupe.Controls
 {
     public sealed partial class ImageDetailCard : UserControl
     {
+        private readonly ILogger<ImageDetailCard> _logger = App.Current.GetService<ILogger<ImageDetailCard>>();
+
         public ImageDetailCard()
         {
             InitializeComponent();
@@ -35,7 +37,6 @@ namespace DeDupe.Controls
             SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
             SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
 
-            // Unsubscribe from event
             SelectableItem?.PropertyChanged -= OnSelectableItemPropertyChanged;
         }
 
@@ -58,11 +59,10 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load thumbnail: {imagePath}, Error: {ex.Message}");
+                LogThumbnailLoadFailed(imagePath, ex);
                 PlaceholderIcon.Visibility = Visibility.Visible;
             }
         }
-
 
         #endregion Loading
 
@@ -127,7 +127,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to load dimensions: {ex.Message}");
+                LogDimensionLoadFailed(item.FilePath, ex);
 
                 DispatcherQueue.TryEnqueue(() =>
                 {
@@ -165,7 +165,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to open file: {ex.Message}");
+                LogFileLaunchFailed(SelectableItem.FilePath, ex);
             }
         }
 
@@ -187,7 +187,7 @@ namespace DeDupe.Controls
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to open folder: {ex.Message}");
+                LogFolderLaunchFailed(SelectableItem.Metadata.DirectoryPath ?? "unknown", ex);
             }
         }
 
@@ -206,13 +206,11 @@ namespace DeDupe.Controls
             if (d is not ImageDetailCard control)
                 return;
 
-            // Unsubscribe from old item
             if (e.OldValue is SelectableItem oldItem)
             {
                 oldItem.PropertyChanged -= control.OnSelectableItemPropertyChanged;
             }
 
-            // Subscribe to new item
             if (e.NewValue is SelectableItem newItem)
             {
                 newItem.PropertyChanged += control.OnSelectableItemPropertyChanged;
@@ -253,5 +251,20 @@ namespace DeDupe.Controls
 
         #endregion Selection
 
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Thumbnail load skipped for {FilePath}")]
+        private partial void LogThumbnailLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Dimension load skipped for {FilePath}")]
+        private partial void LogDimensionLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "File launch failed for {FilePath}")]
+        private partial void LogFileLaunchFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Folder launch failed for {FolderPath}")]
+        private partial void LogFolderLaunchFailed(string folderPath, Exception ex);
+
+        #endregion Logging
     }
 }

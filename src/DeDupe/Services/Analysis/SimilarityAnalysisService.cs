@@ -1,5 +1,6 @@
 ﻿using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,8 +11,15 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <inheritdoc />
-    public class SimilarityAnalysisService : ISimilarityAnalysisService
+    public partial class SimilarityAnalysisService : ISimilarityAnalysisService
     {
+        private readonly ILogger<SimilarityAnalysisService> _logger;
+
+        public SimilarityAnalysisService(ILogger<SimilarityAnalysisService> logger)
+        {
+            _logger = logger;
+        }
+
         /// <inheritdoc />
         public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default)
         {
@@ -24,6 +32,9 @@ namespace DeDupe.Services.Analysis
                 return SimilarityResult.Empty(similarityThreshold);
             }
 
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            LogClusteringStarting(itemList.Count, similarityThreshold);
+
             try
             {
                 // Build similarity matrix
@@ -35,6 +46,10 @@ namespace DeDupe.Services.Analysis
                 // Calculate cluster statistics
                 CalculateClusterStatistics(clusters, itemList, similarityMatrix);
 
+                stopwatch.Stop();
+                int duplicateGroupCount = clusters.Count(c => c.Count > 1);
+                LogClusteringCompleted(itemList.Count, clusters.Count, duplicateGroupCount, stopwatch.Elapsed.TotalSeconds);
+
                 return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
             }
             catch (OperationCanceledException)
@@ -43,7 +58,7 @@ namespace DeDupe.Services.Analysis
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error during clustering: {ex.Message}");
+                LogClusteringFailed(itemList.Count, ex);
                 throw;
             }
         }
@@ -86,7 +101,8 @@ namespace DeDupe.Services.Analysis
             int count = items.Count;
             double[,] matrix = new double[count, count];
 
-            int completedComparisons = 0;
+            long totalComparisons = (long)count * (count - 1) / 2;
+            Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Calculate similarities (symmetric matrix - only upper triangle)
             for (int i = 0; i < count; i++)
@@ -109,10 +125,11 @@ namespace DeDupe.Services.Analysis
                         matrix[i, j] = similarity;
                         matrix[j, i] = similarity; // Matrix is symmetric
                     }
-
-                    completedComparisons++;
                 }
             }
+
+            stopwatch.Stop();
+            LogSimilarityMatrixCalculated(count, totalComparisons, stopwatch.Elapsed.TotalSeconds);
 
             return matrix;
         }
@@ -120,7 +137,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform agglomerative hierarchical clustering.
         /// </summary>
-        private static List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
+        private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
         {
             int count = items.Count;
 
@@ -209,6 +226,8 @@ namespace DeDupe.Services.Analysis
                 result.Add(group);
             }
 
+            LogHierarchicalClusteringCompleted(count, mergeOperations, result.Count);
+
             return result;
         }
 
@@ -283,5 +302,24 @@ namespace DeDupe.Services.Analysis
                 group.AverageSimilarity = pairCount > 0 ? totalSimilarity / pairCount : 1.0;
             }
         }
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Similarity clustering starting for {ItemCount} items (Threshold={SimilarityThreshold:F2})")]
+        private partial void LogClusteringStarting(int itemCount, double similarityThreshold);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Similarity clustering completed: {ItemCount} items → {GroupCount} groups ({DuplicateGroupCount} duplicate groups) in {ElapsedSeconds:F1}s")]
+        private partial void LogClusteringCompleted(int itemCount, int groupCount, int duplicateGroupCount, double elapsedSeconds);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Similarity clustering failed for {ItemCount} items")]
+        private partial void LogClusteringFailed(int itemCount, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Similarity matrix calculated: {ItemCount} items, {ComparisonCount} comparisons in {ElapsedSeconds:F1}s")]
+        private partial void LogSimilarityMatrixCalculated(int itemCount, long comparisonCount, double elapsedSeconds);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Hierarchical clustering finished: {ItemCount} items, {MergeCount} merges, {ResultGroupCount} final groups")]
+        private partial void LogHierarchicalClusteringCompleted(int itemCount, int mergeCount, int resultGroupCount);
+
+        #endregion Logging
     }
 }

@@ -1,7 +1,7 @@
 ﻿using DeDupe.Enums;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -16,7 +16,7 @@ namespace DeDupe.Models.Media
         /// <summary>
         /// Create video metadata from file path.
         /// </summary>
-        protected internal VideoMetadata(string filePath, MediaType mediaType) : base(filePath, mediaType)
+        protected internal VideoMetadata(string filePath, MediaType mediaType, ILogger? logger = null) : base(filePath, mediaType, logger)
         {
             MediaType = MediaType.Video;
         }
@@ -27,9 +27,9 @@ namespace DeDupe.Models.Media
 
         public bool IsFullMetadataLoaded { get; private set; }
 
-        public static async Task<VideoMetadata> CreateAsync(string filePath, bool loadFullMetadata = true)
+        public static async Task<VideoMetadata> CreateAsync(string filePath, bool loadFullMetadata = true, ILogger? logger = null)
         {
-            VideoMetadata metadata = new(filePath, MediaType.Video);
+            VideoMetadata metadata = new(filePath, MediaType.Video, logger);
             metadata.LoadBasicFileInfo();
 
             if (loadFullMetadata)
@@ -61,7 +61,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"VideoMetadata.LoadDimensionsOnlyAsync error for {FilePath}: {ex.Message}");
+                LogVideoDimensionLoadFailed(FilePath, ex);
             }
         }
 
@@ -109,7 +109,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"VideoMetadata.LoadVideoPropertiesAsync error: {ex.Message}");
+                LogVideoPropertiesLoadFailed(FilePath, ex);
             }
         }
 
@@ -176,7 +176,7 @@ namespace DeDupe.Models.Media
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"VideoMetadata.LoadExtendedVideoPropertiesAsync warning: {ex.Message}");
+                LogExtendedVideoPropertiesLoadSkipped(FilePath, ex);
             }
         }
 
@@ -287,5 +287,18 @@ namespace DeDupe.Models.Media
         public bool HasGpsCoordinates => GpsLatitude.HasValue && GpsLongitude.HasValue;
 
         #endregion Recording Metadata
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Video dimension load failed for {FilePath}")]
+        private partial void LogVideoDimensionLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Video properties load failed for {FilePath}")]
+        private partial void LogVideoPropertiesLoadFailed(string filePath, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Extended video properties load skipped for {FilePath}")]
+        private partial void LogExtendedVideoPropertiesLoadSkipped(string filePath, Exception ex);
+
+        #endregion Logging
     }
 }

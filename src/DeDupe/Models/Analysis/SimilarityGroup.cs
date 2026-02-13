@@ -125,7 +125,6 @@ namespace DeDupe.Models.Analysis
 
         public bool IsAnySelected => SelectableItems.Any(x => x.IsSelected);
 
-
         public event EventHandler? GroupSelectionChanged;
 
         public void SelectAll() => SetAllItemsSelection(true);

@@ -1,5 +1,6 @@
 ﻿using DeDupe.Constants;
 using DeDupe.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
@@ -12,9 +13,10 @@ using WinRT.Interop;
 namespace DeDupe.Services
 {
     /// <inheritdoc/>
-    public class ThemeService(ISettingsService settingsService) : IThemeService
+    public partial class ThemeService(ISettingsService settingsService, ILogger<ThemeService> logger) : IThemeService
     {
         private readonly ISettingsService _settingsService = settingsService;
+        private readonly ILogger<ThemeService> _logger = logger;
         private readonly Dictionary<Window, FrameworkElement> _registeredWindows = [];
 
         /// <inheritdoc/>
@@ -25,6 +27,8 @@ namespace DeDupe.Services
             _settingsService.AccentColorChanged += OnAccentColorChanged;
 
             ApplyAccentColor(_settingsService.AccentColor);
+
+            LogThemeServiceInitialized();
         }
 
         /// <inheritdoc/>
@@ -36,6 +40,8 @@ namespace DeDupe.Services
 
                 ApplyTheme(window, rootElement);
                 ApplyBackdrop(window);
+
+                LogWindowRegistered(_registeredWindows.Count);
             }
         }
 
@@ -43,6 +49,8 @@ namespace DeDupe.Services
         public void UnregisterWindow(Window window)
         {
             _registeredWindows.Remove(window);
+
+            LogWindowUnregistered(_registeredWindows.Count);
         }
 
         #region Theme
@@ -90,6 +98,8 @@ namespace DeDupe.Services
                 titleBar.ButtonBackgroundColor = Colors.Transparent;
                 titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
             }
+
+            LogThemeApplied(_settingsService.Theme.ToString(), isDark);
         }
 
         private void OnThemeChanged(object? sender, AppTheme theme)
@@ -115,6 +125,8 @@ namespace DeDupe.Services
                 AppBackdrop.None => null,
                 _ => null
             };
+
+            LogBackdropApplied(_settingsService.Backdrop.ToString());
         }
 
         private void OnBackdropChanged(object? sender, AppBackdrop backdrop)
@@ -160,6 +172,8 @@ namespace DeDupe.Services
 
             // Force UI refresh
             RefreshAllWindows();
+
+            LogAccentColorApplied(accentColor.ToString());
         }
 
         private void RefreshAllWindows()
@@ -201,5 +215,27 @@ namespace DeDupe.Services
         }
 
         #endregion Accent Color
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Theme service initialized")]
+        private partial void LogThemeServiceInitialized();
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Window registered, {WindowCount} window(s) tracked")]
+        private partial void LogWindowRegistered(int windowCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Window unregistered, {WindowCount} window(s) tracked")]
+        private partial void LogWindowUnregistered(int windowCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Theme applied: {ThemeName}, resolved as dark: {IsDark}")]
+        private partial void LogThemeApplied(string themeName, bool isDark);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Backdrop applied: {BackdropType}")]
+        private partial void LogBackdropApplied(string backdropType);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Accent color applied: {AccentColorType}")]
+        private partial void LogAccentColorApplied(string accentColorType);
+
+        #endregion Logging
     }
 }
