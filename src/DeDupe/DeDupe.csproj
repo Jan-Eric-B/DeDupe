@@ -28,6 +28,7 @@
     <Content Remove="Assets\Icon\Square44x44Logo.altform-unplated_targetsize-48.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\GitHub_Invertocat_White_Clearspace.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-100.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-125.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-150.png" />
@@ -94,15 +95,31 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.23.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.24.1" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1-RTM" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental3" />
+    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
   <ItemGroup>
+    <Content Update="Assets\GitHub_Invertocat_White_Clearspace.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\Settings\AnalysisSettingsPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\Settings\AboutSettingsPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Views\Settings\GeneralSettingsPage.xaml">
       <SubType>Designer</SubType>
     </Page>

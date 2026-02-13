@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="DeDupe.Views.Settings.AboutSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:constants="using:DeDupe.Constants"
+    Background="Transparent"
+    mc:Ignorable="d">
+    <ScrollViewer>
+        <StackPanel Spacing="4">
+            <Grid ColumnSpacing="20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Image
+                    Grid.Column="0"
+                    Width="150"
+                    Height="150"
+                    Source="ms-appx:///Assets/Icon/Square150x150Logo.png" />
+                <StackPanel Grid.Column="1" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.AppName, Mode=OneWay}" />
+                    <TextBlock
+                        Opacity="0.8"
+                        Style="{StaticResource BodyTextBlockStyle}"
+                        Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}" />
+                    <TextBlock
+                        Opacity="0.6"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.Publisher, Mode=OneWay}" />
+                </StackPanel>
+            </Grid>
+
+            <controls:SettingsExpander
+                Margin="0,29,0,0"
+                Header="Application specifications"
+                HeaderIcon="{ui:FontIcon Glyph=&#xE946;}"
+                IsExpanded="True">
+
+                <Button
+                    Padding="28,5"
+                    Command="{x:Bind ViewModel.CopyToClipboardCommand}"
+                    Content="Copy" />
+
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <Grid Margin="0,8,0,8" RowSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Application" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.AppName, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Publisher" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.Publisher, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Version" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Commit" />
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.CommitId, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text=".NET version" />
+                                <TextBlock
+                                    Grid.Row="4"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.DotNetVersion, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <TextBlock
+                                    Grid.Row="5"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Model release tag" />
+                                <TextBlock
+                                    Grid.Row="5"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind ViewModel.ModelReleaseTag, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+                <controls:SettingsExpander.ItemsFooter>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <StackPanel Orientation="Horizontal" Spacing="0">
+                                <TextBlock
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Style="{StaticResource BodyTextBlockStyle}"
+                                    Text="Related links" />
+                                <HyperlinkButton
+                                    Command="{x:Bind ViewModel.OpenLinkCommand}"
+                                    CommandParameter="{x:Bind constants:AppInformation.GitHubRepo}"
+                                    ToolTipService.ToolTip="{x:Bind constants:AppInformation.GitHubRepo}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Image
+                                            Width="25"
+                                            Height="25"
+                                            Source="ms-appx:///Assets/GitHub_Invertocat_White_Clearspace.png" />
+                                        <TextBlock VerticalAlignment="Center">Source Code</TextBlock>
+                                    </StackPanel>
+                                </HyperlinkButton>
+                                <HyperlinkButton
+                                    Command="{x:Bind ViewModel.OpenLinkCommand}"
+                                    CommandParameter="{x:Bind constants:AppInformation.License}"
+                                    ToolTipService.ToolTip="{x:Bind constants:AppInformation.License}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Image
+                                            Width="25"
+                                            Height="25"
+                                            Source="ms-appx:///Assets/GitHub_Invertocat_White_Clearspace.png" />
+                                        <TextBlock VerticalAlignment="Center">License</TextBlock>
+                                    </StackPanel>
+                                </HyperlinkButton>
+                            </StackPanel>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.ItemsFooter>
+            </controls:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DeDupe.Constants;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DeDupe.Models.Configuration
@@ -8,8 +9,6 @@ namespace DeDupe.Models.Configuration
     /// </summary>
     public static class BundledModelRegistry
     {
-        private const string ReleaseBaseUrl = "https://github.com/Jan-Eric-B/DeDupe/releases/download/v1.0.0-models";
-
         /// <summary>
         /// DINOv2 ViT-B/14
         /// </summary>
@@ -20,7 +19,7 @@ namespace DeDupe.Models.Configuration
             Description: "Best visual similarity. Finds duplicates even with edits or different angles.",
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
-            DownloadUrl: $"{ReleaseBaseUrl}/dinov2_vitb14.onnx",
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/dinov2_vitb14.onnx",
             ExpectedFileSize: 347_148_037);
 
         /// <summary>
@@ -33,7 +32,7 @@ namespace DeDupe.Models.Configuration
             Description: "Fastest option. Good for exact or near-exact duplicates.",
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
-            DownloadUrl: $"{ReleaseBaseUrl}/resnet50-v2-7.onnx",
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/resnet50-v2-7.onnx",
             ExpectedFileSize: 102_442_452);
 
         /// <summary>
@@ -46,14 +45,14 @@ namespace DeDupe.Models.Configuration
             Description: "Groups by content (e.g., all beach photos). Less strict on visual match.",
             Normalization: NormalizationSettings.Clip,
             InputSize: 224,
-            DownloadUrl: $"{ReleaseBaseUrl}/clip-vit-b32-image.onnx",
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/clip-vit-b32-image.onnx",
             ExpectedFileSize: 976_517);
 
         public static IReadOnlyList<BundledModelInfo> All { get; } =
         [
             ResNet50,
-        DinoV2VitB14,
-        ClipVitB32
+            DinoV2VitB14,
+            ClipVitB32
         ];
 
         public static string DefaultModelId => ResNet50.Id;

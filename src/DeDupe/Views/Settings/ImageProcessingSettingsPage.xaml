@@ -2,13 +2,13 @@
 <Page
     x:Class="DeDupe.Views.Settings.ImageProcessingSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:enums="using:DeDupe.Enums"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converters="using:DeDupe.Converters"
+    xmlns:enums="using:DeDupe.Enums"
     Background="Transparent"
     mc:Ignorable="d">
     <Page.Resources>
@@ -27,7 +27,7 @@
             <TextBlock
                 Margin="0,0,0,8"
                 Style="{StaticResource TitleTextBlockStyle}"
-                Text="Image Processing" />
+                Text="Image processing" />
 
             <!--  Performance Settings  -->
             <TextBlock
@@ -38,7 +38,7 @@
             <!--  Parallel Processing  -->
             <controls:SettingsCard
                 Description="Images processed simultaneously. Higher values are faster but use more memory."
-                Header="Parallel Processing"
+                Header="Parallel processing"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Slider
@@ -62,16 +62,16 @@
             <!--  GPU Acceleration  -->
             <controls:SettingsExpander
                 Description="Use GPU for faster feature extraction via DirectML (Intel, AMD, NVIDIA)"
-                Header="GPU Acceleration"
+                Header="GPU acceleration"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE950;}"
                 IsExpanded="True">
                 <ToggleSwitch
                     IsOn="{x:Bind ViewModel.EnableGpuAcceleration, Mode=TwoWay}"
-                    OffContent="CPU Only"
+                    OffContent="CPU only"
                     OnContent="Enabled" />
                 <controls:SettingsExpander.Items>
                     <!--  Batch Size  -->
-                    <controls:SettingsCard Header="Inference Batch Size" HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
+                    <controls:SettingsCard Header="Inference batch size" HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
                         <controls:SettingsCard.Description>
                             <StackPanel>
                                 <TextBlock>Number of images processed per inference call.</TextBlock>
@@ -104,7 +104,7 @@
                 Text="Resize" />
 
             <!--  Enable Resize  -->
-            <controls:SettingsCard Header="Resize Image" HeaderIcon="{ui:FontIcon Glyph=&#xE799;}">
+            <controls:SettingsCard Header="Resize image" HeaderIcon="{ui:FontIcon Glyph=&#xE799;}">
                 <ToggleSwitch
                     IsOn="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}"
                     OffContent="Off"
@@ -114,11 +114,10 @@
             <!--  Size  -->
             <controls:SettingsCard
                 Description="Width × Height (px)"
-                Header="Target Size"
+                Header="Target size"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE9A6;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <NumberBox
-                    x:Name="ResizeSizeNumberBox"
                     Maximum="2048"
                     Minimum="32"
                     SpinButtonPlacementMode="Compact"
@@ -128,7 +127,7 @@
             <!--  Method  -->
             <controls:SettingsCard
                 Description="How to handle images that don't match the target aspect ratio"
-                Header="Aspect Ratio Handling"
+                Header="Aspect ratio handling"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE740;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -149,7 +148,7 @@
             <!--  Interpolation Methods  -->
             <controls:SettingsExpander
                 Description="Used algorithm when images are scaled up or down"
-                Header="Interpolation Methods"
+                Header="Interpolation methods"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE158;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <controls:SettingsExpander.Items>
@@ -196,12 +195,12 @@
             <TextBlock
                 Margin="0,29,0,3"
                 Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Border Detection" />
+                Text="Border detection" />
 
             <!--  Enable Border Removal  -->
             <controls:SettingsCard
                 Description="Automatically crop black bars or uniform borders from images"
-                Header="Remove Borders/Letterboxing"
+                Header="Remove borders/letterboxing"
                 HeaderIcon="{ui:FontIcon Glyph=&#xEF2E;}">
                 <ToggleSwitch
                     x:Name="BorderDetectionCheckBox"
@@ -213,7 +212,7 @@
             <!--  Detection Aggressiveness  -->
             <controls:SettingsExpander
                 Description="How aggressively borders are detected and removed"
-                Header="Detection Sensitivity"
+                Header="Detection sensitivity"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE790;}"
                 IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}"
                 IsExpanded="True">
@@ -222,7 +221,7 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="{x:Bind ViewModel.BorderDetectionAggressivenessLabel, Mode=OneWay}" />
                 <controls:SettingsExpander.Items>
-                    <controls:SettingsCard Header="Color Tolerance" IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}">
+                    <controls:SettingsCard Header="Color tolerance" IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}">
                         <controls:SettingsCard.Description>
                             <StackPanel>
                                 <TextBlock>Lower values detect only very uniform borders (like pure black).</TextBlock>
@@ -266,7 +265,7 @@
                 Text="Output" />
 
             <!--  File Format  -->
-            <controls:SettingsCard Header="File Format" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
+            <controls:SettingsCard Header="File format" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
                 <ComboBox
                     HorizontalAlignment="Stretch"
                     ItemsSource="{x:Bind ViewModel.OutputFormats}"
@@ -285,7 +284,7 @@
             </controls:SettingsCard>
 
             <!--  Color Format  -->
-            <controls:SettingsCard Header="Bit Depth" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
+            <controls:SettingsCard Header="Color format" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
                 <ComboBox
                     HorizontalAlignment="Stretch"
                     ItemsSource="{x:Bind ViewModel.ColorFormats}"
@@ -296,18 +295,18 @@
             <TextBlock
                 Margin="0,29,0,3"
                 Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Temp Folder" />
+                Text="Temporary folder" />
 
             <!--  Temp Folder  -->
             <controls:SettingsExpander
                 Description="Location for storing pre-processed images temporarily"
-                Header="Temporary Folder Location"
+                Header="Temporary folder"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE8B7;}"
                 IsExpanded="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <ToggleSwitch
                         IsOn="{x:Bind ViewModel.UseCustomTempFolder, Mode=TwoWay}"
-                        OffContent="Application Temp Folder"
+                        OffContent="Application Temporary folder"
                         OnContent="Custom" />
                     <Button
                         HorizontalAlignment="Stretch"
@@ -319,7 +318,7 @@
                 <controls:SettingsExpander.Items>
                     <!--  Custom Temp Folder  -->
                     <controls:SettingsCard
-                        Header="Custom Directory"
+                        Header="Custom directory"
                         HeaderIcon="{ui:FontIcon Glyph=&#xE838;}"
                         IsEnabled="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
 

@@ -10,11 +10,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using Serilog;
+using Serilog.Events;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Memory;
 using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
+using System.IO;
+using Windows.Storage;
 
 namespace DeDupe
 {
@@ -34,18 +37,27 @@ namespace DeDupe
         {
             InitializeComponent();
 
-            _host = Host.CreateDefaultBuilder()
-                .ConfigureServices(ConfigureServices)
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
+            string logPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Logs", "dedupe-.log");
+
+            LoggerConfiguration? logConfig = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .Enrich.WithThreadId()
+                .WriteTo.File(logPath,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{ThreadId}] {SourceContext}{NewLine} {Message:lj}{NewLine}{Exception}",
+                    shared: true);
+
 #if DEBUG
-                    logging.AddDebug();
-                    logging.SetMinimumLevel(LogLevel.Debug);
-#else
-            logging.SetMinimumLevel(LogLevel.Warning);
+            logConfig = logConfig.WriteTo.Debug(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{ThreadId}] {Message:lj}{NewLine}{Exception}");
 #endif
-                })
+            Log.Logger = logConfig.CreateLogger();
+
+            _host = Host.CreateDefaultBuilder()
+                .UseSerilog()
+                .ConfigureServices(ConfigureServices)
                 .Build();
 
             _serviceProvider = _host.Services;
@@ -58,7 +70,7 @@ namespace DeDupe
             settingsService.ParallelProcessingCoresChanged += (_, cores) =>
             {
                 Configuration.Default.MaxDegreeOfParallelism = cores;
-                Debug.WriteLine($"ImageSharp parallelism updated to {cores}");
+                Log.Debug("ImageSharp parallelism updated to {Cores}", cores);
             };
 
             UnhandledException += App_UnhandledException;
@@ -82,6 +94,8 @@ namespace DeDupe
             services.AddSingleton<GeneralSettingsViewModel>();
             services.AddSingleton<ImageProcessingSettingsViewModel>();
             services.AddSingleton<ModelSettingsViewModel>();
+            services.AddSingleton<AnalysisSettingsViewModel>();
+            services.AddSingleton<AboutSettingsViewModel>();
 
             // Services
 
@@ -127,11 +141,11 @@ namespace DeDupe
 
                 Configuration.Default.MaxDegreeOfParallelism = maxParallelism;
 
-                Debug.WriteLine($"ImageSharp configured: {maxPoolSizeMegabytes}MB pool, {Configuration.Default.MaxDegreeOfParallelism} max parallelism");
+                Log.Debug("ImageSharp configured with {PoolSizeMB}MB pool and {MaxParallelism} max parallelism", maxPoolSizeMegabytes, Configuration.Default.MaxDegreeOfParallelism);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Warning: Failed to configure ImageSharp memory settings: {ex.Message}");
+                Log.Warning(ex, "ImageSharp memory configuration failed, using defaults");
             }
         }
 
@@ -140,6 +154,7 @@ namespace DeDupe
             await _host.StartAsync();
 
             _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
+            LogApplicationStarted();
 
             IThemeService themeService = _serviceProvider.GetRequiredService<IThemeService>();
             themeService.Initialize();
@@ -154,6 +169,7 @@ namespace DeDupe
             {
                 _settingsWindow = new SettingsWindow();
                 _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+                LogSettingsWindowOpened();
             }
 
             _settingsWindow.Activate();
@@ -161,17 +177,17 @@ namespace DeDupe
 
         public async void Shutdown()
         {
-            // Close settings window
+            LogApplicationShuttingDown();
+
             _settingsWindow?.Close();
             _settingsWindow = null;
 
-            // Stop host
             await _host.StopAsync();
 
-            // Dispose
             _host.Dispose();
 
-            // Exit application
+            Log.CloseAndFlush();
+
             Environment.Exit(0);
         }
 
@@ -179,15 +195,10 @@ namespace DeDupe
 
         private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
         {
-            Exception? exception = e.Exception;
-            string? message = $"Unhandled Exception: {exception.Message}";
-            string? stackTrace = $"Stack Trace: {exception.StackTrace}";
+            LogUnhandledException(e.Exception);
 
-            _logger?.LogError(exception, "Unhandled application exception occurred");
-
-            // Debug output
-            Debug.WriteLine(message);
-            Debug.WriteLine(stackTrace);
+            Debug.WriteLine($"Unhandled Exception: {e.Exception.Message}");
+            Debug.WriteLine($"Stack Trace: {e.Exception.StackTrace}");
 
             // Prevent debugger break
             e.Handled = true;
@@ -197,14 +208,35 @@ namespace DeDupe
 
         private void DebugSettings_BindingFailed(object sender, BindingFailedEventArgs e)
         {
-            string? message = $"Binding Failed: {e.Message}";
-            Debug.WriteLine(message);
-
-            _logger?.LogWarning("Data binding failed: {BindingMessage}", e.Message);
+            LogBindingFailed(e.Message);
+            Debug.WriteLine($"Binding Failed: {e.Message}");
         }
 
 #endif
 
         #endregion Exception Handling
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Application started")]
+        private partial void LogApplicationStarted();
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Application shutting down")]
+        private partial void LogApplicationShuttingDown();
+
+        [LoggerMessage(Level = LogLevel.Critical, Message = "Unhandled application exception")]
+        private partial void LogUnhandledException(Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Settings window opened")]
+        private partial void LogSettingsWindowOpened();
+
+#if DEBUG
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Data binding failed: {BindingMessage}")]
+        private partial void LogBindingFailed(string bindingMessage);
+
+#endif
+
+        #endregion Logging
     }
 }

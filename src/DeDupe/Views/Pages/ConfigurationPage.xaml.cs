@@ -1,6 +1,7 @@
 using DeDupe.Constants;
 using DeDupe.Models.Input;
 using DeDupe.ViewModels.Pages;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,8 @@ namespace DeDupe.Views.Pages
 {
     public sealed partial class ConfigurationPage : Page
     {
+        private readonly ILogger<ConfigurationPage> _logger = App.Current.GetService<ILogger<ConfigurationPage>>();
+
         private ConfigurationViewModel ViewModel { get; }
 
         public ConfigurationPage()
@@ -42,7 +45,6 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Get dragged items
             IReadOnlyList<IStorageItem> items = await e.DataView.GetStorageItemsAsync();
 
             if (items.Count == 0)
@@ -50,10 +52,14 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
+            LogDropReceived(items.Count);
+
             (List<InputListItem>? folders, List<InputListItem>? files) = await CollectDroppedItemsAsync(items);
 
             await ProcessDroppedFoldersAsync(folders);
             ProcessDroppedFiles(files);
+
+            LogDropProcessed(folders.Count, files.Count);
         }
 
         private async Task<(List<InputListItem> Folders, List<InputListItem> Files)> CollectDroppedItemsAsync(IReadOnlyList<IStorageItem> items)
@@ -65,6 +71,7 @@ namespace DeDupe.Views.Pages
             {
                 if (IsAlreadyInInputList(item.Path))
                 {
+                    LogDuplicateInputSkipped(item.Path);
                     continue;
                 }
 
@@ -96,11 +103,10 @@ namespace DeDupe.Views.Pages
             return ViewModel.InputListItems.Any(existingItem => existingItem.Path.Equals(path, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static async Task<InputListItem?> CreateFolderItemAsync(StorageFolder folder)
+        private async Task<InputListItem?> CreateFolderItemAsync(StorageFolder folder)
         {
             try
             {
-                // Check if folder has subdirectories
                 IReadOnlyList<StorageFolder> subfolders = await folder.GetFoldersAsync();
                 bool hasSubdirectories = subfolders.Count > 0;
 
@@ -114,7 +120,7 @@ namespace DeDupe.Views.Pages
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing folder '{folder.Path}': {ex.Message}");
+                LogFolderAccessFailed(folder.Path, ex);
                 return null;
             }
         }
@@ -152,5 +158,21 @@ namespace DeDupe.Views.Pages
         }
 
         #endregion Item Loading
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Drop received with {ItemCount} storage items")]
+        private partial void LogDropReceived(int itemCount);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Drop processed, added {FolderCount} folders and {FileCount} files")]
+        private partial void LogDropProcessed(int folderCount, int fileCount);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Duplicate input skipped for {Path}")]
+        private partial void LogDuplicateInputSkipped(string path);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Folder access denied for {FolderPath}")]
+        private partial void LogFolderAccessFailed(string folderPath, Exception ex);
+
+        #endregion Logging
     }
 }

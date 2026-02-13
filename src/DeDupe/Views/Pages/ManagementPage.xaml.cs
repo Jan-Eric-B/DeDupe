@@ -4,6 +4,7 @@ using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.ViewModels.Pages;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -18,6 +19,8 @@ namespace DeDupe.Views.Pages
 {
     public sealed partial class ManagementPage : Page
     {
+        private readonly ILogger<ManagementPage> _logger = App.Current.GetService<ILogger<ManagementPage>>();
+
         private ManagementViewModel ViewModel { get; }
 
         public ManagementPage()
@@ -28,6 +31,13 @@ namespace DeDupe.Views.Pages
 
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             SplitViewGrid.SizeChanged += SplitViewGrid_SizeChanged;
+
+            Loaded += ManagementPage_Loaded;
+        }
+
+        private async void ManagementPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.TryAutoAnalyzeAsync();
         }
 
         private void BackToConfiguration_Click(object sender, RoutedEventArgs e)
@@ -56,12 +66,10 @@ namespace DeDupe.Views.Pages
         {
             ExitEditMode(false);
 
-            // Unsubscribe from group
             UnsubscribeFromGroup();
 
             if (ViewModel.SelectedGroup != null)
             {
-                // Subscribe to group events
                 SubscribeToGroup(ViewModel.SelectedGroup);
 
                 SetupPanelForGroup();
@@ -72,7 +80,6 @@ namespace DeDupe.Views.Pages
             }
             else
             {
-                // Save width ratio before closing
                 SavePanelWidthRatio();
 
                 HideRightPanel();
@@ -135,12 +142,11 @@ namespace DeDupe.Views.Pages
 
             if (totalWidth <= 0)
             {
-                totalWidth = 1000; // Fallback
+                totalWidth = 1000;
             }
 
             double rightPanelWidth = totalWidth * _rightPanelWidthRatio;
 
-            // Constraints
             double minWidth = 300;
             double maxWidth = totalWidth * 0.7;
 
@@ -203,7 +209,6 @@ namespace DeDupe.Views.Pages
 
         private void OnGroupPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            // Update UI on selection change
             if (e.PropertyName is nameof(SimilarityGroup.IsSelected) or nameof(SimilarityGroup.SelectedCount) or nameof(SimilarityGroup.AllSelected) or nameof(SimilarityGroup.NoneSelected))
             {
                 DispatcherQueue.TryEnqueue(UpdateSelection);
@@ -219,7 +224,6 @@ namespace DeDupe.Views.Pages
 
             SimilarityGroup group = ViewModel.SelectedGroup;
 
-            // Update checkbox state to match group's IsSelected
             SelectAllCheckBox.IsChecked = group.IsSelected;
 
             SelectionCountText.Text = $"{group.SelectedCount} of {group.Count} selected";
@@ -338,7 +342,6 @@ namespace DeDupe.Views.Pages
                 CommitButtonText = title,
             };
 
-            // Initialize folder picker
             folderPicker.FileTypeFilter.Add("*");
             nint windowHandle = WindowNative.GetWindowHandle(App.Window);
             InitializeWithWindow.Initialize(folderPicker, windowHandle);
@@ -371,6 +374,8 @@ namespace DeDupe.Views.Pages
         {
             if (result.HasFailures)
             {
+                LogFileOperationPartialFailure(operation, result.SuccessCount, result.FailedCount);
+
                 string message = $"Completed with some issues:\n\n" +
                                 $"✓ {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")} {operation.ToLower()}d successfully\n" +
                                 $"✗ {result.FailedCount} file{(result.FailedCount == 1 ? "" : "s")} failed";
@@ -385,6 +390,10 @@ namespace DeDupe.Views.Pages
 
                 await resultDialog.ShowAsync();
             }
+            else
+            {
+                LogFileOperationCompleted(operation, result.SuccessCount);
+            }
         }
 
         private async void MoveToSingleFolder_Click(object sender, RoutedEventArgs e)
@@ -395,24 +404,22 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Pick destination folder
             string? folderPath = await PickFolderAsync("Select destination folder");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            // Show confirmation
             bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, 0, isGrouped: false);
             if (!confirmed)
             {
                 return;
             }
 
-            // Execute move
+            LogFileOperationStarting("Move", count, folderPath);
+
             FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
 
-            // Show result
             await ShowOperationResultAsync("Move", result);
         }
 
@@ -425,24 +432,22 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Pick root folder
             string? folderPath = await PickFolderAsync("Select root folder for group organization");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            // Show confirmation
             bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, groupCount, isGrouped: true);
             if (!confirmed)
             {
                 return;
             }
 
-            // Execute move
+            LogFileOperationStarting("Move to group folders", count, folderPath);
+
             FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
 
-            // Show result
             await ShowOperationResultAsync("Move", result);
         }
 
@@ -454,24 +459,22 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Pick destination folder
             string? folderPath = await PickFolderAsync("Select destination folder");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            // Show confirmation
             bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, 0, isGrouped: false);
             if (!confirmed)
             {
                 return;
             }
 
-            // Execute copy
+            LogFileOperationStarting("Copy", count, folderPath);
+
             FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
 
-            // Show result
             await ShowOperationResultAsync("Copy", result);
         }
 
@@ -484,24 +487,22 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Pick root folder
             string? folderPath = await PickFolderAsync("Select root folder for group organization");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            // Show confirmation
             bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, groupCount, isGrouped: true);
             if (!confirmed)
             {
                 return;
             }
 
-            // Execute copy
+            LogFileOperationStarting("Copy to group folders", count, folderPath);
+
             FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
 
-            // Show result
             await ShowOperationResultAsync("Copy", result);
         }
 
@@ -523,7 +524,6 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Show warning dialog for permanent deletion
             ContentDialog confirmDialog = new()
             {
                 Title = "Permanent Deletion",
@@ -538,6 +538,7 @@ namespace DeDupe.Views.Pages
 
             if (result == ContentDialogResult.Primary)
             {
+                LogFileOperationStarting("Permanent delete", count, "N/A");
                 await ViewModel.DeletePermanentlyCommand.ExecuteAsync(null);
             }
         }
@@ -550,7 +551,6 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            // Show confirmation dialog
             ContentDialog confirmDialog = new()
             {
                 Title = "Confirm Deletion",
@@ -565,6 +565,7 @@ namespace DeDupe.Views.Pages
 
             if (result == ContentDialogResult.Primary)
             {
+                LogFileOperationStarting("Recycle bin delete", count, "N/A");
                 await ViewModel.DeleteSelectedFilesCommand.ExecuteAsync(null);
             }
         }
@@ -660,7 +661,16 @@ namespace DeDupe.Views.Pages
 
                 if (!string.IsNullOrWhiteSpace(newName) && newName != ViewModel.SelectedGroup.Name)
                 {
-                    ViewModel.SelectedGroup.Name = FolderNameValidationService.Validate(newName) ? newName : FolderNameValidationService.Sanitize(newName) ?? ViewModel.SelectedGroup.Name;
+                    if (FolderNameValidationService.Validate(newName))
+                    {
+                        ViewModel.SelectedGroup.Name = newName;
+                    }
+                    else
+                    {
+                        string? sanitized = FolderNameValidationService.Sanitize(newName);
+                        LogGroupNameSanitized(newName, sanitized ?? "(null)");
+                        ViewModel.SelectedGroup.Name = sanitized ?? ViewModel.SelectedGroup.Name;
+                    }
                 }
             }
 
@@ -672,5 +682,21 @@ namespace DeDupe.Views.Pages
         }
 
         #endregion Group Renaming
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "File operation starting: {Operation} for {FileCount} files to {DestinationPath}")]
+        private partial void LogFileOperationStarting(string operation, int fileCount, string destinationPath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "File operation completed: {Operation} succeeded for {SuccessCount} files")]
+        private partial void LogFileOperationCompleted(string operation, int successCount);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "File operation partial failure: {Operation} succeeded for {SuccessCount}, failed for {FailedCount} files")]
+        private partial void LogFileOperationPartialFailure(string operation, int successCount, int failedCount);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Group name sanitized from {OriginalName} to {SanitizedName}")]
+        private partial void LogGroupNameSanitized(string originalName, string sanitizedName);
+
+        #endregion Logging
     }
 }

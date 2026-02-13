@@ -1,6 +1,7 @@
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Pages;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -16,14 +17,17 @@ namespace DeDupe
 
         private readonly WindowSizeService _windowsSizeService;
         private readonly IThemeService _themeService;
+        private readonly ILogger<MainWindow> _logger;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            _logger = App.Current.GetService<ILogger<MainWindow>>();
+
             // Set minimum window size
             nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowSizeService(hWnd, 800, 600);
+            _windowsSizeService = new WindowSizeService(hWnd, 800, 600, App.Current.GetService<ILogger<WindowSizeService>>());
 
             // Theme
             _themeService = App.Current.GetService<IThemeService>();
@@ -42,6 +46,8 @@ namespace DeDupe
 
             // Navigate to ConfigurationPage
             frMain.Navigate(typeof(ConfigurationPage));
+
+            LogMainWindowInitialized();
         }
 
         private void SetRegionsForCustomTitleBar()
@@ -68,11 +74,11 @@ namespace DeDupe
 
         private void OnWindowClosed(object sender, WindowEventArgs args)
         {
-            // Unregister and dispose
+            LogMainWindowClosed();
+
             _themeService.UnregisterWindow(this);
             _windowsSizeService?.Dispose();
 
-            // Close entire application
             App.Current.Shutdown();
         }
 
@@ -80,8 +86,8 @@ namespace DeDupe
         {
             if (e.PropertyName == nameof(MainWindowViewModel.IsInManagementMode) && ViewModel.IsInManagementMode)
             {
-                // Navigate to ManagementPage when entering management mode
                 frManagement.Navigate(typeof(ManagementPage));
+                LogNavigatedToManagementPage();
             }
         }
 
@@ -89,5 +95,18 @@ namespace DeDupe
         {
             App.Current.OpenSettingsWindow();
         }
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Main window initialized")]
+        private partial void LogMainWindowInitialized();
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Main window closed")]
+        private partial void LogMainWindowClosed();
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Navigated to management page")]
+        private partial void LogNavigatedToManagementPage();
+
+        #endregion Logging
     }
 }

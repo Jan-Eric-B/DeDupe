@@ -1,13 +1,13 @@
 using CommunityToolkit.WinUI.Controls;
 using DeDupe.Constants;
 using DeDupe.ViewModels.Settings;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 
@@ -15,11 +15,14 @@ namespace DeDupe.Views.Settings
 {
     public sealed partial class ModelSettingsPage : Page
     {
+        private readonly ILogger<ModelSettingsPage> _logger;
+
         private ModelSettingsViewModel ViewModel { get; }
 
         public ModelSettingsPage()
         {
             InitializeComponent();
+            _logger = App.Current.GetService<ILogger<ModelSettingsPage>>();
             ViewModel = App.Current.GetService<ModelSettingsViewModel>();
             DataContext = ViewModel;
         }
@@ -32,6 +35,8 @@ namespace DeDupe.Views.Settings
             {
                 bool isBundled = item.Tag?.ToString() == "Bundled";
                 ViewModel.UseBundledModel = isBundled;
+
+                LogModelSourceSwitched(isBundled ? "Bundled" : "Custom");
             }
         }
 
@@ -69,6 +74,7 @@ namespace DeDupe.Views.Settings
 
                 if (items.Count == 0 || items[0] is not StorageFile file)
                 {
+                    LogModelFileDropIgnored("No valid file in dropped items");
                     return;
                 }
 
@@ -77,11 +83,16 @@ namespace DeDupe.Views.Settings
                 if (SupportedFileExtensions.IsSupportedModelFile(extension))
                 {
                     ViewModel.CustomModelFilePath = file.Path;
+                    LogCustomModelFileAccepted(file.Path, extension);
+                }
+                else
+                {
+                    LogModelFileDropIgnored($"Unsupported extension '{extension}'");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error handling file drop: {ex.Message}");
+                LogModelFileDropFailed(ex);
             }
         }
 
@@ -105,10 +116,25 @@ namespace DeDupe.Views.Settings
             base.OnNavigatedTo(e);
             ViewModel.OnNavigatedTo();
 
-            // Sync Segmented control with ViewModel's state
             ModelSourceSegmented.SelectedIndex = ViewModel.UseBundledModel ? 0 : 1;
         }
 
         #endregion Navigation
+
+        #region Logging
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model source switched to {ModelSource}")]
+        private partial void LogModelSourceSwitched(string modelSource);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Custom model file accepted from drop: {FilePath} ({FileExtension})")]
+        private partial void LogCustomModelFileAccepted(string filePath, string fileExtension);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model file drop ignored: {Reason}")]
+        private partial void LogModelFileDropIgnored(string reason);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Model file drop handling failed")]
+        private partial void LogModelFileDropFailed(Exception ex);
+
+        #endregion Logging
     }
 }
