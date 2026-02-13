@@ -29,7 +29,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Assets\GitHub_Invertocat_Black_Clearspace.png" />
+    <None Remove="Assets\GitHub_Invertocat_Black_Clearspace.svg" />
     <None Remove="Assets\GitHub_Invertocat_White_Clearspace.png" />
+    <None Remove="Assets\GitHub_Invertocat_White_Clearspace.svg" />
     <None Remove="Assets\Icon\BadgeLogo.scale-100.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-125.png" />
     <None Remove="Assets\Icon\BadgeLogo.scale-150.png" />
@@ -113,7 +115,19 @@
     <Content Update="Assets\GitHub_Invertocat_Black_Clearspace.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Update="Assets\GitHub_Invertocat_Black_Clearspace.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Update="Assets\GitHub_Invertocat_White_Clearspace.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\GitHub_Invertocat_White_Clearspace.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\huggingface_logo-noborder.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Assets\nuget.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -185,9 +199,6 @@
       <_PkgJson>@(_PkgLine, ',')</_PkgJson>
     </PropertyGroup>
 
-    <WriteLinesToFile
-      File="$(_DepsOutputPath)"
-      Lines="[%0A$(_PkgJson)%0A]"
-      Overwrite="true" />
+    <WriteLinesToFile File="$(_DepsOutputPath)" Lines="[%0A$(_PkgJson)%0A]" Overwrite="true" />
   </Target>
 </Project>
