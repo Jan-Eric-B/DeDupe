@@ -1,4 +1,5 @@
 ﻿using DeDupe.Constants;
+using DeDupe.Enums;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,11 +20,12 @@ namespace DeDupe.Models.Configuration
             Description: "Best visual similarity. Finds duplicates even with edits or different angles.",
             License: "Apache 2.0",
             Url: "https://github.com/facebookresearch/dinov2",
-            Developers: "Meta AI (build using PyTorch)",
+            Developers: "Meta AI (converted from TorchScript to ONNX)",
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/dinov2_vitb14.onnx",
-            ExpectedFileSize: 347_148_037);
+            ExpectedFileSize: 347_148_037,
+            RecommendedResizeMethod: ResizeMethod.Padding);
 
         /// <summary>
         /// ResNet50-v2
@@ -39,7 +41,8 @@ namespace DeDupe.Models.Configuration
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/resnet50-v2-7.onnx",
-            ExpectedFileSize: 102_442_452);
+            ExpectedFileSize: 102_442_452,
+            RecommendedResizeMethod: ResizeMethod.Padding);
 
         /// <summary>
         /// CLIP ViT-B/32
@@ -51,20 +54,57 @@ namespace DeDupe.Models.Configuration
             Description: "Groups by content (e.g., all beach photos). Less strict on visual match.",
             License: "MIT",
             Url: "https://github.com/openai/CLIP",
-            Developers: "OpenAI (build using PyTorch)",
+            Developers: "OpenAI (converted from TorchScript to ONNX)",
             Normalization: NormalizationSettings.Clip,
             InputSize: 224,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/clip-vit-b32-image.onnx",
-            ExpectedFileSize: 976_517);
+            ExpectedFileSize: 976_517,
+            RecommendedResizeMethod: ResizeMethod.Padding);
+
+        /// <summary>
+        /// SSCD Disc Mixup (ResNet50 backbone)
+        /// </summary>
+        public static BundledModelInfo SscdDiscMixup { get; } = new(
+            Id: "sscd-disc-mixup",
+            DisplayName: "SSCD Disc Mixup",
+            FileName: "sscd_disc_mixup.onnx",
+            Description: "Purpose-built for copy detection. Best at finding duplicates with heavy edits, crops, or overlays.",
+            License: "MIT",
+            Url: "https://github.com/facebookresearch/sscd-copy-detection",
+            Developers: "Meta AI (converted from TorchScript to ONNX)",
+            Normalization: NormalizationSettings.ImageNet,
+            InputSize: 320,
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/sscd_disc_mixup.onnx",
+            ExpectedFileSize: 98_158_429,
+            RecommendedResizeMethod: ResizeMethod.Stretch);
+
+        /// <summary>
+        /// SSCD Disc Large (ResNeXt101 backbone)
+        /// </summary>
+        public static BundledModelInfo SscdDiscLarge { get; } = new(
+            Id: "sscd-disc-large",
+            DisplayName: "SSCD Disc Large",
+            FileName: "sscd_disc_large.onnx",
+            Description: "Highest accuracy copy detection (ResNeXt101). Slower but more precise than Disc Mixup.",
+            License: "MIT",
+            Url: "https://github.com/facebookresearch/sscd-copy-detection",
+            Developers: "Meta AI (converted from TorchScript to ONNX)",
+            Normalization: NormalizationSettings.ImageNet,
+            InputSize: 320,
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/sscd_disc_large.onnx",
+            ExpectedFileSize: 176_700_233,
+            RecommendedResizeMethod: ResizeMethod.Stretch);
 
         public static IReadOnlyList<BundledModelInfo> All { get; } =
         [
             ResNet50,
             DinoV2VitB14,
-            ClipVitB32
+            ClipVitB32,
+            SscdDiscMixup,
+            SscdDiscLarge
         ];
 
-        public static string DefaultModelId => ResNet50.Id;
+        public static string DefaultModelId => SscdDiscMixup.Id;
 
         public static BundledModelInfo? GetById(string? id)
         {

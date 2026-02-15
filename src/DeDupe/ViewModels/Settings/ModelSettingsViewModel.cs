@@ -176,10 +176,22 @@ namespace DeDupe.ViewModels.Settings
         {
             _settingsService.UseBundledModel = value;
 
+            if (value)
+            {
+                BundledModelInfo? model = _bundledModelService.GetModelInfo(SelectedBundledModelId);
+                if (model != null)
+                {
+                    Normalization = model.Normalization;
+                    _settingsService.EnableResizing = true;
+                    _settingsService.ResizeSize = (uint)model.InputSize;
+                    _settingsService.ResizeMethod = model.RecommendedResizeMethod;
+                }
+            }
+
             LogModelSourceChanged(value ? "bundled" : "custom");
         }
 
-        // Syncs normalization when bundled model is changed
+        // Syncs normalization and image processing settings when bundled model is changed
         partial void OnSelectedBundledModelIdChanged(string value)
         {
             _settingsService.SelectedBundledModelId = value;
@@ -189,7 +201,14 @@ namespace DeDupe.ViewModels.Settings
                 BundledModelInfo? model = _bundledModelService.GetModelInfo(value);
                 if (model != null)
                 {
+                    // Sync normalization
                     Normalization = model.Normalization;
+
+                    // Sync image processing settings
+                    _settingsService.EnableResizing = true;
+                    _settingsService.ResizeSize = (uint)model.InputSize;
+                    _settingsService.ResizeMethod = model.RecommendedResizeMethod;
+
                     LogBundledModelSelected(model.DisplayName, value);
                 }
             }
