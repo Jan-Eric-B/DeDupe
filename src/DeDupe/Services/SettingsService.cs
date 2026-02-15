@@ -14,6 +14,7 @@ namespace DeDupe.Services
         private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
         private readonly string _defaultTempFolderPath = Path.Combine(ApplicationData.Current.TemporaryFolder.Path, "ProcessedImages");
         private readonly string _defaultModelFolderPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Models");
+        private readonly string _defaultLogFolderPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Logs");
         private readonly ILogger<SettingsService> _logger = logger;
 
         /// <inheritdoc/>
@@ -353,7 +354,7 @@ namespace DeDupe.Services
 
         public ColorFormat ColorFormat
         {
-            get => (ColorFormat)GetValue(ColorFormatKey, ColorFormat.RGB8);
+            get => GetValue(ColorFormatKey, ColorFormat.RGB8);
             set
             {
                 if (ColorFormat != value)
@@ -566,6 +567,12 @@ namespace DeDupe.Services
         public event EventHandler<bool>? AutoAnalyzeSimilarityChanged;
 
         #endregion Similarity
+
+        #region Log Folder
+
+        public string LogFolderPath => _defaultLogFolderPath;
+
+        #endregion Log Folder
 
         #region Logging
 

@@ -163,5 +163,11 @@ namespace DeDupe.Services
         event EventHandler<bool>? AutoAnalyzeSimilarityChanged;
 
         #endregion Similarity
+
+        #region Log Folder
+
+        string LogFolderPath { get; }
+
+        #endregion Log Folder
     }
 }

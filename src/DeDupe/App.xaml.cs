@@ -17,6 +17,7 @@ using SixLabors.ImageSharp.Memory;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Windows.Storage;
 
 namespace DeDupe
@@ -37,7 +38,8 @@ namespace DeDupe
         {
             InitializeComponent();
 
-            string logPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Logs", "dedupe-.log");
+            string logPath = ApplicationData.Current.LocalSettings.Values["LogFolderPath"] as string ?? Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Logs");
+            logPath = Path.Combine(logPath, "dedupe-.log");
 
             LoggerConfiguration? logConfig = new LoggerConfiguration()
                 .MinimumLevel.Debug()
@@ -175,7 +177,7 @@ namespace DeDupe
             _settingsWindow.Activate();
         }
 
-        public async void Shutdown()
+        public async Task Shutdown()
         {
             LogApplicationShuttingDown();
 
@@ -186,7 +188,7 @@ namespace DeDupe
 
             _host.Dispose();
 
-            Log.CloseAndFlush();
+            await Log.CloseAndFlushAsync();
 
             Environment.Exit(0);
         }

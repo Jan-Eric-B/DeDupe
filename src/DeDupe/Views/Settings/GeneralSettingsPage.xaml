@@ -2,13 +2,13 @@
 <Page
     x:Class="DeDupe.Views.Settings.GeneralSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:converter="using:DeDupe.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enums="using:DeDupe.Enums"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="using:CommunityToolkit.WinUI"
     Background="Transparent"
     mc:Ignorable="d">
     <Page.Resources>
@@ -70,6 +70,22 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
+            </controls:SettingsCard>
+
+            <!--  Logging  -->
+            <TextBlock
+                Margin="0,29,0,3"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Logging" />
+
+            <!--  Log Folder  -->
+            <controls:SettingsCard Header="Log folder" HeaderIcon="{ui:FontIcon Glyph=&#xE838;}">
+                <Button
+                    HorizontalAlignment="Stretch"
+                    Command="{x:Bind ViewModel.OpenLogFolderCommand}"
+                    ToolTipService.ToolTip="Open folder in Explorer">
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
+                </Button>
             </controls:SettingsCard>
         </StackPanel>
     </ScrollViewer>

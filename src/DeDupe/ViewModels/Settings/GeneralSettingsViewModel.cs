@@ -1,10 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
 using DeDupe.Helpers;
 using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {
@@ -73,6 +77,35 @@ namespace DeDupe.ViewModels.Settings
 
         #endregion Appearance
 
+        #region Log Folder
+
+        [RelayCommand]
+        private async Task OpenLogFolderAsync()
+        {
+            try
+            {
+                string path = _settingsService.LogFolderPath;
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                    LogLogFolderCreated(path);
+                }
+
+                await Launcher.LaunchFolderPathAsync(path);
+            }
+            catch (Exception ex)
+            {
+                LogLogFolderOpenFailed(ex);
+            }
+        }
+
+        #endregion Log Folder
+
         #region Navigation
 
         public override void OnNavigatedTo()
@@ -97,6 +130,12 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Information, Message = "AccentColor changed to {SelectedAccentColor}")]
         private partial void LogSelectedAccentColorIndexChanged(string selectedAccentColor);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "log folder created at {FolderPath}")]
+        private partial void LogLogFolderCreated(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Log folder open failed")]
+        private partial void LogLogFolderOpenFailed(Exception ex);
 
         #endregion Logging
     }
