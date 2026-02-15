@@ -247,7 +247,7 @@ namespace DeDupe.ViewModels.Pages
 
             // Cancel existing scan
             CancellationTokenSource? oldCts = Interlocked.Exchange(ref _scanCts, new CancellationTokenSource());
-            oldCts?.Cancel();
+            if (oldCts is not null) await oldCts.CancelAsync();
             oldCts?.Dispose();
             CancellationToken ct = _scanCts.Token;
 
@@ -507,7 +507,13 @@ namespace DeDupe.ViewModels.Pages
         private async Task ProcessAsync()
         {
             // Cancel any existing processing
-            _processingCts?.Cancel();
+            if (_processingCts is not null)
+            {
+                await _processingCts.CancelAsync();
+            }
+
+            _processingCts = new CancellationTokenSource();
+
             _processingCts = new CancellationTokenSource();
             CancellationToken ct = _processingCts.Token;
 

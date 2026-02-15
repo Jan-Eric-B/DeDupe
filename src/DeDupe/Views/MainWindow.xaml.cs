@@ -72,14 +72,14 @@ namespace DeDupe
             nonClientInputSrc.SetRegionRects(NonClientRegionKind.Passthrough, [buttonRect]);
         }
 
-        private void OnWindowClosed(object sender, WindowEventArgs args)
+        private async void OnWindowClosed(object sender, WindowEventArgs args)
         {
             LogMainWindowClosed();
 
             _themeService.UnregisterWindow(this);
             _windowsSizeService?.Dispose();
 
-            App.Current.Shutdown();
+            await App.Current.Shutdown();
         }
 
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -87,7 +87,7 @@ namespace DeDupe.Views.Settings
                 }
                 else
                 {
-                    LogModelFileDropIgnored($"Unsupported extension '{extension}'");
+                    LogModelFileDropIgnoredUnsupportedExtension(extension);
                 }
             }
             catch (Exception ex)
@@ -131,6 +131,9 @@ namespace DeDupe.Views.Settings
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Model file drop ignored: {Reason}")]
         private partial void LogModelFileDropIgnored(string reason);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Model file drop ignored: Unsupported extension '{Extension}'")]
+        private partial void LogModelFileDropIgnoredUnsupportedExtension(string extension);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Model file drop handling failed")]
         private partial void LogModelFileDropFailed(Exception ex);
