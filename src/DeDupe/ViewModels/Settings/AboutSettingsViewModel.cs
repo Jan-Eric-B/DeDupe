@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {
@@ -48,9 +49,6 @@ namespace DeDupe.ViewModels.Settings
 
         [ObservableProperty]
         public partial List<DependencyPackageEntry> Dependencies { get; set; } = [];
-
-        [ObservableProperty]
-        public partial List<BundledModelInfo> BundledModels { get; set; } = [.. BundledModelRegistry.All];
 
         private static readonly JsonSerializerOptions jsonOptions = new()
         {

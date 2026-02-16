@@ -2,20 +2,17 @@
 
 namespace DeDupe.Models.Configuration
 {
-    public sealed record BundledModelInfo(
-         string Id,
-         string DisplayName,
-         string FileName,
-         string Description,
-         string License,
-         string Url,
-         string Developers,
-         NormalizationSettings Normalization,
-         int InputSize = 224,
-         string? DownloadUrl = null,
-         string? ExpectedSha256 = null,
-         ResizeMethod RecommendedResizeMethod = ResizeMethod.Padding)
+    public static class BundledModelInfo
     {
-        public bool RequiresDownload => DownloadUrl is not null;
+        public const string DisplayName = "SSCD Disc Mixup";
+        public const string FileName = "sscd_disc_mixup.onnx";
+        public const string License = "MIT";
+        public const string UrlName = "Facebook Research - SSCD Copy Detection";
+        public const string Url = "https://github.com/facebookresearch/sscd-copy-detection";
+        public const string Developers = "Meta AI (converted from TorchScript to ONNX)";
+        public const int InputSize = 320;
+        public const ResizeMethod RecommendedResizeMethod = ResizeMethod.Stretch;
+
+        public static NormalizationSettings Normalization => NormalizationSettings.ImageNet;
     }
 }

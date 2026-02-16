@@ -1,64 +1,45 @@
 ﻿using DeDupe.Models.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
+using System;
+using System.IO;
 
 namespace DeDupe.Services.Model
 {
     /// <inheritdoc/>
-    public partial class BundledModelService(IModelDownloadService downloadService, ILogger<BundledModelService> logger) : IBundledModelService
+    public partial class BundledModelService(ILogger<BundledModelService> logger) : IBundledModelService
     {
-        private readonly IModelDownloadService _downloadService = downloadService;
         private readonly ILogger<BundledModelService> _logger = logger;
 
-        /// <inheritdoc/>
-        public IReadOnlyList<BundledModelInfo> AvailableModels => BundledModelRegistry.All;
+        private static readonly string _modelPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Models", BundledModelInfo.FileName);
 
         /// <inheritdoc/>
-        public string GetModelPath(string modelId)
+        public string GetModelPath()
         {
-            BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
-            if (model is null)
+            if (!File.Exists(_modelPath))
             {
-                LogModelNotFound(modelId);
-                return string.Empty;
+                LogBundledModelNotFound(_modelPath);
             }
 
-            return _downloadService.GetLocalModelPath(model) ?? string.Empty;
+            return _modelPath;
         }
 
         /// <inheritdoc/>
-        public bool IsModelAvailable(string modelId)
+        public bool IsModelAvailable()
         {
-            BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
-            if (model is null)
+            bool exists = File.Exists(_modelPath);
+
+            if (!exists)
             {
-                LogModelNotFound(modelId);
-                return false;
+                LogBundledModelNotFound(_modelPath);
             }
 
-            return _downloadService.IsModelAvailable(model);
+            return exists;
         }
-
-        /// <inheritdoc/>
-        public bool NeedsDownload(string modelId)
-        {
-            BundledModelInfo? model = BundledModelRegistry.GetById(modelId);
-            if (model is null)
-            {
-                LogModelNotFound(modelId);
-                return false;
-            }
-
-            return !_downloadService.IsModelAvailable(model);
-        }
-
-        /// <inheritdoc/>
-        public BundledModelInfo? GetModelInfo(string modelId) => BundledModelRegistry.GetById(modelId);
 
         #region Logging
 
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Bundled model lookup failed, unknown ModelId '{ModelId}'")]
-        private partial void LogModelNotFound(string modelId);
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Bundled model not found at expected path '{ModelPath}'")]
+        private partial void LogBundledModelNotFound(string modelPath);
 
         #endregion Logging
     }

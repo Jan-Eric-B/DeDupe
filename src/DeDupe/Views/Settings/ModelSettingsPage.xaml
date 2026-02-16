@@ -3,7 +3,6 @@
     x:Class="DeDupe.Views.Settings.ModelSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:config="using:DeDupe.Models.Configuration"
     xmlns:constants="using:DeDupe.Constants"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -39,7 +38,7 @@
 
             <!--  Model Source Toggle  -->
             <controls:SettingsCard
-                Description="Switch between pre-configured models or your own ONNX file."
+                Description="Switch between the bundled model or your own ONNX file."
                 Header="Model source"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
                 <controls:Segmented x:Name="ModelSourceSegmented" SelectionChanged="ModelSourceSegmented_SelectionChanged">
@@ -48,7 +47,7 @@
                 </controls:Segmented>
             </controls:SettingsCard>
 
-            <!--  Bundled Model Selection  -->
+            <!--  Bundled Model Info  -->
             <StackPanel
                 x:Name="BundledModelSection"
                 Margin="0,8,0,0"
@@ -56,41 +55,9 @@
                 Visibility="{x:Bind ViewModel.UseBundledModel, Mode=OneWay}">
 
                 <controls:SettingsCard
-                    Description="{x:Bind ViewModel.SelectedModelDescription, Mode=OneWay}"
-                    Header="Select model"
+                    Description="{x:Bind ViewModel.BundledModelDevelopers}"
+                    Header="{x:Bind ViewModel.BundledModelDisplayName}"
                     HeaderIcon="{ui:FontIcon Glyph=&#xE74C;}">
-                    <StackPanel>
-                        <ComboBox
-                            MinWidth="220"
-                            ItemsSource="{x:Bind ViewModel.BundledModels}"
-                            SelectedValue="{x:Bind ViewModel.SelectedBundledModelId, Mode=TwoWay}"
-                            SelectedValuePath="Id">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="config:BundledModelInfo">
-                                    <TextBlock Text="{x:Bind DisplayName}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <TextBlock
-                            Margin="48,0,0,0"
-                            HorizontalAlignment="Right"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{StaticResource CaptionTextBlockStyle}"
-                            Text="{x:Bind ViewModel.SelectedModelAvailability, Mode=OneWay}" />
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <!--  Model Folder  -->
-                <controls:SettingsCard
-                    Header="Model folder"
-                    HeaderIcon="{ui:FontIcon Glyph=&#xE838;}"
-                    IsEnabled="{x:Bind ViewModel.UseBundledModel, Mode=OneWay}">
-                    <Button
-                        HorizontalAlignment="Stretch"
-                        Command="{x:Bind ViewModel.OpenModelFolderCommand}"
-                        ToolTipService.ToolTip="Open folder in Explorer">
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
-                    </Button>
                 </controls:SettingsCard>
             </StackPanel>
 
@@ -159,8 +126,8 @@
                             ToolTipService.ToolTip="{x:Bind constants:ModelLinks.HuggingFace}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <Image
-                                    Width="16"
-                                    Height="16"
+                                    Width="25"
+                                    Height="25"
                                     VerticalAlignment="Center"
                                     Source="{StaticResource HuggingFaceIcon}" />
                                 <TextBlock VerticalAlignment="Center" Text="Hugging Face" />
@@ -172,8 +139,8 @@
                             ToolTipService.ToolTip="{x:Bind constants:ModelLinks.OnnxModelZoo}">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <Image
-                                    Width="16"
-                                    Height="16"
+                                    Width="25"
+                                    Height="25"
                                     VerticalAlignment="Center"
                                     Source="{ThemeResource GitHubIcon}" />
                                 <TextBlock VerticalAlignment="Center" Text="ONNX Model Zoo" />
@@ -190,15 +157,15 @@
                 Text="Advanced" />
 
             <controls:SettingsExpander
-                Description="Configure image preprocessing. Auto-applied when selecting bundled models."
+                Description="Configure image preprocessing. Auto-applied when switching back to the bundled model."
                 Header="Normalization"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}"
                 IsExpanded="False">
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button
-                        Command="{x:Bind ViewModel.ApplyModelNormalizationCommand}"
-                        Content="Apply model defaults"
+                        Command="{x:Bind ViewModel.ApplyBundledModelNormalizationCommand}"
+                        Content="Apply bundled model defaults"
                         IsEnabled="{x:Bind ViewModel.UseBundledModel, Mode=OneWay}" />
                 </StackPanel>
 

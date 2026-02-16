@@ -6,7 +6,6 @@
     xmlns:configuration="using:DeDupe.Models.Configuration"
     xmlns:constants="using:DeDupe.Constants"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models"
@@ -29,11 +28,12 @@
 
             <SvgImageSource x:Key="NuGetIcon" UriSource="ms-appx:///Assets/Images/nuget.svg" />
             <SvgImageSource x:Key="HuggingFaceIcon" UriSource="ms-appx:///Assets/Images/huggingface_logo-noborder.svg" />
-            <converters:UrlHostToVisibilityConverter x:Key="UrlHostToVisibilityConverter" />
         </ResourceDictionary>
     </Page.Resources>
     <ScrollViewer>
         <StackPanel Spacing="4">
+
+            <!--  App Icon + Info  -->
             <Grid ColumnSpacing="20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="auto" />
@@ -57,6 +57,7 @@
                 </StackPanel>
             </Grid>
 
+            <!--  Application  Specifications  -->
             <controls:SettingsExpander
                 Margin="0,29,0,0"
                 Header="Application specifications"
@@ -202,6 +203,76 @@
                 </controls:SettingsExpander.ItemsFooter>
             </controls:SettingsExpander>
 
+            <!--  Bundled Model  -->
+            <controls:SettingsExpander Header="Bundled Model" HeaderIcon="{ui:FontIcon Glyph=&#xF0B9;}">
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <Grid Margin="0,8,0,8" RowSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Model Name -->
+                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Model" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" 
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{x:Bind configuration:BundledModelInfo.DisplayName}"
+                               TextWrapping="Wrap" />
+
+                                <!-- License -->
+                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="License" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{x:Bind configuration:BundledModelInfo.License}"
+                               TextWrapping="Wrap" />
+
+                                <!-- Developers -->
+                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Developer" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Text="{x:Bind configuration:BundledModelInfo.Developers}"
+                               TextWrapping="Wrap" />
+                            </Grid>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+                <controls:SettingsExpander.ItemsFooter>
+                    <controls:SettingsCard>
+                        <controls:SettingsCard.Header>
+                            <StackPanel Orientation="Horizontal" Spacing="0">
+                                <TextBlock
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Style="{StaticResource BodyTextBlockStyle}"
+                                    Text="Related links" />
+
+                                <HyperlinkButton
+                                    Command="{x:Bind ViewModel.OpenLinkCommand}"
+                                    CommandParameter="{x:Bind configuration:BundledModelInfo.Url}"
+                                    ToolTipService.ToolTip="{x:Bind configuration:BundledModelInfo.Url}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Image
+                                            Width="25"
+                                            Height="25"
+                                            Source="{ThemeResource GitHubIcon}" />
+                                        <TextBlock VerticalAlignment="Center" Text="{x:Bind configuration:BundledModelInfo.UrlName}" />
+                                    </StackPanel>
+                                </HyperlinkButton>
+                            </StackPanel>
+                        </controls:SettingsCard.Header>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.ItemsFooter>
+            </controls:SettingsExpander>
+
+            <!--  Dependencies  -->
             <controls:SettingsExpander Header="Third-party Dependencies" HeaderIcon="{ui:FontIcon Glyph=&#xE946;}">
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard>
@@ -269,90 +340,7 @@
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
 
-            <controls:SettingsExpander Header="Bundled Models" HeaderIcon="{ui:FontIcon Glyph=&#xF0B9;}">
-                <controls:SettingsExpander.Items>
-                    <controls:SettingsCard>
-                        <controls:SettingsCard.Header>
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto">
-                                <ListView ItemsSource="{x:Bind ViewModel.BundledModels, Mode=OneWay}" SelectionMode="None">
-                                    <ListView.ItemContainerStyle>
-                                        <Style TargetType="ListViewItem">
-                                            <Setter Property="Padding" Value="0,2" />
-                                            <Setter Property="MinHeight" Value="30" />
-                                        </Style>
-                                    </ListView.ItemContainerStyle>
-                                    <ListView.HeaderTemplate>
-                                        <DataTemplate>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="250" />
-                                                    <ColumnDefinition Width="200" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock
-                                                    Grid.Column="0"
-                                                    FontWeight="Bold"
-                                                    Text="Model" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    FontWeight="Bold"
-                                                    Text="License" />
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    FontWeight="Bold"
-                                                    Text="Developer" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.HeaderTemplate>
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="configuration:BundledModelInfo">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="250" />
-                                                    <ColumnDefinition Width="200" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <HyperlinkButton
-                                                    Grid.Column="0"
-                                                    Command="{Binding DataContext.OpenLinkCommand, ElementName=BundledModelsListView}"
-                                                    CommandParameter="{x:Bind Url}"
-                                                    ToolTipService.ToolTip="{x:Bind Url}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                                        <Grid
-                                                            Width="16"
-                                                            Height="16"
-                                                            VerticalAlignment="Center">
-                                                            <Image Source="{ThemeResource GitHubIcon}" Visibility="{x:Bind Url, Converter={StaticResource UrlHostToVisibilityConverter}, ConverterParameter=github.com}" />
-                                                            <Image Source="{StaticResource HuggingFaceIcon}" Visibility="{x:Bind Url, Converter={StaticResource UrlHostToVisibilityConverter}, ConverterParameter=huggingface}" />
-                                                        </Grid>
-                                                        <TextBlock VerticalAlignment="Center" Text="{x:Bind DisplayName}" />
-                                                    </StackPanel>
-                                                </HyperlinkButton>
-
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    Padding="10,0"
-                                                    VerticalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind License}" />
-
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    Padding="10,0"
-                                                    VerticalAlignment="Center"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind Developers}" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-                            </ScrollViewer>
-                        </controls:SettingsCard.Header>
-                    </controls:SettingsCard>
-                </controls:SettingsExpander.Items>
-            </controls:SettingsExpander>
-
+            <!--  Special Thanks  -->
             <controls:SettingsExpander Header="Special Thanks" HeaderIcon="{ui:FontIcon Glyph=&#xEB51;}">
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard Description="App and logo design" Header="Linda">

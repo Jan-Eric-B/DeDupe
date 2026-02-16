@@ -85,7 +85,7 @@
                     Width="16"
                     Height="16"
                     VerticalAlignment="Center"
-                    Source="/Assets/Icon/StoreLogo.png" />
+                    Source="/Assets/Images/Icon/AppIcon.targetsize-16.png" />
                 <TextBlock
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource TextFillColorPrimaryBrush}"

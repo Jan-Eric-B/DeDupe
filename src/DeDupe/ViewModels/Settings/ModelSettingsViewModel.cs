@@ -7,7 +7,6 @@ using DeDupe.Services;
 using DeDupe.Services.Model;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -21,14 +20,12 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
-        private readonly IModelDownloadService _downloadService;
         private readonly ILogger<ModelSettingsViewModel> _logger;
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, IModelDownloadService downloadService, ILogger<ModelSettingsViewModel> logger)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILogger<ModelSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
-            _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Model Configuration";
@@ -37,7 +34,6 @@ namespace DeDupe.ViewModels.Settings
         private void LoadSettings()
         {
             UseBundledModel = _settingsService.UseBundledModel;
-            SelectedBundledModelId = _settingsService.SelectedBundledModelId;
             CustomModelFilePath = _settingsService.CustomModelFilePath;
             Normalization = _settingsService.Normalization;
 
@@ -55,44 +51,21 @@ namespace DeDupe.ViewModels.Settings
         public partial bool UseBundledModel { get; set; }
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(SelectedBundledModel))]
-        [NotifyPropertyChangedFor(nameof(SelectedModelDescription))]
-        [NotifyPropertyChangedFor(nameof(SelectedModelInputSize))]
-        [NotifyPropertyChangedFor(nameof(ModelDisplayName))]
-        [NotifyPropertyChangedFor(nameof(ActiveModelPath))]
-        public partial string SelectedBundledModelId { get; set; } = BundledModelRegistry.DefaultModelId;
-
-        [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(CustomDirectoryPath))]
         [NotifyPropertyChangedFor(nameof(CustomFileName))]
         [NotifyPropertyChangedFor(nameof(ModelDisplayName))]
         [NotifyPropertyChangedFor(nameof(ActiveModelPath))]
         public partial string CustomModelFilePath { get; set; } = string.Empty;
 
-        public IReadOnlyList<BundledModelInfo> BundledModels => _bundledModelService.AvailableModels;
+        public string BundledModelDisplayName => BundledModelInfo.DisplayName;
 
-        public BundledModelInfo? SelectedBundledModel => _bundledModelService.GetModelInfo(SelectedBundledModelId);
+        public string BundledModelLicense => BundledModelInfo.License;
 
-        public string SelectedModelDescription => SelectedBundledModel?.Description ?? string.Empty;
+        public string BundledModelDevelopers => BundledModelInfo.Developers;
 
-        public int SelectedModelInputSize => SelectedBundledModel?.InputSize ?? 224;
+        public int BundledModelInputSize => BundledModelInfo.InputSize;
 
-        public string SelectedModelAvailability
-        {
-            get
-            {
-                BundledModelInfo? model = SelectedBundledModel;
-                if (model is null)
-                {
-                    return string.Empty;
-                }
-                if (_downloadService.IsModelAvailable(model))
-                {
-                    return "Downloaded ✓";
-                }
-                return "Not downloaded";
-            }
-        }
+        public bool IsBundledModelAvailable => _bundledModelService.IsModelAvailable();
 
         public bool UseCustomModel => !UseBundledModel;
 
@@ -100,13 +73,13 @@ namespace DeDupe.ViewModels.Settings
         public bool IsBundledModelSectionEnabled => UseBundledModel;
 
         public string ModelDisplayName => UseBundledModel
-            ? SelectedBundledModel?.DisplayName ?? "Unknown Model"
+            ? BundledModelInfo.DisplayName
             : !string.IsNullOrEmpty(CustomModelFilePath)
                 ? Path.GetFileName(CustomModelFilePath)
                 : "No model selected";
 
         public string ActiveModelPath => UseBundledModel
-            ? _bundledModelService.GetModelPath(SelectedBundledModelId)
+            ? _bundledModelService.GetModelPath()
             : CustomModelFilePath;
 
         public string CustomDirectoryPath => !string.IsNullOrEmpty(CustomModelFilePath)
@@ -175,42 +148,14 @@ namespace DeDupe.ViewModels.Settings
 
             if (value)
             {
-                BundledModelInfo? model = _bundledModelService.GetModelInfo(SelectedBundledModelId);
-                if (model != null)
-                {
-                    Normalization = model.Normalization;
-                    _settingsService.EnableResizing = true;
-                    _settingsService.ResizeSize = (uint)model.InputSize;
-                    _settingsService.ResizeMethod = model.RecommendedResizeMethod;
-                }
+                // Sync normalization and image processing settings to bundled model defaults
+                Normalization = BundledModelInfo.Normalization;
+                _settingsService.EnableResizing = true;
+                _settingsService.ResizeSize = (uint)BundledModelInfo.InputSize;
+                _settingsService.ResizeMethod = BundledModelInfo.RecommendedResizeMethod;
             }
 
             LogModelSourceChanged(value ? "bundled" : "custom");
-        }
-
-        // Syncs normalization and image processing settings when bundled model is changed
-        partial void OnSelectedBundledModelIdChanged(string value)
-        {
-            _settingsService.SelectedBundledModelId = value;
-
-            if (UseBundledModel)
-            {
-                BundledModelInfo? model = _bundledModelService.GetModelInfo(value);
-                if (model != null)
-                {
-                    // Sync normalization
-                    Normalization = model.Normalization;
-
-                    // Sync image processing settings
-                    _settingsService.EnableResizing = true;
-                    _settingsService.ResizeSize = (uint)model.InputSize;
-                    _settingsService.ResizeMethod = model.RecommendedResizeMethod;
-
-                    LogBundledModelSelected(model.DisplayName, value);
-                }
-            }
-
-            OnPropertyChanged(nameof(SelectedModelAvailability));
         }
 
         partial void OnCustomModelFilePathChanged(string value)
@@ -219,35 +164,6 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Model Selection
-
-        #region Model Folder
-
-        [RelayCommand]
-        private async Task OpenModelFolderAsync()
-        {
-            try
-            {
-                string path = _settingsService.ModelFolderPath;
-                if (string.IsNullOrEmpty(path))
-                {
-                    return;
-                }
-
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                    LogModelFolderCreated(path);
-                }
-
-                await Launcher.LaunchFolderPathAsync(path);
-            }
-            catch (Exception ex)
-            {
-                LogModelFolderOpenFailed(ex);
-            }
-        }
-
-        #endregion Model Folder
 
         #region Normalization
 
@@ -304,13 +220,10 @@ namespace DeDupe.ViewModels.Settings
         }
 
         [RelayCommand]
-        private void ApplyModelNormalization()
+        private void ApplyBundledModelNormalization()
         {
-            if (SelectedBundledModel != null)
-            {
-                Normalization = SelectedBundledModel.Normalization;
-                LogNormalizationReset(SelectedBundledModel.DisplayName);
-            }
+            Normalization = BundledModelInfo.Normalization;
+            LogNormalizationReset(BundledModelInfo.DisplayName);
         }
 
         private void UpdateNormalization(double meanR, double meanG, double meanB, double stdR, double stdG, double stdB)
@@ -343,9 +256,6 @@ namespace DeDupe.ViewModels.Settings
         [LoggerMessage(Level = LogLevel.Information, Message = "Model source changed to {ModelSource}")]
         private partial void LogModelSourceChanged(string modelSource);
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Bundled model selected: {ModelName} ({ModelId})")]
-        private partial void LogBundledModelSelected(string modelName, string modelId);
-
         [LoggerMessage(Level = LogLevel.Information, Message = "Custom model file selected: {FilePath}")]
         private partial void LogCustomModelFileSelected(string filePath);
 
@@ -357,12 +267,6 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Model location open failed for {FilePath}")]
         private partial void LogModelLocationOpenFailed(string filePath, Exception ex);
-
-        [LoggerMessage(Level = LogLevel.Debug, Message = "Model folder created at {FolderPath}")]
-        private partial void LogModelFolderCreated(string folderPath);
-
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Model folder open failed")]
-        private partial void LogModelFolderOpenFailed(Exception ex);
 
         #endregion Logging
     }

@@ -35,20 +35,18 @@ namespace DeDupe.ViewModels.Pages
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
         private readonly IFeatureExtractionService _featureExtractionService;
-        private readonly IModelDownloadService _modelDownloadService;
         private readonly ImageProcessingService _imageProcessingService;
         private readonly ILogger<ConfigurationViewModel> _logger;
 
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, IBorderDetectionService borderDetectionService, IModelDownloadService modelDownloadService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, IBorderDetectionService borderDetectionService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
-            _modelDownloadService = modelDownloadService ?? throw new ArgumentNullException(nameof(modelDownloadService));
             _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
@@ -472,7 +470,7 @@ namespace DeDupe.ViewModels.Pages
 
         public bool IsCancellable => IsScanning || IsProcessing;
 
-        public string ModelFilePath => _settingsService.UseBundledModel ? _bundledModelService.GetModelPath(_settingsService.SelectedBundledModelId) : _settingsService.CustomModelFilePath;
+        public string ModelFilePath => _settingsService.UseBundledModel ? _bundledModelService.GetModelPath() : _settingsService.CustomModelFilePath;
 
         public bool CanStartProcessing
         {
@@ -483,8 +481,7 @@ namespace DeDupe.ViewModels.Pages
 
                 if (_settingsService.UseBundledModel)
                 {
-                    // Check model ID is valid
-                    return BundledModelRegistry.Exists(_settingsService.SelectedBundledModelId);
+                    return _bundledModelService.IsModelAvailable();
                 }
 
                 return !string.IsNullOrEmpty(_settingsService.CustomModelFilePath) && File.Exists(_settingsService.CustomModelFilePath);
@@ -513,8 +510,6 @@ namespace DeDupe.ViewModels.Pages
             }
 
             _processingCts = new CancellationTokenSource();
-
-            _processingCts = new CancellationTokenSource();
             CancellationToken ct = _processingCts.Token;
 
             try
@@ -530,41 +525,6 @@ namespace DeDupe.ViewModels.Pages
                 HasProcessedItems = false;
                 HasExtractedFeatures = false;
                 ExtractedFeaturesCount = 0;
-
-                // Step 0 - Model Download
-                if (_settingsService.UseBundledModel)
-                {
-                    string modelId = _settingsService.SelectedBundledModelId;
-                    BundledModelInfo? modelInfo = _bundledModelService.GetModelInfo(modelId);
-
-                    if (modelInfo != null && !_bundledModelService.IsModelAvailable(modelId))
-                    {
-                        CurrentOperation = "Downloading model";
-                        Status = $"Downloading {modelInfo.DisplayName}...";
-
-                        Progress<ModelDownloadProgress> downloadProgress = new(info =>
-                        {
-                            DispatchToUI(() =>
-                            {
-                                ProgressPercentage = info.Percentage * 100;
-                                Status = info.StatusText;
-                            });
-                        });
-
-                        await _modelDownloadService.EnsureModelAvailableAsync(modelInfo, downloadProgress, ct);
-
-                        ct.ThrowIfCancellationRequested();
-
-                        if (!_bundledModelService.IsModelAvailable(modelId))
-                        {
-                            Status = "Model download failed. Please try again.";
-                            return;
-                        }
-
-                        // Reset progress for next step
-                        ProgressPercentage = 0;
-                    }
-                }
 
                 // Step 1 - Image Processing
                 IReadOnlyCollection<AnalysisItem> analysisItems = _appStateService.AnalysisItems;

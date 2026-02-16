@@ -124,15 +124,9 @@ namespace DeDupe.Services
 
         bool UseBundledModel { get; set; }
 
-        string SelectedBundledModelId { get; set; }
-
         string CustomModelFilePath { get; set; }
 
-        string ModelFolderPath { get; }
-
         event EventHandler<bool>? UseBundledModelChanged;
-
-        event EventHandler<string>? SelectedBundledModelIdChanged;
 
         event EventHandler<string>? CustomModelFilePathChanged;
 

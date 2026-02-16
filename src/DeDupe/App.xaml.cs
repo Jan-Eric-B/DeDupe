@@ -110,7 +110,6 @@ namespace DeDupe
             services.AddTransient<ImageProcessingService>();
 
             // Model Management
-            services.AddSingleton<IModelDownloadService, ModelDownloadService>();
             services.AddSingleton<IBundledModelService, BundledModelService>();
 
             // Feature Extraction

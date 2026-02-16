@@ -13,7 +13,6 @@ namespace DeDupe.Services
     {
         private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
         private readonly string _defaultTempFolderPath = Path.Combine(ApplicationData.Current.TemporaryFolder.Path, "ProcessedImages");
-        private readonly string _defaultModelFolderPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Models");
         private readonly string _defaultLogFolderPath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "Logs");
         private readonly ILogger<SettingsService> _logger = logger;
 
@@ -189,7 +188,7 @@ namespace DeDupe.Services
 
         public uint ResizeSize
         {
-            get => GetValue(ResizeSizeKey, 224u);
+            get => GetValue(ResizeSizeKey, 320u);
             set
             {
                 if (ResizeSize != value)
@@ -202,7 +201,7 @@ namespace DeDupe.Services
 
         public ResizeMethod ResizeMethod
         {
-            get => (ResizeMethod)GetValue(ResizeMethodKey, (int)ResizeMethod.Padding);
+            get => (ResizeMethod)GetValue(ResizeMethodKey, (int)ResizeMethod.Stretch);
             set
             {
                 if (ResizeMethod != value)
@@ -418,8 +417,6 @@ namespace DeDupe.Services
 
         private const string UseBundledModelKey = "UseBundledModel";
 
-        private const string SelectedBundledModelIdKey = "SelectedBundledModelId";
-
         private const string CustomModelFilePathKey = "CustomModelFilePath";
 
         public bool UseBundledModel
@@ -432,24 +429,6 @@ namespace DeDupe.Services
                     SetValue(UseBundledModelKey, value);
                     UseBundledModelChanged?.Invoke(this, value);
                     ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public string SelectedBundledModelId
-        {
-            get => GetValue(SelectedBundledModelIdKey, BundledModelRegistry.DefaultModelId);
-            set
-            {
-                string newValue = string.IsNullOrEmpty(value) ? BundledModelRegistry.DefaultModelId : value;
-                if (SelectedBundledModelId != newValue)
-                {
-                    SetValue(SelectedBundledModelIdKey, newValue);
-                    SelectedBundledModelIdChanged?.Invoke(this, newValue);
-                    if (UseBundledModel)
-                    {
-                        ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
-                    }
                 }
             }
         }
@@ -471,11 +450,7 @@ namespace DeDupe.Services
             }
         }
 
-        public string ModelFolderPath => _defaultModelFolderPath;
-
         public event EventHandler<bool>? UseBundledModelChanged;
-
-        public event EventHandler<string>? SelectedBundledModelIdChanged;
 
         public event EventHandler<string>? CustomModelFilePathChanged;
 
@@ -537,7 +512,7 @@ namespace DeDupe.Services
 
         public double SimilarityThreshold
         {
-            get => GetValue(SimilarityThresholdKey, 0.90);
+            get => GetValue(SimilarityThresholdKey, 0.75);
             set
             {
                 double clamped = Math.Clamp(value, 0.3, 1.0);

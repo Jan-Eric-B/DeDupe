@@ -1,36 +1,18 @@
-﻿using DeDupe.Models.Configuration;
-using System.Collections.Generic;
-
-namespace DeDupe.Services.Model
+﻿namespace DeDupe.Services.Model
 {
     /// <summary>
-    /// Service for accessing bundled ONNX models.
+    /// Service for accessing bundled ONNX model.
     /// </summary>
     public interface IBundledModelService
     {
         /// <summary>
-        /// All bundled models in the application.
+        /// Gets path to the bundled model file.
         /// </summary>
-        IReadOnlyList<BundledModelInfo> AvailableModels { get; }
+        string GetModelPath();
 
         /// <summary>
-        /// Get full file path of bundled model.
+        /// Returns true if bundled model file exists.
         /// </summary>
-        string GetModelPath(string modelId);
-
-        /// <summary>
-        /// Check if specific model file exists.
-        /// </summary>
-        bool IsModelAvailable(string modelId);
-
-        /// <summary>
-        /// Get model metadata by ID.
-        /// </summary>
-        BundledModelInfo? GetModelInfo(string modelId);
-
-        /// <summary>
-        /// Check if file needs to be downloaded.
-        /// </summary>
-        bool NeedsDownload(string modelId);
+        bool IsModelAvailable();
     }
 }

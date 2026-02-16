@@ -6,7 +6,6 @@ using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
-using DeDupe.Services.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualBasic.FileIO;
 using System;
@@ -22,16 +21,14 @@ namespace DeDupe.ViewModels.Pages
     {
         private readonly IAppStateService _appStateService;
         private readonly ISettingsService _settingsService;
-        private readonly IBundledModelService _bundledModelService;
         private readonly ISimilarityAnalysisService _similarityAnalysisService;
         private readonly IAutoSelectionService _autoSelectionService;
         private readonly ILogger<ManagementViewModel> _logger;
 
-        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-            _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _similarityAnalysisService = similarityAnalysisService ?? throw new ArgumentNullException(nameof(similarityAnalysisService));
             _autoSelectionService = autoSelectionService ?? throw new ArgumentNullException(nameof(autoSelectionService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -82,8 +79,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 if (_settingsService.UseBundledModel)
                 {
-                    BundledModelInfo? model = _bundledModelService.GetModelInfo(_settingsService.SelectedBundledModelId);
-                    return model?.DisplayName ?? "Unknown Model";
+                    return BundledModelInfo.DisplayName;
                 }
                 else
                 {
