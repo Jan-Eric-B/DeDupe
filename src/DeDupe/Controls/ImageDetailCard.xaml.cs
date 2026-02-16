@@ -1,17 +1,20 @@
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Media;
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
+using Windows.UI.Core;
 
 namespace DeDupe.Controls
 {
@@ -246,6 +249,24 @@ namespace DeDupe.Controls
             if (SelectableItem != null && SelectionCheckBox.IsChecked.HasValue)
             {
                 SelectableItem.IsSelected = SelectionCheckBox.IsChecked.Value;
+            }
+        }
+
+
+        private void OnCardPointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            if (SelectableItem == null)
+            {
+                return;
+            }
+
+            CoreVirtualKeyStates ctrlState = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control);
+            bool isCtrlPressed = (ctrlState & CoreVirtualKeyStates.Down) != 0;
+
+            if (isCtrlPressed)
+            {
+                SelectableItem.IsSelected = !SelectableItem.IsSelected;
+                e.Handled = true; // Prevent other click behaviors
             }
         }
 

@@ -17,7 +17,8 @@
         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
-        CornerRadius="8">
+        CornerRadius="8"
+        PointerPressed="OnCardPointerPressed">
         <Grid RowSpacing="6">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

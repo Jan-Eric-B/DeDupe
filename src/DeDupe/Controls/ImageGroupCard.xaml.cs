@@ -1,7 +1,9 @@
 using DeDupe.Models.Analysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
@@ -10,6 +12,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.System;
+using Windows.UI.Core;
 
 namespace DeDupe.Controls
 {
@@ -35,6 +39,18 @@ namespace DeDupe.Controls
             if (d is ImageGroupCard control)
             {
                 control.UpdateStackedImages();
+            }
+        }
+
+        private void OnCardPointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            CoreVirtualKeyStates ctrlState = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control);
+            bool isCtrlPressed = (ctrlState & CoreVirtualKeyStates.Down) != 0;
+
+            if (isCtrlPressed && Group != null)
+            {
+                Group.ToggleSelection();
+                e.Handled = true; // Prevent other click behaviors
             }
         }
 

@@ -21,13 +21,12 @@ This project uses the following third-party components:
 | Component                    | License      | Source                                         |
 |------------------------------|--------------|------------------------------------------------|
 | SSCD Disc Mixup              | MIT          | https://github.com/facebookresearch/sscd-copy-detection |
-| SixLabors.ImageSharp         | Apache-2.0   | https://github.com/SixLabors/ImageSharp        |
 | CommunityToolkit.Mvvm        | MIT          | https://github.com/CommunityToolkit/dotnet     |
 | CommunityToolkit.WinUI.*     | MIT          | https://github.com/CommunityToolkit/Windows    |
-| Microsoft.ML.OnnxRuntime.*   | MIT          | https://github.com/microsoft/onnxruntime       |
 | Microsoft.Extensions.*       | MIT          | https://github.com/dotnet/runtime              |
+| Microsoft.ML.OnnxRuntime.*   | MIT          | https://github.com/microsoft/onnxruntime       |
 | Microsoft.WindowsAppSDK      | MIT          | https://github.com/microsoft/WindowsAppSDK     |
 | Serilog.*                    | Apache-2.0   | https://github.com/serilog/serilog             |
-
+| SixLabors.ImageSharp         | Apache-2.0   | https://github.com/SixLabors/ImageSharp        |
 
 Full license texts are available in the LICENSES folder.
