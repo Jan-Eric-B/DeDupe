@@ -1,6 +1,6 @@
 ﻿# DeDupe
 
-A tool for managing duplicate and similar looking media files.
+DeDupe is a simple application for finding and managing duplicate and visually similar images.
 
 > [!WARNING]
 > This application is still in early development. Use at your own risk.
@@ -20,13 +20,14 @@ This project uses the following third-party components:
 
 | Component                    | License      | Source                                         |
 |------------------------------|--------------|------------------------------------------------|
-| CLIP ViT-B/32                | MIT          | https://github.com/openai/CLIP                 |
-| DINOv2 ViT-B/14              | Apache-2.0   | https://github.com/facebookresearch/dinov2     |
-| ResNet50 ONNX Model          | Apache-2.0   | https://github.com/onnx/models                               |
+| SSCD Disc Mixup              | MIT          | https://github.com/facebookresearch/sscd-copy-detection |
 | SixLabors.ImageSharp         | Apache-2.0   | https://github.com/SixLabors/ImageSharp        |
 | CommunityToolkit.Mvvm        | MIT          | https://github.com/CommunityToolkit/dotnet     |
-| CommunityToolkit.WinUI       | MIT          | https://github.com/CommunityToolkit/Windows    |
-| Microsoft.ML.OnnxRuntime     | MIT          | https://github.com/microsoft/onnxruntime       |
+| CommunityToolkit.WinUI.*     | MIT          | https://github.com/CommunityToolkit/Windows    |
+| Microsoft.ML.OnnxRuntime.*   | MIT          | https://github.com/microsoft/onnxruntime       |
 | Microsoft.Extensions.*       | MIT          | https://github.com/dotnet/runtime              |
+| Microsoft.WindowsAppSDK      | MIT          | https://github.com/microsoft/WindowsAppSDK     |
+| Serilog.*                    | Apache-2.0   | https://github.com/serilog/serilog             |
+
 
 Full license texts are available in the LICENSES folder.
