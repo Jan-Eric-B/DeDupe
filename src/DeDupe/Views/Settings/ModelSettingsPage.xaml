@@ -15,13 +15,13 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/GitHub_Invertocat_Black_Clearspace.svg" />
+                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/Images/GitHub_Invertocat_Black_Clearspace.svg" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/GitHub_Invertocat_White_Clearspace.svg" />
+                    <SvgImageSource x:Key="GitHubIcon" UriSource="ms-appx:///Assets/Images/GitHub_Invertocat_White_Clearspace.svg" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-            <SvgImageSource x:Key="HuggingFaceIcon" UriSource="ms-appx:///Assets/huggingface_logo-noborder.svg" />
+            <SvgImageSource x:Key="HuggingFaceIcon" UriSource="ms-appx:///Assets/Images/huggingface_logo-noborder.svg" />
         </ResourceDictionary>
     </Page.Resources>
     <ScrollViewer>

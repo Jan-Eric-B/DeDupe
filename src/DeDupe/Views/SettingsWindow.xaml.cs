@@ -28,8 +28,8 @@ namespace DeDupe.Views
 
             // Set window size and minimum size
             nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowSizeService(hWnd, 1000, 700, App.Current.GetService<ILogger<WindowSizeService>>());
-            SetWindowSize(hWnd, 1000, 700);
+            _windowsSizeService = new WindowSizeService(hWnd, 1200, 800, App.Current.GetService<ILogger<WindowSizeService>>());
+            SetWindowSize(hWnd, 1200, 800);
 
             // Theme
             _themeService = App.Current.GetService<IThemeService>();
