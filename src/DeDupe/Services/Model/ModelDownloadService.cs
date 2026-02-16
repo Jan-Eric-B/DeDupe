@@ -71,7 +71,7 @@ namespace DeDupe.Services.Model
             string targetPath = Path.Combine(_cacheDirectory, model.FileName);
             string tempPath = targetPath + ".download";
 
-            LogModelDownloadStarting(model.DisplayName, model.ExpectedFileSize / 1024.0 / 1024.0);
+            LogModelDownloadStarting(model.DisplayName);
 
             try
             {
@@ -80,7 +80,7 @@ namespace DeDupe.Services.Model
 
                 response.EnsureSuccessStatusCode();
 
-                long totalBytes = response.Content.Headers.ContentLength ?? model.ExpectedFileSize;
+                long totalBytes = response.Content.Headers.ContentLength ?? -1;
 
                 await using Stream contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
                 await using FileStream fileStream = new(tempPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 81920, useAsync: true);
@@ -102,6 +102,11 @@ namespace DeDupe.Services.Model
                         string totalMB = $"{totalBytes / 1024.0 / 1024.0:F0}";
 
                         progress?.Report(new ModelDownloadProgress(percentage, bytesRead, totalBytes, $"Downloading {model.DisplayName}... {sizeMB}/{totalMB} MB"));
+                    }
+                    else
+                    {
+                        string sizeMB = $"{bytesRead / 1024.0 / 1024.0:F1}";
+                        progress?.Report(new ModelDownloadProgress(-1, bytesRead, -1, $"Downloading {model.DisplayName}... {sizeMB} MB"));
                     }
                 }
 
@@ -180,8 +185,34 @@ namespace DeDupe.Services.Model
             string? existingPath = GetLocalModelPath(model);
             if (existingPath != null)
             {
-                LogModelCacheHit(model.DisplayName, existingPath);
-                return existingPath;
+                // Validate integrity of cached model via SHA256
+                if (model.ExpectedSha256 is not null)
+                {
+                    LogCachedModelValidating(model.DisplayName, existingPath);
+
+                    progress?.Report(new ModelDownloadProgress(-1, 0, -1, $"Verifying {model.DisplayName}..."));
+
+                    string actualHash = await ComputeSha256Async(existingPath, cancellationToken);
+
+                    if (!string.Equals(actualHash, model.ExpectedSha256, StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogCachedModelCorrupt(model.DisplayName, model.ExpectedSha256, actualHash);
+
+                        try { File.Delete(existingPath); }
+                        catch (Exception ex) { LogTempFileCleanupFailed(existingPath, ex); }
+                    }
+                    else
+                    {
+                        LogCachedModelValid(model.DisplayName);
+                        LogModelCacheHit(model.DisplayName, existingPath);
+                        return existingPath;
+                    }
+                }
+                else
+                {
+                    LogModelCacheHit(model.DisplayName, existingPath);
+                    return existingPath;
+                }
             }
 
             if (model.DownloadUrl is null)
@@ -203,7 +234,7 @@ namespace DeDupe.Services.Model
 
                         LogModelDownloadRetrying(model.DisplayName, attempt, _maxRetries, delay.TotalSeconds);
 
-                        progress?.Report(new ModelDownloadProgress(0, 0, model.ExpectedFileSize, $"Retry {attempt}/{_maxRetries} — waiting {delay.TotalSeconds:F0}s..."));
+                        progress?.Report(new ModelDownloadProgress(0, 0, -1, $"Retry {attempt}/{_maxRetries} — waiting {delay.TotalSeconds:F0}s..."));
 
                         await Task.Delay(delay, cancellationToken);
                     }
@@ -243,8 +274,8 @@ namespace DeDupe.Services.Model
 
         #region Logging
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "Model download starting for '{ModelName}' ({ExpectedSizeMb:F1} MB)")]
-        private partial void LogModelDownloadStarting(string modelName, double expectedSizeMb);
+        [LoggerMessage(Level = LogLevel.Information, Message = "Model download starting for '{ModelName}'")]
+        private partial void LogModelDownloadStarting(string modelName);
 
         [LoggerMessage(Level = LogLevel.Information, Message = "Model download completed for '{ModelName}' ({DownloadedSizeMb:F1} MB)")]
         private partial void LogModelDownloadCompleted(string modelName, double downloadedSizeMb);
@@ -278,6 +309,15 @@ namespace DeDupe.Services.Model
 
         [LoggerMessage(Level = LogLevel.Information, Message = "Cached model deleted for '{ModelName}' at {CachedPath}")]
         private partial void LogCachedModelDeleted(string modelName, string cachedPath);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Validating cached model integrity for '{ModelName}' at {CachedPath}")]
+        private partial void LogCachedModelValidating(string modelName, string cachedPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cached model '{ModelName}' is corrupt, expected SHA256 '{ExpectedHash}' but got '{ActualHash}'. Re-downloading.")]
+        private partial void LogCachedModelCorrupt(string modelName, string expectedHash, string actualHash);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Cached model '{ModelName}' passed SHA256 integrity check")]
+        private partial void LogCachedModelValid(string modelName);
 
         #endregion Logging
     }

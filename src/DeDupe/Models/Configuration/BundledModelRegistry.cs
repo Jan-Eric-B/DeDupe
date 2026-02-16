@@ -24,24 +24,24 @@ namespace DeDupe.Models.Configuration
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/dinov2_vitb14.onnx",
-            ExpectedFileSize: 347_148_037,
+            ExpectedSha256: "425f9a4ace446639cd1c86304b2ff90aee95b03551b3fb95dbb3a1db307f38a2",
             RecommendedResizeMethod: ResizeMethod.Padding);
 
         /// <summary>
-        /// ResNet50-v2
+        /// ResNet50
         /// </summary>
         public static BundledModelInfo ResNet50 { get; } = new(
-            Id: "resnet50-v2",
-            DisplayName: "ResNet50-v2-7",
-            FileName: "resnet50-v2-7.onnx",
+            Id: "resnet50-features",
+            DisplayName: "ResNet50",
+            FileName: "resnet50-features.onnx",
             Description: "Fastest option. Good for exact or near-exact duplicates.",
-            License: "Apache 2.0",
-            Url: "https://huggingface.co/onnxmodelzoo/resnet50-v2-7",
-            Developers: "Microsoft Research (via ONNX Model Zoo); Initially by: Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun.",
+            License: "BSD 3-Clause",
+            Url: "https://github.com/pytorch/vision",
+            Developers: "Kaiming He et al.; torchvision IMAGENET1K_V2 weights (converted to ONNX)",
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 224,
-            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/resnet50-v2-7.onnx",
-            ExpectedFileSize: 102_442_452,
+            DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/resnet50-features.onnx",
+            ExpectedSha256: "e889e7fda55b9c453502a93d8962a3eebf71a3389d03eed7243474fcf202856f",
             RecommendedResizeMethod: ResizeMethod.Padding);
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace DeDupe.Models.Configuration
             Normalization: NormalizationSettings.Clip,
             InputSize: 224,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/clip-vit-b32-image.onnx",
-            ExpectedFileSize: 976_517,
+            ExpectedSha256: "2be71b05268ee2dc4288fce6f138b7790ab683bc56f558a332db2d0fb88aaca3",
             RecommendedResizeMethod: ResizeMethod.Padding);
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace DeDupe.Models.Configuration
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 320,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/sscd_disc_mixup.onnx",
-            ExpectedFileSize: 98_158_429,
+            ExpectedSha256: "1542492e86910dd7fd0b45ce4cb230831f935a322ef41034be66acb6fe843176",
             RecommendedResizeMethod: ResizeMethod.Stretch);
 
         /// <summary>
@@ -92,7 +92,7 @@ namespace DeDupe.Models.Configuration
             Normalization: NormalizationSettings.ImageNet,
             InputSize: 320,
             DownloadUrl: $"{AppInformation.GitHubRepo}/releases/download/{AppInformation.ModelReleaseTag}/sscd_disc_large.onnx",
-            ExpectedFileSize: 176_700_233,
+            ExpectedSha256: "b466f25bf4e2cd08984e6a2c9e860d40d3613d3cbf8ea7595881eb20173287bd",
             RecommendedResizeMethod: ResizeMethod.Stretch);
 
         public static IReadOnlyList<BundledModelInfo> All { get; } =

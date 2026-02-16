@@ -86,14 +86,11 @@ namespace DeDupe.ViewModels.Settings
                 {
                     return string.Empty;
                 }
-
                 if (_downloadService.IsModelAvailable(model))
                 {
                     return "Downloaded ✓";
                 }
-
-                double sizeMB = model.ExpectedFileSize / 1024.0 / 1024.0;
-                return $"Not downloaded ({sizeMB:F0} MB)";
+                return "Not downloaded";
             }
         }
 

@@ -13,7 +13,6 @@ namespace DeDupe.Models.Configuration
          NormalizationSettings Normalization,
          int InputSize = 224,
          string? DownloadUrl = null,
-         long ExpectedFileSize = 0,
          string? ExpectedSha256 = null,
          ResizeMethod RecommendedResizeMethod = ResizeMethod.Padding)
     {
