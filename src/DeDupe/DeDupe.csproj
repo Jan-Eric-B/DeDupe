@@ -84,7 +84,13 @@
     <None Remove="Assets\Images\Icon\WideTile.scale-150.png" />
     <None Remove="Assets\Images\Icon\WideTile.scale-200.png" />
     <None Remove="Assets\Images\Icon\WideTile.scale-400.png" />
+    <None Remove="Assets\sscd_disc_mixup.onnx" />
     <None Remove="Views\Pages\ManagementPage.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\Models\sscd_disc_mixup.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
