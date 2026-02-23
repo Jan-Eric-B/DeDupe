@@ -18,6 +18,8 @@
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
         <converters:SimilarityToPercentageConverter x:Key="SimilarityToPercentageConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:PercentageConverter x:Key="PercentageConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <Style x:Key="CustomGridSplitterStyle" TargetType="splitter:GridSplitter">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Template">
@@ -98,6 +100,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -106,9 +109,9 @@
 
                 <!--  Auto-Selection  -->
                 <DropDownButton
-                    Grid.Column="0"
-                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
-                    ToolTipService.ToolTip="Apply auto selection to all groups">
+            Grid.Column="0"
+            IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
+            ToolTipService.ToolTip="Apply auto selection to all groups">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xF16E;" />
                         <TextBlock Text="Auto-Select All" />
@@ -188,42 +191,77 @@
                     ToolTipService.ToolTip="Sort duplicate groups">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xE8CB;" />
-                        <TextBlock Text="{x:Bind ViewModel.CurrentSortOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                        <TextBlock>
+                            <Run Text="Sort: " />
+                            <Run Text="{x:Bind ViewModel.CurrentSortOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                        </TextBlock>
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
-                            <MenuFlyoutItem Click="SortBy_Similarity" Text="Similarity (High to Low)">
-                                <MenuFlyoutItem.Icon>
+                            <RadioMenuFlyoutItem Click="SortBy_Similarity" GroupName="SortGroup" IsChecked="True" Text="Similarity (High to Low)">
+                                <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE9D9;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Click="SortBy_ImageCount" Text="Image Count">
-                                <MenuFlyoutItem.Icon>
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
+                            <RadioMenuFlyoutItem Click="SortBy_ImageCount" GroupName="SortGroup" Text="Image Count">
+                                <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8B9;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
-                            <MenuFlyoutItem Click="SortBy_Name" Text="Group Name">
-                                <MenuFlyoutItem.Icon>
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
+                            <RadioMenuFlyoutItem Click="SortBy_Name" GroupName="SortGroup" Text="Group Name">
+                                <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8AC;" />
-                                </MenuFlyoutItem.Icon>
-                            </MenuFlyoutItem>
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
                         </MenuFlyout>
                     </DropDownButton.Flyout>
                 </DropDownButton>
 
+                <!--  Filter Dropdown  -->
+                <DropDownButton
+                    Grid.Column="2"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
+                    ToolTipService.ToolTip="Filter duplicate groups">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE71C;" />
+                        <TextBlock>
+                            <Run Text="Filter: " />
+                            <Run Text="{x:Bind ViewModel.CurrentFilterOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <RadioMenuFlyoutItem Click="FilterBy_All" GroupName="FilterGroup" IsChecked="True" Text="All Groups">
+                                <RadioMenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE8B9;" />
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
+                            <RadioMenuFlyoutItem Click="FilterBy_ExactMatchesOnly" GroupName="FilterGroup" Text="Exact Matches (100%)">
+                                <RadioMenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE73E;" />
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
+                            <RadioMenuFlyoutItem Click="FilterBy_SimilarOnly" GroupName="FilterGroup" Text="Similar Only (&lt;100%)">
+                                <RadioMenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE9D9;" />
+                                </RadioMenuFlyoutItem.Icon>
+                            </RadioMenuFlyoutItem>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
                 <!--  Separator  -->
                 <Border
-                    Grid.Column="2"
+                    Grid.Column="3"
                     Width="1"
                     Margin="4,4"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
                 <!--  Spacer  -->
-                <Border Grid.Column="3" />
+                <Border Grid.Column="4" />
 
                 <!--  Similarity Threshold  -->
                 <StackPanel
-                    Grid.Column="4"
+                    Grid.Column="5"
                     Orientation="Horizontal"
                     Spacing="8">
                     <TextBlock
@@ -259,14 +297,14 @@
 
                 <!--  Separator  -->
                 <Border
-                    Grid.Column="5"
+                    Grid.Column="6"
                     Width="1"
                     Margin="4,4"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
                 <!--  Config Info  -->
                 <StackPanel
-                    Grid.Column="6"
+                    Grid.Column="7"
                     Orientation="Horizontal"
                     Spacing="12">
 
@@ -310,9 +348,9 @@
 
         <!--  Main Content  -->
         <Grid
-            x:Name="SplitViewGrid"
-            Grid.Row="1"
-            Margin="10,10,10,10">
+        x:Name="SplitViewGrid"
+        Grid.Row="1"
+        Margin="10,10,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="0" />
@@ -321,11 +359,11 @@
 
             <!--  Left Panel - Cluster Grid  -->
             <Border
-                Grid.Column="0"
-                MinWidth="300"
-                Padding="16"
-                BorderThickness="1"
-                CornerRadius="8">
+          Grid.Column="0"
+          MinWidth="300"
+          Padding="16"
+          BorderThickness="1"
+          CornerRadius="8">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -345,6 +383,29 @@
                             FontSize="13"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
+                        <!--  Analysis Progress Bar  -->
+                        <Grid
+                            Visibility="{x:Bind ViewModel.IsAnalyzingSimilarity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ProgressBar
+                                Grid.Column="0"
+                                Height="8"
+                                Margin="0,0,8,0"
+                                IsIndeterminate="False"
+                                Maximum="100"
+                                Minimum="0"
+                                Value="{x:Bind ViewModel.AnalysisProgressPercentage, Mode=OneWay}" />
+
+                            <TextBlock
+                                Grid.Column="1"
+                                MinWidth="40"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind ViewModel.AnalysisProgressPercentage, Mode=OneWay, Converter={StaticResource PercentageConverter}}" />
+                        </Grid>
                     </StackPanel>
 
                     <!--  Empty State  -->

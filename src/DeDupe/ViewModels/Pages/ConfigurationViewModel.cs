@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Helpers;
 using DeDupe.Models;
-using DeDupe.Models.Configuration;
 using DeDupe.Models.Input;
 using DeDupe.Models.Media;
 using DeDupe.Models.Results;

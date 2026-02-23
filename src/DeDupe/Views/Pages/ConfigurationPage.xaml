@@ -215,7 +215,7 @@
                 <!--  Process Button  -->
                 <Button
                     Command="{x:Bind ViewModel.ProcessCommand}"
-                    Content="Process"
+                    Content="Scan"
                     IsEnabled="{x:Bind ViewModel.CanStartProcessing, Mode=OneWay}"
                     ToolTipService.ToolTip="Preprocess images and extract feature vectors" />
 

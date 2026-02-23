@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
@@ -61,6 +62,9 @@ namespace DeDupe.ViewModels.Pages
         [NotifyPropertyChangedFor(nameof(TotalGroups), nameof(DuplicateGroupsCount), nameof(TotalItems), nameof(ResultSummary))]
         public partial SimilarityResult? SimilarityResult { get; set; }
 
+        [ObservableProperty]
+        public partial double AnalysisProgressPercentage { get; set; }
+
         public int TotalGroups => SimilarityResult?.TotalClusters ?? 0;
 
         public int DuplicateGroupsCount => SimilarityResult?.DuplicateGroupsCount ?? 0;
@@ -92,6 +96,8 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
+        private readonly List<SimilarityGroup> _allDuplicateGroups = [];
+
         public ObservableCollection<SimilarityGroup> SimilarityGroups { get; } = [];
 
         public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && _appStateService.ExtractedFeaturesCount > 0;
@@ -105,6 +111,7 @@ namespace DeDupe.ViewModels.Pages
             {
                 IsAnalyzingSimilarity = true;
                 IsBusy = true;
+                AnalysisProgressPercentage = 0;
                 Status = "Analyzing similarities...";
 
                 // Get items with features
@@ -118,10 +125,18 @@ namespace DeDupe.ViewModels.Pages
 
                 LogSimilarityAnalysisStarting(itemsWithFeatures.Count, SimilarityThreshold);
 
+                // Create progress handler
+                Progress<ProgressInfo> analysisProgress = new(info =>
+                {
+                    AnalysisProgressPercentage = info.Percentage;
+                    Status = info.StatusText;
+                });
+
                 // Perform clustering
-                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold);
+                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, analysisProgress);
 
                 HasSimilarityResults = true;
+                AnalysisProgressPercentage = 100;
                 Status = $"Analysis complete: {ResultSummary}";
 
                 LogSimilarityAnalysisCompleted(ResultSummary);
@@ -136,6 +151,13 @@ namespace DeDupe.ViewModels.Pages
             {
                 IsAnalyzingSimilarity = false;
                 IsBusy = false;
+
+                // Reset progress
+                await Task.Delay(2000);
+                if (!IsAnalyzingSimilarity)
+                {
+                    AnalysisProgressPercentage = 0;
+                }
             }
         }
 
@@ -148,23 +170,21 @@ namespace DeDupe.ViewModels.Pages
             }
 
             SimilarityGroups.Clear();
+            _allDuplicateGroups.Clear();
 
             if (SimilarityResult == null)
             {
+                OnPropertyChanged(nameof(FilteredGroupCount));
                 return;
             }
 
-            // Show duplicate groups
-            foreach (SimilarityGroup cluster in SimilarityResult.DuplicateGroups)
-            {
-                cluster.GroupSelectionChanged += OnAnyGroupSelectionChanged;
-                SimilarityGroups.Add(cluster);
-            }
+            // Store duplicate groups in backing list
+            _allDuplicateGroups.AddRange(SimilarityResult.DuplicateGroups);
 
-            // Apply current sort
-            ApplyCurrentSort();
+            // Reset filter to All
+            CurrentFilterOption = GroupFilterOption.All;
 
-            UpdateSelectionSummary();
+            ApplyCurrentFilter();
         }
 
         private void OnExtractedFeaturesChanged(object? sender, EventArgs e)
@@ -381,6 +401,67 @@ namespace DeDupe.ViewModels.Pages
         }
 
         #endregion Sorting
+
+        #region Filtering
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(FilteredGroupCount))]
+        public partial GroupFilterOption CurrentFilterOption { get; set; } = GroupFilterOption.All;
+
+        public int FilteredGroupCount => SimilarityGroups.Count;
+
+        public void FilterGroups(GroupFilterOption filterOption)
+        {
+            CurrentFilterOption = filterOption;
+        }
+
+        partial void OnCurrentFilterOptionChanged(GroupFilterOption value)
+        {
+            ApplyCurrentFilter();
+        }
+
+        private void ApplyCurrentFilter()
+        {
+            foreach (SimilarityGroup group in SimilarityGroups)
+            {
+                group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
+            }
+
+            SimilarityGroups.Clear();
+
+            // Apply filter
+            const double exactMatchThreshold = 0.9999;
+
+            IEnumerable<SimilarityGroup> filtered = CurrentFilterOption switch
+            {
+                GroupFilterOption.ExactMatchesOnly => _allDuplicateGroups.Where(g => g.AverageSimilarity >= exactMatchThreshold),
+                GroupFilterOption.SimilarOnly => _allDuplicateGroups.Where(g => g.AverageSimilarity < exactMatchThreshold),
+                _ => _allDuplicateGroups
+            };
+
+            foreach (SimilarityGroup group in filtered)
+            {
+                group.GroupSelectionChanged += OnAnyGroupSelectionChanged;
+                SimilarityGroups.Add(group);
+            }
+
+            // Re-apply current sort order
+            ApplyCurrentSort();
+
+            // Close detail panel
+            if (SelectedGroup != null && !SimilarityGroups.Contains(SelectedGroup))
+            {
+                SelectedGroup = null;
+            }
+
+            OnPropertyChanged(nameof(FilteredGroupCount));
+            OnPropertyChanged(nameof(DuplicateGroupsCount));
+            UpdateSelectionSummary();
+
+            LogGroupsFiltered(CurrentFilterOption.ToString(), SimilarityGroups.Count, _allDuplicateGroups.Count);
+        }
+
+        #endregion Filtering
 
         #region File Operations
 
@@ -830,6 +911,7 @@ namespace DeDupe.ViewModels.Pages
                 group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
                 group.Cleanup();
                 SimilarityGroups.Remove(group);
+                _allDuplicateGroups.Remove(group);
 
                 // Clear selected cluster
                 if (SelectedGroup == group)
@@ -869,6 +951,15 @@ namespace DeDupe.ViewModels.Pages
                     group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
                     group.Cleanup();
                 }
+
+                // Clean up any invisible groups (filtered out)
+                foreach (SimilarityGroup group in _allDuplicateGroups)
+                {
+                    if (!SimilarityGroups.Contains(group))
+                    {
+                        group.Cleanup();
+                    }
+                }
             }
             base.Dispose(disposing);
         }
@@ -898,6 +989,9 @@ namespace DeDupe.ViewModels.Pages
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Groups sorted by {SortOption}")]
         private partial void LogGroupsSorted(GroupSortingOption sortOption);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Groups filtered by {FilterOption}: showing {VisibleCount} of {TotalCount} groups")]
+        private partial void LogGroupsFiltered(string filterOption, int visibleCount, int totalCount);
 
         // File Operations - Move/Copy
 

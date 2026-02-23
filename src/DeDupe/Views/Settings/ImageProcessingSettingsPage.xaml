@@ -75,7 +75,7 @@
                         <controls:SettingsCard.Description>
                             <StackPanel>
                                 <TextBlock>Number of images processed per inference call.</TextBlock>
-                                <TextBlock>Higher values are faster but require more GPU/system memory.</TextBlock>
+                                <TextBlock>Higher values are faster but require more GPU power and memory.</TextBlock>
                             </StackPanel>
                         </controls:SettingsCard.Description>
                         <StackPanel Orientation="Horizontal" Spacing="10">

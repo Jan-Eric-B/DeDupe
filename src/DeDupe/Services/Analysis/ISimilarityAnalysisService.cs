@@ -1,5 +1,7 @@
-﻿using DeDupe.Models.Analysis;
+﻿using DeDupe.Models;
+using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +16,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform hierarchical clustering on analysis items using cosine similarity.
         /// </summary>
-        Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default);
+        Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Calculate cosine similarity between two feature vectors.

@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Models;
-using DeDupe.Models.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,6 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
-using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {

@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.Storage;
@@ -251,7 +250,6 @@ namespace DeDupe.Controls
                 SelectableItem.IsSelected = SelectionCheckBox.IsChecked.Value;
             }
         }
-
 
         private void OnCardPointerPressed(object sender, PointerRoutedEventArgs e)
         {

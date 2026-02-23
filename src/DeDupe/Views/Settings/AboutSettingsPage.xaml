@@ -221,7 +221,7 @@
 
                                 <!-- Model Name -->
                                 <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Model" />
-                                <TextBlock Grid.Row="0" Grid.Column="1" 
+                                <TextBlock Grid.Row="0" Grid.Column="1"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                Text="{x:Bind configuration:BundledModelInfo.DisplayName}"
                                TextWrapping="Wrap" />
@@ -331,7 +331,6 @@
                                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                 Text="{x:Bind ResolvedVersion}" />
                                         </Grid>
-
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                             </ListView>

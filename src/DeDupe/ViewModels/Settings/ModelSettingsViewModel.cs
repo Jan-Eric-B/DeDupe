@@ -12,7 +12,6 @@ using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {

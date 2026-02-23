@@ -526,7 +526,7 @@ namespace DeDupe.Services
 
         public bool AutoAnalyzeSimilarity
         {
-            get => GetValue(AutoAnalyzeSimilarityKey, false);
+            get => GetValue(AutoAnalyzeSimilarityKey, true);
             set
             {
                 if (AutoAnalyzeSimilarity != value)

@@ -1,4 +1,5 @@
-﻿using DeDupe.Models.Analysis;
+﻿using DeDupe.Models;
+using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,17 +12,12 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <inheritdoc />
-    public partial class SimilarityAnalysisService : ISimilarityAnalysisService
+    public partial class SimilarityAnalysisService(ILogger<SimilarityAnalysisService> logger) : ISimilarityAnalysisService
     {
-        private readonly ILogger<SimilarityAnalysisService> _logger;
-
-        public SimilarityAnalysisService(ILogger<SimilarityAnalysisService> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<SimilarityAnalysisService> _logger = logger;
 
         /// <inheritdoc />
-        public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, CancellationToken cancellationToken = default)
+        public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(items);
 
@@ -37,18 +33,25 @@ namespace DeDupe.Services.Analysis
 
             try
             {
+                progress?.Report(new ProgressInfo(0, 100, "Building similarity matrix"));
+
                 // Build similarity matrix
-                double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, cancellationToken), cancellationToken);
+                double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, progress, cancellationToken), cancellationToken);
 
                 // Hierarchical clustering
-                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, cancellationToken), cancellationToken);
+                progress?.Report(new ProgressInfo(70, 100, "Clustering similar items"));
+
+                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, progress, cancellationToken), cancellationToken);
 
                 // Calculate cluster statistics
+                progress?.Report(new ProgressInfo(95, 100, "Calculating statistics"));
                 CalculateClusterStatistics(clusters, itemList, similarityMatrix);
 
                 stopwatch.Stop();
                 int duplicateGroupCount = clusters.Count(c => c.Count > 1);
                 LogClusteringCompleted(itemList.Count, clusters.Count, duplicateGroupCount, stopwatch.Elapsed.TotalSeconds);
+
+                progress?.Report(new ProgressInfo(100, 100, "Analysis complete"));
 
                 return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
             }
@@ -96,13 +99,15 @@ namespace DeDupe.Services.Analysis
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
-        private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, CancellationToken cancellationToken)
+        private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
         {
             int count = items.Count;
             double[,] matrix = new double[count, count];
 
             long totalComparisons = (long)count * (count - 1) / 2;
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            int lastReportedPercentage = -1;
 
             // Calculate similarities (symmetric matrix - only upper triangle)
             for (int i = 0; i < count; i++)
@@ -126,6 +131,13 @@ namespace DeDupe.Services.Analysis
                         matrix[j, i] = similarity; // Matrix is symmetric
                     }
                 }
+
+                int percentage = (int)((double)(i + 1) / count * 70);
+                if (percentage > lastReportedPercentage)
+                {
+                    lastReportedPercentage = percentage;
+                    progress?.Report(new ProgressInfo(percentage, 100, "Building similarity matrix", $"Row {i + 1:N0}/{count:N0}"));
+                }
             }
 
             stopwatch.Stop();
@@ -137,7 +149,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform agglomerative hierarchical clustering.
         /// </summary>
-        private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, CancellationToken cancellationToken)
+        private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
         {
             int count = items.Count;
 
@@ -153,6 +165,7 @@ namespace DeDupe.Services.Analysis
             Array.Fill(activeClusters, true);
 
             int mergeOperations = 0;
+            int maxPossibleMerges = count - 1; // upper bound
 
             // Agglomerative clustering - merge closest clusters
             while (true)
@@ -204,6 +217,9 @@ namespace DeDupe.Services.Analysis
                 activeClusters[clusterJ] = false;
 
                 mergeOperations++;
+
+                int percentage = 70 + (int)((double)mergeOperations / maxPossibleMerges * 25);
+                progress?.Report(new ProgressInfo(Math.Min(percentage, 95), 100, "Clustering similar items", $"Merge {mergeOperations:N0}"));
             }
 
             // Convert to SimilarityGroup objects

@@ -205,6 +205,25 @@ namespace DeDupe.Views.Pages
 
         #endregion Sorting
 
+        #region Filtering
+
+        private void FilterBy_All(object sender, RoutedEventArgs e)
+        {
+            ViewModel.FilterGroups(GroupFilterOption.All);
+        }
+
+        private void FilterBy_ExactMatchesOnly(object sender, RoutedEventArgs e)
+        {
+            ViewModel.FilterGroups(GroupFilterOption.ExactMatchesOnly);
+        }
+
+        private void FilterBy_SimilarOnly(object sender, RoutedEventArgs e)
+        {
+            ViewModel.FilterGroups(GroupFilterOption.SimilarOnly);
+        }
+
+        #endregion Filtering
+
         #region Selection
 
         private void OnGroupPropertyChanged(object? sender, PropertyChangedEventArgs e)
