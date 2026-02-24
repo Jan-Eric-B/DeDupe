@@ -1,4 +1,4 @@
-﻿# DeDupe
+﻿# <img src="docs/images/AppIcon.png" width="30" height="30" alt="DeDupe icon"> DeDupe
 
 DeDupe is a simple application for finding and managing duplicate and visually similar images using deep learning.
 
