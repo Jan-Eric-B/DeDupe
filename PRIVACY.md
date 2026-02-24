@@ -41,7 +41,7 @@ If you install DeDupe through the Microsoft Store, Microsoft may collect standar
 
 ## Open Source
 
-DeDupe is open source software licensed under GPL v3. You can review the complete source code at [GitHub](https://github.com/YOUR_USERNAME/DeDupe) to verify these privacy practices.
+DeDupe is open source software licensed under GPL v3. You can review the complete source code at [GitHub](https://github.com/Jan-Eric-B/DeDupe) to verify these privacy practices.
 
 ## Changes to This Policy
 
@@ -49,4 +49,4 @@ If this privacy policy is updated, the changes will be reflected in this documen
 
 ## Contact
 
-If you have questions about this privacy policy, please open an issue on the [GitHub repository](https://github.com/YOUR_USERNAME/DeDupe/issues).
+If you have questions about this privacy policy, please open an issue on the [GitHub repository](https://github.com/Jan-Eric-B/DeDupe/issues).
