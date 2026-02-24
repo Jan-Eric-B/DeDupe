@@ -197,6 +197,18 @@
                                         <TextBlock VerticalAlignment="Center">License</TextBlock>
                                     </StackPanel>
                                 </HyperlinkButton>
+                                <HyperlinkButton
+                                    Command="{x:Bind ViewModel.OpenLinkCommand}"
+                                    CommandParameter="{x:Bind constants:AppInformation.Privacy}"
+                                    ToolTipService.ToolTip="{x:Bind constants:AppInformation.Privacy}">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Image
+                                            Width="25"
+                                            Height="25"
+                                            Source="{ThemeResource GitHubIcon}" />
+                                        <TextBlock VerticalAlignment="Center">Privacy Policy</TextBlock>
+                                    </StackPanel>
+                                </HyperlinkButton>
                             </StackPanel>
                         </controls:SettingsCard.Header>
                     </controls:SettingsCard>
