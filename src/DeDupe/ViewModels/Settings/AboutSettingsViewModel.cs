@@ -40,9 +40,6 @@ namespace DeDupe.ViewModels.Settings
         public partial string DotNetVersion { get; set; } = string.Empty;
 
         [ObservableProperty]
-        public partial string ModelReleaseTag { get; set; } = string.Empty;
-
-        [ObservableProperty]
         public partial string CommitId { get; set; } = string.Empty;
 
         [ObservableProperty]
@@ -63,8 +60,6 @@ namespace DeDupe.ViewModels.Settings
                 AppName = package.DisplayName;
                 Publisher = package.PublisherDisplayName;
                 AppVersion = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
-
-                ModelReleaseTag = AppInformation.ModelReleaseTag;
 
                 DotNetVersion = RuntimeInformation.FrameworkDescription;
 
@@ -110,7 +105,6 @@ namespace DeDupe.ViewModels.Settings
             builder.AppendLine($"Version: {AppVersion}");
             builder.AppendLine($"Commit: {CommitId}");
             builder.AppendLine($".NET Version: {DotNetVersion}");
-            builder.AppendLine($"Model Release Version: {ModelReleaseTag}");
 
             DataPackage dataPackage = new();
             dataPackage.SetText(builder.ToString());

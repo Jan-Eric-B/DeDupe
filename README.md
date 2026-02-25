@@ -5,6 +5,8 @@ DeDupe is a simple application for finding and managing duplicate and visually s
 Just enter your image sources (folder or files) and DeDupe will scan them, extract features using a pre-trained model, and group similar images together. 
 You can then review and manage the groups by removing duplicates or moving similar images into separate folders.
 
+<img src="docs/images/Showcase_ManagementPage.png" alt="DeDupe - ManagementPage">
+
 Built with WinUI 3, .NET 10, and ONNX Runtime with DirectML.
 
 The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI Research and is specifically designed for image copy detection.
@@ -12,6 +14,7 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 ## Features
 
 - **Visual grouping** - Automatically groups similar images for comparison side by side.
+- **Auto-Selection** - Automatically select duplicates based on criteria like lowest resolution, oldest file, etc.
 - **Batch management** - Select and delete or move images in bulk.
 - **Deep learning similarity detection** - Uses a pre-trained ONNX model to extract features and find visually similar images, even if they have been cropped or resized.
 - **GPU-accelerated processing** - Uses DirectML to leverage your GPU for fast feature extraction. NVIDIA, AMD, and Intel GPUs are supported. (Optional)
@@ -48,6 +51,8 @@ Download the latest `.msixbundle` from the [Releases](../../releases) page.
 5. **Manage Duplicates** - Use the auto-select checkboxes to select automatically images with specific criteria. You can also manually select or deselect images.
 6. **Delete or Move** - Once you have selected the images you want to manage, you can either delete them or move them to a different folder using the buttons at the bottom.
 
+<img src="docs/images/Showcase_ConfigurationPage.png" alt="DeDupe - ConfigurationPage">
+
 ## Configuration
 
 - **Appearance** - Change theme, accent color and backdrop.
@@ -55,6 +60,8 @@ Download the latest `.msixbundle` from the [Releases](../../releases) page.
 - **Image Processing** - Select temp file output, like filetype and interpolation methods.
 - **Border Detection** - Image processing option to remove borders and letterboxes from images before passing them to the model.
 - **Model Selection** - Choose between bundled model or use your own and adjust the normalization values.
+
+<img src="docs/images/Showcase_Settings_General.png" alt="DeDupe - Settings - General">
 
 ## Building from Source
 

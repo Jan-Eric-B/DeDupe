@@ -147,18 +147,6 @@
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                     Text="{x:Bind ViewModel.DotNetVersion, Mode=OneWay}"
                                     TextWrapping="Wrap" />
-
-                                <TextBlock
-                                    Grid.Row="5"
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Text="Model release tag" />
-                                <TextBlock
-                                    Grid.Row="5"
-                                    Grid.Column="1"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind ViewModel.ModelReleaseTag, Mode=OneWay}"
-                                    TextWrapping="Wrap" />
                             </Grid>
                         </controls:SettingsCard.Header>
                     </controls:SettingsCard>
@@ -231,26 +219,44 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <!-- Model Name -->
-                                <TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Text="Model" />
-                                <TextBlock Grid.Row="0" Grid.Column="1"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="{x:Bind configuration:BundledModelInfo.DisplayName}"
-                               TextWrapping="Wrap" />
+                                <!--  Model Name  -->
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Model" />
+                                <TextBlock
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind configuration:BundledModelInfo.DisplayName}"
+                                    TextWrapping="Wrap" />
 
-                                <!-- License -->
-                                <TextBlock Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Text="License" />
-                                <TextBlock Grid.Row="1" Grid.Column="1"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="{x:Bind configuration:BundledModelInfo.License}"
-                               TextWrapping="Wrap" />
+                                <!--  License  -->
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="License" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind configuration:BundledModelInfo.License}"
+                                    TextWrapping="Wrap" />
 
-                                <!-- Developers -->
-                                <TextBlock Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Text="Developer" />
-                                <TextBlock Grid.Row="2" Grid.Column="1"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="{x:Bind configuration:BundledModelInfo.Developers}"
-                               TextWrapping="Wrap" />
+                                <!--  Developers  -->
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="Developer" />
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind configuration:BundledModelInfo.Developers}"
+                                    TextWrapping="Wrap" />
                             </Grid>
                         </controls:SettingsCard.Header>
                     </controls:SettingsCard>
