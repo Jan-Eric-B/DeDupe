@@ -87,7 +87,7 @@ msbuild DeDupe.csproj /p:Configuration=Release /p:Platform=x64 /p:AppxPackageDir
 
 - **Video support** - Extend the application to support video files, by extracting a specified amount of frames and processing them as images.
 - **FFMPEG integration** - Integration of FFMPEG for expanding image format support.
-- ** Temp file optimization** - Batch process images in memory and only hold all extracted features there instead of writing temporary files to disk.
+- **Temp file optimization** - Batch process images in memory and only hold all extracted features there instead of writing temporary files to disk.
 - **File handling** - More options to handle duplicate files.
 - **Improved UI** - Better design and different views (like list view) for comparing images.
 - **Localization** - Support for multiple languages.
