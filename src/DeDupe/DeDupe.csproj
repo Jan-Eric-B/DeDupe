@@ -13,6 +13,8 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
   </PropertyGroup>
   <ItemGroup>
     <Content Remove="Assets\Images\Icon\AppIcon.altform-lightunplated_targetsize-16.png" />
