@@ -74,6 +74,8 @@ Download the latest `.msixbundle` from the [Releases](../../releases) page.
 ```bash
 git clone https://github.com/Jan-Eric-B/DeDupe.git
 cd DeDupe
+git lfs install
+git lfs pull
 dotnet restore
 dotnet build -c Release
 ```
