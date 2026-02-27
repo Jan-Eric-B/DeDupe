@@ -41,7 +41,7 @@ namespace DeDupe.ViewModels.Pages
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, IBorderDetectionService borderDetectionService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -620,6 +620,9 @@ namespace DeDupe.ViewModels.Pages
 
                 // Release ImageSharp's pooled memory.
                 Configuration.Default.MemoryAllocator.ReleaseRetainedResources();
+
+                // Clean up temp processed images
+                _imageProcessingService.ClearTempFolder();
 
                 // Update results
                 ExtractedFeaturesCount = _appStateService.ExtractedFeaturesCount;
