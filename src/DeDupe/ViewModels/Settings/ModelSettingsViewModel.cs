@@ -147,11 +147,21 @@ namespace DeDupe.ViewModels.Settings
 
             if (value)
             {
-                // Sync normalization and image processing settings to bundled model defaults
+                // Sync all settings to bundled model defaults
                 Normalization = BundledModelInfo.Normalization;
+
+                // Resize
                 _settingsService.EnableResizing = true;
                 _settingsService.ResizeSize = (uint)BundledModelInfo.InputSize;
                 _settingsService.ResizeMethod = BundledModelInfo.RecommendedResizeMethod;
+                _settingsService.DownsamplingMethod = BundledModelInfo.RecommendedDownsamplingMethod;
+                _settingsService.UpsamplingMethod = BundledModelInfo.RecommendedUpsamplingMethod;
+                _settingsService.Compand = BundledModelInfo.RecommendedCompanding;
+
+                // Output & Inference
+                _settingsService.ColorFormat = BundledModelInfo.RecommendedColorFormat;
+                _settingsService.OutputFormat = BundledModelInfo.RecommendedOutputFormat;
+                _settingsService.TensorLayout = BundledModelInfo.RecommendedTensorLayout;
             }
 
             LogModelSourceChanged(value ? "bundled" : "custom");

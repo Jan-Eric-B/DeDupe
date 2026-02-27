@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
+using DeDupe.Enums;
 using DeDupe.Helpers;
 using DeDupe.Models;
 using DeDupe.Models.Input;
@@ -740,15 +741,13 @@ namespace DeDupe.ViewModels.Pages
             try
             {
                 string modelPath = ModelFilePath;
-
                 if (!string.IsNullOrEmpty(modelPath) && File.Exists(modelPath))
                 {
-                    // Use settings for GPU and batch size
                     bool useGpu = _settingsService.EnableGpuAcceleration;
                     int batchSize = _settingsService.InferenceBatchSize;
-
+                    TensorLayout tensorLayout = _settingsService.TensorLayout;
                     LogFeatureExtractionModelInitializing(modelPath);
-                    await _featureExtractionService.InitializeAsync(modelPath, useGpu, batchSize);
+                    await _featureExtractionService.InitializeAsync(modelPath, useGpu, batchSize, tensorLayout);
                     LogFeatureExtractionModelInitialized(_featureExtractionService.IsGpuEnabled);
                 }
                 else

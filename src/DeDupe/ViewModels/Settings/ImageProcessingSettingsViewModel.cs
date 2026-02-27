@@ -34,6 +34,7 @@ namespace DeDupe.ViewModels.Settings
             ParallelProcessingCores = _settingsService.ParallelProcessingCores;
             EnableGpuAcceleration = _settingsService.EnableGpuAcceleration;
             InferenceBatchSize = _settingsService.InferenceBatchSize;
+            TensorLayout = _settingsService.TensorLayout;
 
             // Resize
             EnableResizing = _settingsService.EnableResizing;
@@ -42,6 +43,7 @@ namespace DeDupe.ViewModels.Settings
             PaddingColor = _settingsService.PaddingColor;
             DownsamplingMethod = _settingsService.DownsamplingMethod;
             UpsamplingMethod = _settingsService.UpsamplingMethod;
+            Compand = _settingsService.Compand;
 
             // Border Detection
             EnableBorderDetection = _settingsService.EnableBorderDetection;
@@ -73,6 +75,9 @@ namespace DeDupe.ViewModels.Settings
         [NotifyPropertyChangedFor(nameof(BatchSizeDisplayText))]
         public partial int InferenceBatchSize { get; set; }
 
+        [ObservableProperty]
+        public partial TensorLayout TensorLayout { get; set; }
+
         public int MaxParallelCores => Environment.ProcessorCount;
 
         public string ParallelCoresDisplayText => ParallelProcessingCores.ToString();
@@ -82,6 +87,8 @@ namespace DeDupe.ViewModels.Settings
         public string BatchSizeDisplayText => InferenceBatchSize.ToString();
 
         public string GpuAccelerationDescription => EnableGpuAcceleration ? "GPU acceleration" : "CPU-only mode";
+
+        public IEnumerable<TensorLayout> TensorLayouts => Enum.GetValues<TensorLayout>();
 
         partial void OnParallelProcessingCoresChanged(int value)
         {
@@ -94,6 +101,16 @@ namespace DeDupe.ViewModels.Settings
             OnPropertyChanged(nameof(GpuAccelerationDescription));
 
             LogGpuAccelerationChanged(value);
+        }
+
+        partial void OnInferenceBatchSizeChanged(int value)
+        {
+            _settingsService.InferenceBatchSize = value;
+        }
+
+        partial void OnTensorLayoutChanged(TensorLayout value)
+        {
+            _settingsService.TensorLayout = value;
         }
 
         #endregion Performance
@@ -119,6 +136,9 @@ namespace DeDupe.ViewModels.Settings
 
         [ObservableProperty]
         public partial InterpolationMethod UpsamplingMethod { get; set; }
+
+        [ObservableProperty]
+        public partial bool Compand { get; set; }
 
         public bool IsResizeEnabled => EnableResizing;
 
@@ -156,6 +176,11 @@ namespace DeDupe.ViewModels.Settings
         partial void OnUpsamplingMethodChanged(InterpolationMethod value)
         {
             _settingsService.UpsamplingMethod = value;
+        }
+
+        partial void OnCompandChanged(bool value)
+        {
+            _settingsService.Compand = value;
         }
 
         #endregion Resize

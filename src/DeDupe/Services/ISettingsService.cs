@@ -66,6 +66,8 @@ namespace DeDupe.Services
 
         InterpolationMethod UpsamplingMethod { get; set; }
 
+        bool Compand { get; set; }
+
         event EventHandler<bool>? EnableResizingChanged;
 
         event EventHandler<uint>? ResizeSizeChanged;
@@ -77,6 +79,8 @@ namespace DeDupe.Services
         event EventHandler<InterpolationMethod>? DownsamplingMethodChanged;
 
         event EventHandler<InterpolationMethod>? UpsamplingMethodChanged;
+
+        event EventHandler<bool>? CompandChanged;
 
         #endregion Resize
 
@@ -137,6 +141,14 @@ namespace DeDupe.Services
         event EventHandler? ModelConfigurationChanged;
 
         #endregion Model
+
+        #region Inference
+
+        TensorLayout TensorLayout { get; set; }
+
+        event EventHandler<TensorLayout>? TensorLayoutChanged;
+
+        #endregion Inference
 
         #region Normalization
 

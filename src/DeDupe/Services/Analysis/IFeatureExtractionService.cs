@@ -1,4 +1,5 @@
-﻿using DeDupe.Models;
+﻿using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using System;
@@ -21,6 +22,8 @@ namespace DeDupe.Services.Analysis
 
         int BatchSize { get; }
 
+        TensorLayout TensorLayout { get; }
+
         /// <summary>
         /// Expected model input dimensions.
         /// </summary>
@@ -29,9 +32,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Loads a model and prepares the inference session. Disposes any previously loaded session.
         /// </summary>
-        Task InitializeAsync(string modelPath, bool preferGpu = true, int batchSize = 16);
-
-        Task InitializeAsync(string modelPath);
+        Task InitializeAsync(string modelPath, bool preferGpu, int batchSize, TensorLayout tensorLayout);
 
         /// <summary>
         /// Extracts feature vectors from items that have been processed.

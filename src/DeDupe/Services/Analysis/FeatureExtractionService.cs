@@ -1,4 +1,5 @@
-﻿using DeDupe.Models;
+﻿using DeDupe.Enums;
+using DeDupe.Models;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,7 @@ namespace DeDupe.Services.Analysis
         private string? _outputName;
         private int[]? _inputDimensions;
         private string _modelPath = string.Empty;
+        private TensorLayout _tensorLayout = TensorLayout.NCHW;
         private bool _disposed;
         private bool _isGpuEnabled;
         private int _batchSize = 16;
@@ -55,18 +57,24 @@ namespace DeDupe.Services.Analysis
 
         public int BatchSize => _batchSize;
 
+        public TensorLayout TensorLayout => _tensorLayout;
+
         /// <summary>
-        /// Expected input dimensions from the model [N, C, H, W].
+        /// NCHW: [N, C, H, W] — NHWC: [N, H, W, C]
         /// </summary>
+        private int ChannelsDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![1] : _inputDimensions![3];
+        private int HeightDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![2] : _inputDimensions![1];
+        private int WidthDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![3] : _inputDimensions![2];
+
         public (int Channels, int Height, int Width)? ExpectedDimensions => _inputDimensions != null
-            ? (_inputDimensions[1], _inputDimensions[2], _inputDimensions[3])
+            ? (ChannelsDim, HeightDim, WidthDim)
             : null;
 
         #endregion Properties
 
         #region Initialization
 
-        public async Task InitializeAsync(string modelPath, bool preferGpu = true, int batchSize = 16)
+        public async Task InitializeAsync(string modelPath, bool preferGpu, int batchSize, TensorLayout tensorLayout)
         {
             if (string.IsNullOrEmpty(modelPath))
             {
@@ -79,6 +87,7 @@ namespace DeDupe.Services.Analysis
             }
 
             _batchSize = Math.Clamp(batchSize, 1, 64);
+            _tensorLayout = tensorLayout;
 
             try
             {
@@ -104,18 +113,13 @@ namespace DeDupe.Services.Analysis
 
                 AllocateTensorBuffers(_batchSize);
 
-                LogModelInitialized(_modelPath, _isGpuEnabled, _batchSize);
+                LogModelInitialized(_modelPath, _isGpuEnabled, _batchSize, _tensorLayout);
             }
             catch (Exception ex) when (ex is not ArgumentException)
             {
                 LogModelInitializationFailed(_modelPath, ex);
                 throw new InvalidOperationException($"Failed to initialize ONNX model: {ex.Message}", ex);
             }
-        }
-
-        public Task InitializeAsync(string modelPath)
-        {
-            return InitializeAsync(modelPath, preferGpu: true, batchSize: 16);
         }
 
         private SessionOptions CreateSessionOptions(bool preferGpu)
@@ -192,12 +196,16 @@ namespace DeDupe.Services.Analysis
                 return;
             }
 
-            int channels = _inputDimensions[1];
-            int height = _inputDimensions[2];
-            int width = _inputDimensions[3];
+            int channels = ChannelsDim;
+            int height = HeightDim;
+            int width = WidthDim;
 
-            _tensorBufferA = new DenseTensor<float>([batchSize, channels, height, width]);
-            _tensorBufferB = new DenseTensor<float>([batchSize, channels, height, width]);
+            int[] shape = _tensorLayout == TensorLayout.NCHW
+                ? [batchSize, channels, height, width]
+                : [batchSize, height, width, channels];
+
+            _tensorBufferA = new DenseTensor<float>(shape);
+            _tensorBufferB = new DenseTensor<float>(shape);
             _allocatedBatchSize = batchSize;
 
             double bufferSizeMb = batchSize * channels * height * width * 4 / 1024.0 / 1024.0;
@@ -211,9 +219,9 @@ namespace DeDupe.Services.Analysis
                 throw new InvalidOperationException("Model not initialized");
             }
 
-            int channels = _inputDimensions[1];
-            int height = _inputDimensions[2];
-            int width = _inputDimensions[3];
+            int channels = ChannelsDim;
+            int height = HeightDim;
+            int width = WidthDim;
 
             // If required size matches allocated size, reuse buffer
             if (requiredBatchSize == _allocatedBatchSize)
@@ -228,7 +236,11 @@ namespace DeDupe.Services.Analysis
             }
 
             // Create new tensor for non-standard batch size
-            return new DenseTensor<float>([requiredBatchSize, channels, height, width]);
+            int[] shape = _tensorLayout == TensorLayout.NCHW
+                ? [requiredBatchSize, channels, height, width]
+                : [requiredBatchSize, height, width, channels];
+
+            return new DenseTensor<float>(shape);
         }
 
         #endregion Buffer Management
@@ -266,8 +278,8 @@ namespace DeDupe.Services.Analysis
                 return;
             }
 
-            int height = _inputDimensions[2];
-            int width = _inputDimensions[3];
+            int height = HeightDim;
+            int width = WidthDim;
 
             // Create batch ranges
             List<(int Start, int Count)> batches = [];
@@ -388,7 +400,7 @@ namespace DeDupe.Services.Analysis
                         }
 
                         // Fill tensor slice
-                        FillTensorFromImage(tensor, index, image, height, width, normalization);
+                        FillTensorFromImage(tensor, index, image, height, width, normalization, _tensorLayout);
 
                         lock (lockObj)
                         {
@@ -453,7 +465,7 @@ namespace DeDupe.Services.Analysis
             }
         }
 
-        private static void FillTensorFromImage(DenseTensor<float> tensor, int batchIndex, Image<Rgb24> image, int height, int width, NormalizationSettingsFloat normalization)
+        private static void FillTensorFromImage(DenseTensor<float> tensor, int batchIndex, Image<Rgb24> image, int height, int width, NormalizationSettingsFloat normalization, TensorLayout layout)
         {
             // Inverse std
             float invStdR = normalization.InvStdR;
@@ -467,13 +479,22 @@ namespace DeDupe.Services.Analysis
                     Rgb24 pixel = image[x, y];
 
                     // Normalize to [0, 1] then apply normalization
-                    float r = pixel.R / 255.0f;
-                    float g = pixel.G / 255.0f;
-                    float b = pixel.B / 255.0f;
+                    float r = (pixel.R / 255.0f - normalization.MeanR) * invStdR;
+                    float g = (pixel.G / 255.0f - normalization.MeanG) * invStdG;
+                    float b = (pixel.B / 255.0f - normalization.MeanB) * invStdB;
 
-                    tensor[batchIndex, 0, y, x] = (r - normalization.MeanR) * invStdR;
-                    tensor[batchIndex, 1, y, x] = (g - normalization.MeanG) * invStdG;
-                    tensor[batchIndex, 2, y, x] = (b - normalization.MeanB) * invStdB;
+                    if (layout == TensorLayout.NCHW)
+                    {
+                        tensor[batchIndex, 0, y, x] = r;
+                        tensor[batchIndex, 1, y, x] = g;
+                        tensor[batchIndex, 2, y, x] = b;
+                    }
+                    else
+                    {
+                        tensor[batchIndex, y, x, 0] = r;
+                        tensor[batchIndex, y, x, 1] = g;
+                        tensor[batchIndex, y, x, 2] = b;
+                    }
                 }
             }
         }
@@ -482,12 +503,16 @@ namespace DeDupe.Services.Analysis
         {
             if (_session == null || _inputName == null || _inputDimensions == null) return;
 
-            int channels = _inputDimensions[1];
-            int height = _inputDimensions[2];
-            int width = _inputDimensions[3];
+            int channels = ChannelsDim;
+            int height = HeightDim;
+            int width = WidthDim;
 
             // Reuse single-item tensor
-            DenseTensor<float> singleTensor = new([1, channels, height, width]);
+            int[] shape = _tensorLayout == TensorLayout.NCHW
+                ? [1, channels, height, width]
+                : [1, height, width, channels];
+
+            DenseTensor<float> singleTensor = new(shape);
 
             foreach (AnalysisItem item in items)
             {
@@ -508,7 +533,7 @@ namespace DeDupe.Services.Analysis
 
                     // Clear and fill tensor
                     singleTensor.Buffer.Span.Clear();
-                    FillTensorFromImage(singleTensor, 0, image, height, width, normalization);
+                    FillTensorFromImage(singleTensor, 0, image, height, width, normalization, _tensorLayout);
 
                     // Run inference
                     List<NamedOnnxValue> inputs =
@@ -546,6 +571,7 @@ namespace DeDupe.Services.Analysis
             _tensorBufferA = null;
             _tensorBufferB = null;
             _allocatedBatchSize = 0;
+            _tensorLayout = TensorLayout.NCHW;
         }
 
         public void Dispose()
@@ -564,8 +590,8 @@ namespace DeDupe.Services.Analysis
 
         // Initialization
 
-        [LoggerMessage(Level = LogLevel.Information, Message = "ONNX model initialized from {ModelPath} (GPU={IsGpuEnabled}, BatchSize={BatchSize})")]
-        private partial void LogModelInitialized(string modelPath, bool isGpuEnabled, int batchSize);
+        [LoggerMessage(Level = LogLevel.Information, Message = "ONNX model initialized from {ModelPath} (GPU={IsGpuEnabled}, BatchSize={BatchSize}, Layout={TensorLayout})")]
+        private partial void LogModelInitialized(string modelPath, bool isGpuEnabled, int batchSize, TensorLayout tensorLayout);
 
         [LoggerMessage(Level = LogLevel.Error, Message = "ONNX model initialization failed for {ModelPath}")]
         private partial void LogModelInitializationFailed(string modelPath, Exception ex);

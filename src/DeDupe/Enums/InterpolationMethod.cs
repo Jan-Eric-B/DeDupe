@@ -13,10 +13,12 @@ namespace DeDupe.Enums
         [Description("Bicubic")]
         Bicubic,
 
-        [Description("Fant")]
-        Fant,
+        [Description("Mitchell-Netravali")]
+        MitchellNetravali,
 
         [Description("Lanczos")]
         Lanczos
+
+
     }
 }

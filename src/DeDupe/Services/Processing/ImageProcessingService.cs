@@ -171,6 +171,7 @@ namespace DeDupe.Services.Processing
                         Size = new Size(targetSize, targetSize),
                         Mode = GetResizeMode(_settingsService.ResizeMethod),
                         Sampler = GetResampler(image, targetSize),
+                        Compand = _settingsService.Compand,
                         PadColor = new Rgba32(
                             _settingsService.PaddingColor.R,
                             _settingsService.PaddingColor.G,
@@ -228,7 +229,7 @@ namespace DeDupe.Services.Processing
                 InterpolationMethod.Bilinear => KnownResamplers.Triangle,
                 InterpolationMethod.Bicubic => KnownResamplers.Bicubic,
                 InterpolationMethod.Lanczos => KnownResamplers.Lanczos3,
-                InterpolationMethod.Fant => KnownResamplers.MitchellNetravali,
+                InterpolationMethod.MitchellNetravali => KnownResamplers.MitchellNetravali,
                 _ => KnownResamplers.Lanczos3
             };
         }

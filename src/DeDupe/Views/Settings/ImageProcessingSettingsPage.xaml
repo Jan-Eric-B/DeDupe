@@ -94,6 +94,23 @@
                                 Text="{x:Bind ViewModel.BatchSizeDisplayText, Mode=OneWay}" />
                         </StackPanel>
                     </controls:SettingsCard>
+
+                    <!--  Tensor Layout  -->
+                    <controls:SettingsCard
+                        Description="NCHW (channels first) is standard for most models. Use NHWC only if your model requires it."
+                        Header="Tensor layout"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{x:Bind ViewModel.TensorLayouts}"
+                            SelectedItem="{x:Bind ViewModel.TensorLayout, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="enums:TensorLayout">
+                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </controls:SettingsCard>
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>
 
@@ -187,6 +204,18 @@
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                    </controls:SettingsCard>
+
+                    <!--  Companding  -->
+                    <controls:SettingsCard
+                        Description="Apply gamma compression/expansion during resize for perceptually accurate scaling"
+                        Header="Companding"
+                        HeaderIcon="{ui:FontIcon Glyph=&#xE793;}"
+                        IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
+                        <ToggleSwitch
+                            IsOn="{x:Bind ViewModel.Compand, Mode=TwoWay}"
+                            OffContent="Off"
+                            OnContent="On" />
                     </controls:SettingsCard>
                 </controls:SettingsExpander.Items>
             </controls:SettingsExpander>

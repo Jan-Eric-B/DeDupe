@@ -173,6 +173,8 @@ namespace DeDupe.Services
 
         private const string UpsamplingMethodKey = "UpsamplingMethod";
 
+        private const string CompandKey = "Compand";
+
         public bool EnableResizing
         {
             get => GetValue(EnableResizingKey, true);
@@ -265,6 +267,19 @@ namespace DeDupe.Services
             }
         }
 
+        public bool Compand
+        {
+            get => GetValue(CompandKey, BundledModelInfo.RecommendedCompanding);
+            set
+            {
+                if (Compand != value)
+                {
+                    SetValue(CompandKey, value);
+                    CompandChanged?.Invoke(this, value);
+                }
+            }
+        }
+
         public event EventHandler<bool>? EnableResizingChanged;
 
         public event EventHandler<uint>? ResizeSizeChanged;
@@ -276,6 +291,8 @@ namespace DeDupe.Services
         public event EventHandler<InterpolationMethod>? DownsamplingMethodChanged;
 
         public event EventHandler<InterpolationMethod>? UpsamplingMethodChanged;
+
+        public event EventHandler<bool>? CompandChanged;
 
         #endregion Resize
 
@@ -353,7 +370,7 @@ namespace DeDupe.Services
 
         public ColorFormat ColorFormat
         {
-            get => GetValue(ColorFormatKey, ColorFormat.RGB8);
+            get => (ColorFormat)GetValue(ColorFormatKey, (int)ColorFormat.RGB8);
             set
             {
                 if (ColorFormat != value)
@@ -458,6 +475,28 @@ namespace DeDupe.Services
         public event EventHandler? ModelConfigurationChanged;
 
         #endregion Model
+
+        #region Inference
+
+        private const string TensorLayoutKey = "TensorLayout";
+
+        public TensorLayout TensorLayout
+        {
+            get => (TensorLayout)GetValue(TensorLayoutKey, (int)BundledModelInfo.RecommendedTensorLayout);
+            set
+            {
+                if (TensorLayout != value)
+                {
+                    SetValue(TensorLayoutKey, (int)value);
+                    TensorLayoutChanged?.Invoke(this, value);
+                    ModelConfigurationChanged?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+
+        public event EventHandler<TensorLayout>? TensorLayoutChanged;
+
+        #endregion Inference
 
         #region Normalization
 
