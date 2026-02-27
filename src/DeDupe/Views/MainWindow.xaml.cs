@@ -15,7 +15,7 @@ namespace DeDupe
     {
         private MainWindowViewModel ViewModel { get; }
 
-        private readonly WindowSizeService _windowsSizeService;
+        private readonly WindowSizeService _windowSizeService;
         private readonly IThemeService _themeService;
         private readonly ILogger<MainWindow> _logger;
 
@@ -27,7 +27,7 @@ namespace DeDupe
 
             // Set minimum window size
             nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            _windowsSizeService = new WindowSizeService(hWnd, 800, 600, App.Current.GetService<ILogger<WindowSizeService>>());
+            _windowSizeService = new WindowSizeService(hWnd, 800, 600, App.Current.GetService<ILogger<WindowSizeService>>());
 
             // Theme
             _themeService = App.Current.GetService<IThemeService>();
@@ -77,7 +77,7 @@ namespace DeDupe
             LogMainWindowClosed();
 
             _themeService.UnregisterWindow(this);
-            _windowsSizeService?.Dispose();
+            _windowSizeService?.Dispose();
 
             await App.Current.Shutdown();
         }
