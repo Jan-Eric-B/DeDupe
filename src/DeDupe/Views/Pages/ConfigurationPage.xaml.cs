@@ -1,7 +1,9 @@
 using DeDupe.Constants;
 using DeDupe.Models.Input;
+using DeDupe.Services;
 using DeDupe.ViewModels.Pages;
 using Microsoft.Extensions.Logging;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ namespace DeDupe.Views.Pages
     public sealed partial class ConfigurationPage : Page
     {
         private readonly ILogger<ConfigurationPage> _logger = App.Current.GetService<ILogger<ConfigurationPage>>();
+        private readonly IDialogService _dialogService = App.Current.GetService<IDialogService>();
 
         private ConfigurationViewModel ViewModel { get; }
 
@@ -23,6 +26,13 @@ namespace DeDupe.Views.Pages
             InitializeComponent();
             ViewModel = App.Current.GetService<ConfigurationViewModel>();
             DataContext = ViewModel;
+
+            Loaded += ConfigurationPage_Loaded;
+        }
+
+        private void ConfigurationPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            _dialogService.SetXamlRoot(XamlRoot);
         }
 
         #region Item Loading

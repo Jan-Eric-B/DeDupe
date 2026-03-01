@@ -12,33 +12,22 @@ namespace DeDupe.Models.Analysis
     /// </summary>
     public partial class SimilarityGroup : ObservableObject
     {
-        private string _name;
-
         private bool _isBatchUpdating;
 
         private bool _isInternalUpdate;
 
         public int Id { get; }
 
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                if (_name != value)
-                {
-                    _name = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        [ObservableProperty]
+        private string _name;
 
         /// <summary>
         /// Analysis items in this group (immutable after construction).
         /// </summary>
         public IReadOnlyList<AnalysisItem> Items { get; }
 
-        public double AverageSimilarity { get; set; } = 0.0;
+        [ObservableProperty]
+        private double _averageSimilarity = 0.0;
 
         public int Count => SelectableItems.Count;
 

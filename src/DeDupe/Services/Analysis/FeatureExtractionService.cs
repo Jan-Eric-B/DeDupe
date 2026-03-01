@@ -63,6 +63,7 @@ namespace DeDupe.Services.Analysis
         /// NCHW: [N, C, H, W] — NHWC: [N, H, W, C]
         /// </summary>
         private int ChannelsDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![1] : _inputDimensions![3];
+
         private int HeightDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![2] : _inputDimensions![1];
         private int WidthDim => _tensorLayout == TensorLayout.NCHW ? _inputDimensions![3] : _inputDimensions![2];
 

@@ -194,6 +194,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>Assets\Images\Icon\AppIcon.ico</ApplicationIcon>
     <PackageIcon>AppIcon.targetsize-128.png</PackageIcon>
+    <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
   </PropertyGroup>
 
   <Target Name="GenerateDependenciesJson" BeforeTargets="BeforeBuild">

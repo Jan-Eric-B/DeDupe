@@ -7,16 +7,16 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="98e6fc67-9ab8-4bc8-b8bb-b3b7f46fed7e"
-    Publisher="CN=Jan-Eric-B"
-    Version="1.0.0.0" />
-
+  	Name="DeDupe.DeDupe-ImageDuplicateFinder"
+  	Publisher="CN=4EB8B421-4EE9-470A-8A8D-54E0C4F44E0C"
+  	Version="1.0.1.0" />
+  
   <Properties>
-    <DisplayName>DeDupe</DisplayName>
-    <PublisherDisplayName>Jan-Eric-B</PublisherDisplayName>
-    <Logo>Assets\Images\Icon\PackageLogo.png</Logo>
+  	<DisplayName>DeDupe - Image Duplicate Finder</DisplayName>
+  	<PublisherDisplayName>DeDupe</PublisherDisplayName>
+  	<Logo>Assets\Images\Icon\PackageLogo.png</Logo>
   </Properties>
-
+	
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />

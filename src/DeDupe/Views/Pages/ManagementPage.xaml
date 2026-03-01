@@ -2,16 +2,16 @@
 <Page
     x:Class="DeDupe.Views.Pages.ManagementPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:splitter="using:CommunityToolkit.WinUI.Controls"
     xmlns:controls="using:DeDupe.Controls"
     xmlns:converters="using:DeDupe.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enums="using:DeDupe.Enums"
     xmlns:helpers="using:DeDupe.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
+    xmlns:splitter="using:CommunityToolkit.WinUI.Controls"
     d:DataContext="{d:DesignInstance Type=pages:ManagementViewModel}"
     mc:Ignorable="d">
     <Page.Resources>
@@ -109,9 +109,9 @@
 
                 <!--  Auto-Selection  -->
                 <DropDownButton
-            Grid.Column="0"
-            IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
-            ToolTipService.ToolTip="Apply auto selection to all groups">
+                    Grid.Column="0"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
+                    ToolTipService.ToolTip="Apply auto selection to all groups">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xF16E;" />
                         <TextBlock Text="Auto-Select All" />
@@ -198,17 +198,27 @@
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
-                            <RadioMenuFlyoutItem Click="SortBy_Similarity" GroupName="SortGroup" IsChecked="True" Text="Similarity (High to Low)">
+                            <RadioMenuFlyoutItem
+                                Click="SortBy_Similarity"
+                                GroupName="SortGroup"
+                                IsChecked="True"
+                                Text="Similarity (High to Low)">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE9D9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
-                            <RadioMenuFlyoutItem Click="SortBy_ImageCount" GroupName="SortGroup" Text="Image Count">
+                            <RadioMenuFlyoutItem
+                                Click="SortBy_ImageCount"
+                                GroupName="SortGroup"
+                                Text="Image Count">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8B9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
-                            <RadioMenuFlyoutItem Click="SortBy_Name" GroupName="SortGroup" Text="Group Name">
+                            <RadioMenuFlyoutItem
+                                Click="SortBy_Name"
+                                GroupName="SortGroup"
+                                Text="Group Name">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8AC;" />
                                 </RadioMenuFlyoutItem.Icon>
@@ -231,17 +241,27 @@
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
-                            <RadioMenuFlyoutItem Click="FilterBy_All" GroupName="FilterGroup" IsChecked="True" Text="All Groups">
+                            <RadioMenuFlyoutItem
+                                Click="FilterBy_All"
+                                GroupName="FilterGroup"
+                                IsChecked="True"
+                                Text="All Groups">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8B9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
-                            <RadioMenuFlyoutItem Click="FilterBy_ExactMatchesOnly" GroupName="FilterGroup" Text="Exact Matches (100%)">
+                            <RadioMenuFlyoutItem
+                                Click="FilterBy_ExactMatchesOnly"
+                                GroupName="FilterGroup"
+                                Text="Exact Matches (100%)">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE73E;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
-                            <RadioMenuFlyoutItem Click="FilterBy_SimilarOnly" GroupName="FilterGroup" Text="Similar Only (&lt;100%)">
+                            <RadioMenuFlyoutItem
+                                Click="FilterBy_SimilarOnly"
+                                GroupName="FilterGroup"
+                                Text="Similar Only (&lt;100%)">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE9D9;" />
                                 </RadioMenuFlyoutItem.Icon>
@@ -348,9 +368,9 @@
 
         <!--  Main Content  -->
         <Grid
-        x:Name="SplitViewGrid"
-        Grid.Row="1"
-        Margin="10,10,10,10">
+            x:Name="SplitViewGrid"
+            Grid.Row="1"
+            Margin="10,10,10,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="0" />
@@ -359,11 +379,11 @@
 
             <!--  Left Panel - Cluster Grid  -->
             <Border
-          Grid.Column="0"
-          MinWidth="300"
-          Padding="16"
-          BorderThickness="1"
-          CornerRadius="8">
+                Grid.Column="0"
+                MinWidth="300"
+                Padding="16"
+                BorderThickness="1"
+                CornerRadius="8">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -384,10 +404,10 @@
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Text="{x:Bind ViewModel.Status, Mode=OneWay}" />
                         <!--  Analysis Progress Bar  -->
-                        <Grid
-                            Visibility="{x:Bind ViewModel.IsAnalyzingSimilarity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid Visibility="{x:Bind ViewModel.IsAnalyzingSimilarity, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
@@ -403,8 +423,24 @@
                             <TextBlock
                                 Grid.Column="1"
                                 MinWidth="40"
+                                VerticalAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="{x:Bind ViewModel.AnalysisProgressPercentage, Mode=OneWay, Converter={StaticResource PercentageConverter}}" />
+
+                            <!--  Cancel Button  -->
+                            <Button
+                                Grid.Column="2"
+                                Margin="4,0,0,0"
+                                Padding="6"
+                                VerticalAlignment="Center"
+                                Command="{x:Bind ViewModel.CancelAnalysisCommand}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Cancel analysis">
+                                <FontIcon
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                    Glyph="&#xE711;" />
+                            </Button>
                         </Grid>
                     </StackPanel>
 

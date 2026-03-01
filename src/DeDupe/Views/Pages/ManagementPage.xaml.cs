@@ -10,16 +10,13 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
 
 namespace DeDupe.Views.Pages
 {
     public sealed partial class ManagementPage : Page
     {
         private readonly ILogger<ManagementPage> _logger = App.Current.GetService<ILogger<ManagementPage>>();
+        private readonly IDialogService _dialogService = App.Current.GetService<IDialogService>();
 
         private ManagementViewModel ViewModel { get; }
 
@@ -37,6 +34,7 @@ namespace DeDupe.Views.Pages
 
         private async void ManagementPage_Loaded(object sender, RoutedEventArgs e)
         {
+            _dialogService.SetXamlRoot(XamlRoot);
             await ViewModel.TryAutoAnalyzeAsync();
         }
 
@@ -131,7 +129,7 @@ namespace DeDupe.Views.Pages
                 if (currentRightWidth > 0)
                 {
                     _rightPanelWidthRatio = currentRightWidth / SplitViewGrid.ActualWidth;
-                    _rightPanelWidthRatio = System.Math.Clamp(_rightPanelWidthRatio, 0.2, 0.7);
+                    _rightPanelWidthRatio = Math.Clamp(_rightPanelWidthRatio, 0.2, 0.7);
                 }
             }
         }
@@ -352,69 +350,6 @@ namespace DeDupe.Views.Pages
 
         #region File Operations
 
-        private static async Task<string?> PickFolderAsync(string title)
-        {
-            FolderPicker folderPicker = new()
-            {
-                ViewMode = PickerViewMode.List,
-                SuggestedStartLocation = PickerLocationId.PicturesLibrary,
-                CommitButtonText = title,
-            };
-
-            folderPicker.FileTypeFilter.Add("*");
-            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
-            InitializeWithWindow.Initialize(folderPicker, windowHandle);
-
-            StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
-            return folder?.Path;
-        }
-
-        private async Task<bool> ShowMoveConfirmationAsync(string operation, string destination, int fileCount, int groupCount, bool isGrouped)
-        {
-            string groupInfo = isGrouped ? $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group." : "";
-
-            string message = $"{operation} {fileCount} file{(fileCount == 1 ? "" : "s")} to:\n{destination}{groupInfo}";
-
-            ContentDialog confirmDialog = new()
-            {
-                Title = $"Confirm {operation}",
-                Content = message,
-                PrimaryButtonText = operation,
-                CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = XamlRoot
-            };
-
-            ContentDialogResult result = await confirmDialog.ShowAsync();
-            return result == ContentDialogResult.Primary;
-        }
-
-        private async Task ShowOperationResultAsync(string operation, FileOperationResult result)
-        {
-            if (result.HasFailures)
-            {
-                LogFileOperationPartialFailure(operation, result.SuccessCount, result.FailedCount);
-
-                string message = $"Completed with some issues:\n\n" +
-                                $"✓ {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")} {operation.ToLower()}d successfully\n" +
-                                $"✗ {result.FailedCount} file{(result.FailedCount == 1 ? "" : "s")} failed";
-
-                ContentDialog resultDialog = new()
-                {
-                    Title = $"{operation} Completed",
-                    Content = message,
-                    CloseButtonText = "OK",
-                    XamlRoot = XamlRoot
-                };
-
-                await resultDialog.ShowAsync();
-            }
-            else
-            {
-                LogFileOperationCompleted(operation, result.SuccessCount);
-            }
-        }
-
         private async void MoveToSingleFolder_Click(object sender, RoutedEventArgs e)
         {
             int count = ViewModel.TotalSelectedCount;
@@ -423,13 +358,13 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await PickFolderAsync("Select destination folder");
+            string? folderPath = await _dialogService.PickFolderAsync("Select destination folder");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, 0, isGrouped: false);
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Move", $"Move {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}", "Move");
             if (!confirmed)
             {
                 return;
@@ -439,7 +374,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
 
-            await ShowOperationResultAsync("Move", result);
+            await _dialogService.ShowOperationResultAsync("Move", result.SuccessCount, result.FailedCount);
         }
 
         private async void MoveToGroupFolders_Click(object sender, RoutedEventArgs e)
@@ -451,13 +386,14 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            string? folderPath = await _dialogService.PickFolderAsync("Select root folder for group organization");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await ShowMoveConfirmationAsync("Move", folderPath, count, groupCount, isGrouped: true);
+            string groupInfo = $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group.";
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Move", $"Move {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}{groupInfo}", "Move");
             if (!confirmed)
             {
                 return;
@@ -467,7 +403,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
 
-            await ShowOperationResultAsync("Move", result);
+            await _dialogService.ShowOperationResultAsync("Move", result.SuccessCount, result.FailedCount);
         }
 
         private async void CopyToSingleFolder_Click(object sender, RoutedEventArgs e)
@@ -478,13 +414,13 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await PickFolderAsync("Select destination folder");
+            string? folderPath = await _dialogService.PickFolderAsync("Select destination folder");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, 0, isGrouped: false);
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Copy", $"Copy {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}", "Copy");
             if (!confirmed)
             {
                 return;
@@ -494,7 +430,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
 
-            await ShowOperationResultAsync("Copy", result);
+            await _dialogService.ShowOperationResultAsync("Copy", result.SuccessCount, result.FailedCount);
         }
 
         private async void CopyToGroupFolders_Click(object sender, RoutedEventArgs e)
@@ -506,13 +442,14 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await PickFolderAsync("Select root folder for group organization");
+            string? folderPath = await _dialogService.PickFolderAsync("Select root folder for group organization");
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await ShowMoveConfirmationAsync("Copy", folderPath, count, groupCount, isGrouped: true);
+            string groupInfo = $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group.";
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Copy", $"Copy {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}{groupInfo}", "Copy");
             if (!confirmed)
             {
                 return;
@@ -522,7 +459,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
 
-            await ShowOperationResultAsync("Copy", result);
+            await _dialogService.ShowOperationResultAsync("Copy", result.SuccessCount, result.FailedCount);
         }
 
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
@@ -543,19 +480,9 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            ContentDialog confirmDialog = new()
-            {
-                Title = "Permanent Deletion",
-                Content = $"Are you sure you want to PERMANENTLY delete {count} file{(count == 1 ? "" : "s")}?\n\nThis action cannot be undone!",
-                PrimaryButtonText = "Delete Permanently",
-                CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Permanent Deletion", $"Are you sure you want to PERMANENTLY delete {count} file{(count == 1 ? "" : "s")}?\n\nThis action cannot be undone!", "Delete Permanently", "Cancel", destructive: true);
 
-            ContentDialogResult result = await confirmDialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
+            if (confirmed)
             {
                 LogFileOperationStarting("Permanent delete", count, "N/A");
                 await ViewModel.DeletePermanentlyCommand.ExecuteAsync(null);
@@ -570,19 +497,9 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            ContentDialog confirmDialog = new()
-            {
-                Title = "Confirm Deletion",
-                Content = $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
+            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Deletion", $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.", "Delete", "Cancel", destructive: true);
 
-            ContentDialogResult result = await confirmDialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
+            if (confirmed)
             {
                 LogFileOperationStarting("Recycle bin delete", count, "N/A");
                 await ViewModel.DeleteSelectedFilesCommand.ExecuteAsync(null);
@@ -706,12 +623,6 @@ namespace DeDupe.Views.Pages
 
         [LoggerMessage(Level = LogLevel.Information, Message = "File operation starting: {Operation} for {FileCount} files to {DestinationPath}")]
         private partial void LogFileOperationStarting(string operation, int fileCount, string destinationPath);
-
-        [LoggerMessage(Level = LogLevel.Information, Message = "File operation completed: {Operation} succeeded for {SuccessCount} files")]
-        private partial void LogFileOperationCompleted(string operation, int successCount);
-
-        [LoggerMessage(Level = LogLevel.Warning, Message = "File operation partial failure: {Operation} succeeded for {SuccessCount}, failed for {FailedCount} files")]
-        private partial void LogFileOperationPartialFailure(string operation, int successCount, int failedCount);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Group name sanitized from {OriginalName} to {SanitizedName}")]
         private partial void LogGroupNameSanitized(string originalName, string sanitizedName);

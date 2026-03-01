@@ -3,10 +3,12 @@
 namespace DeDupe.Models.Results
 {
     /// <summary>
-    /// Result of file operation (move or copy).
+    /// Result of file operation (move, copy, or delete).
     /// </summary>
     public class FileOperationResult(int successCount, int failedCount, List<string> successfulPaths, List<string> failedPaths)
     {
+        public static FileOperationResult Empty { get; } = new(0, 0, [], []);
+
         public int SuccessCount { get; } = successCount;
 
         public int FailedCount { get; } = failedCount;

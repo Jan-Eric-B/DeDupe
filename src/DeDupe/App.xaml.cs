@@ -105,9 +105,12 @@ namespace DeDupe
             services.AddSingleton<IThemeService, ThemeService>();
             services.AddSingleton<IAppStateService, AppStateService>();
 
+            services.AddSingleton<IDialogService, DialogService>();
+            services.AddSingleton<IFileOperationService, FileOperationService>();
+
             // Image Processing
             services.AddTransient<IBorderDetectionService, BorderDetectionService>();
-            services.AddTransient<ImageProcessingService>();
+            services.AddTransient<IImageProcessingService, ImageProcessingService>();
 
             // Model Management
             services.AddSingleton<IBundledModelService, BundledModelService>();

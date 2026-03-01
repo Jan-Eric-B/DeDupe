@@ -18,7 +18,5 @@ namespace DeDupe.Enums
 
         [Description("Lanczos")]
         Lanczos
-
-
     }
 }

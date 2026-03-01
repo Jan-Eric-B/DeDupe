@@ -6,11 +6,7 @@ using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using Windows.System;
 using Windows.UI;
 
 namespace DeDupe.ViewModels.Settings
@@ -18,11 +14,13 @@ namespace DeDupe.ViewModels.Settings
     public partial class ImageProcessingSettingsViewModel : SettingsPageViewModelBase
     {
         private readonly ISettingsService _settingsService;
+        private readonly IDialogService _dialogService;
         private readonly ILogger<ImageProcessingSettingsViewModel> _logger;
 
-        public ImageProcessingSettingsViewModel(ISettingsService settingsService, ILogger<ImageProcessingSettingsViewModel> logger)
+        public ImageProcessingSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILogger<ImageProcessingSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Image Processing";
@@ -266,18 +264,12 @@ namespace DeDupe.ViewModels.Settings
         {
             try
             {
-                FolderPicker picker = new()
-                {
-                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary
-                };
-                picker.FileTypeFilter.Add("*");
-                picker.InitializeForCurrentWindow();
+                string? folderPath = await _dialogService.PickFolderAsync("Select Temp Folder");
 
-                StorageFolder folder = await picker.PickSingleFolderAsync();
-                if (folder != null)
+                if (!string.IsNullOrEmpty(folderPath))
                 {
-                    CustomTempFolderPath = folder.Path;
-                    LogTempFolderSelected(folder.Path);
+                    CustomTempFolderPath = folderPath;
+                    LogTempFolderSelected(folderPath);
                 }
             }
             catch (Exception ex)
@@ -292,18 +284,13 @@ namespace DeDupe.ViewModels.Settings
             try
             {
                 string path = _settingsService.TempFolderPath;
+
                 if (string.IsNullOrEmpty(path))
                 {
                     return;
                 }
 
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                    LogTempFolderCreated(path);
-                }
-
-                await Launcher.LaunchFolderPathAsync(path);
+                await _dialogService.OpenFolderInExplorerAsync(path);
             }
             catch (Exception ex)
             {
@@ -343,9 +330,6 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Custom temp folder selected: {FolderPath}")]
         private partial void LogTempFolderSelected(string folderPath);
-
-        [LoggerMessage(Level = LogLevel.Debug, Message = "Temp folder created at {FolderPath}")]
-        private partial void LogTempFolderCreated(string folderPath);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Temp folder browse picker failed")]
         private partial void LogTempFolderBrowseFailed(Exception ex);

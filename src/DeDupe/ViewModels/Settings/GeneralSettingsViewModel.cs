@@ -6,20 +6,20 @@ using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
-using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {
     public partial class GeneralSettingsViewModel : SettingsPageViewModelBase
     {
         private readonly ISettingsService _settingsService;
+        private readonly IDialogService _dialogService;
         private readonly ILogger<GeneralSettingsViewModel> _logger;
 
-        public GeneralSettingsViewModel(ISettingsService settingsService, ILogger<GeneralSettingsViewModel> logger)
+        public GeneralSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILogger<GeneralSettingsViewModel> logger)
         {
             _settingsService = settingsService;
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "General";
@@ -31,10 +31,10 @@ namespace DeDupe.ViewModels.Settings
             SelectedBackdropIndex = (int)_settingsService.Backdrop;
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
 
-            string themeDescripion = EnumExtensions.GetDescription(_settingsService.Theme);
+            string themeDescription = EnumExtensions.GetDescription(_settingsService.Theme);
             string backdropDescription = EnumExtensions.GetDescription(_settingsService.Backdrop);
             string accentColorDescription = EnumExtensions.GetDescription(_settingsService.AccentColor);
-            LogSettingsLoaded(themeDescripion, backdropDescription, accentColorDescription);
+            LogSettingsLoaded(themeDescription, backdropDescription, accentColorDescription);
         }
 
         #region Appearance
@@ -65,14 +65,14 @@ namespace DeDupe.ViewModels.Settings
         {
             _settingsService.Backdrop = (AppBackdrop)value;
 
-            LogSelectedBackdropIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
+            LogSelectedBackdropIndexChanged(EnumExtensions.GetDescription((AppBackdrop)value));
         }
 
         partial void OnSelectedAccentColorIndexChanged(int value)
         {
             _settingsService.AccentColor = (AppAccentColor)value;
 
-            LogSelectedAccentColorIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
+            LogSelectedAccentColorIndexChanged(EnumExtensions.GetDescription((AppAccentColor)value));
         }
 
         #endregion Appearance
@@ -85,18 +85,13 @@ namespace DeDupe.ViewModels.Settings
             try
             {
                 string path = _settingsService.LogFolderPath;
+
                 if (string.IsNullOrEmpty(path))
                 {
                     return;
                 }
 
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                    LogLogFolderCreated(path);
-                }
-
-                await Launcher.LaunchFolderPathAsync(path);
+                await _dialogService.OpenFolderInExplorerAsync(path);
             }
             catch (Exception ex)
             {
@@ -130,9 +125,6 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Information, Message = "AccentColor changed to {SelectedAccentColor}")]
         private partial void LogSelectedAccentColorIndexChanged(string selectedAccentColor);
-
-        [LoggerMessage(Level = LogLevel.Debug, Message = "log folder created at {FolderPath}")]
-        private partial void LogLogFolderCreated(string folderPath);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Log folder open failed")]
         private partial void LogLogFolderOpenFailed(Exception ex);

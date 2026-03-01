@@ -20,10 +20,9 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Processing
 {
-    /// <summary>
-    /// Service for processing images before feature extraction.
-    /// </summary>
-    public partial class ImageProcessingService
+
+    /// <inheritdoc />
+    public partial class ImageProcessingService : IImageProcessingService
     {
         private readonly IAppStateService _appStateService;
         private readonly ISettingsService _settingsService;

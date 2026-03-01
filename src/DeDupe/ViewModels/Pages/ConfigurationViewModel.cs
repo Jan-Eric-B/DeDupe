@@ -23,9 +23,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
 
 namespace DeDupe.ViewModels.Pages
 {
@@ -33,18 +30,20 @@ namespace DeDupe.ViewModels.Pages
     {
         private readonly IAppStateService _appStateService;
         private readonly ISettingsService _settingsService;
+        private readonly IDialogService _dialogService;
         private readonly IBundledModelService _bundledModelService;
         private readonly IFeatureExtractionService _featureExtractionService;
-        private readonly ImageProcessingService _imageProcessingService;
+        private readonly IImageProcessingService _imageProcessingService;
         private readonly ILogger<ConfigurationViewModel> _logger;
 
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, ImageProcessingService imageProcessingService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IDialogService dialogService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IImageProcessingService imageProcessingService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
             _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
@@ -84,106 +83,96 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand]
         private async Task AddFolderAsync()
         {
-            FolderPicker folderPicker = new()
-            {
-                ViewMode = PickerViewMode.List,
-                SuggestedStartLocation = PickerLocationId.ComputerFolder
-            };
-            folderPicker.InitializeForCurrentWindow();
+            string? folderPath = await _dialogService.PickFolderAsync("Select Folder");
 
-            // Show folder picker
-            StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
 
             // Folder is already in list
-            if (folder != null && !InputListItems.Any(item => string.Equals(item.Path, folder.Path, StringComparison.OrdinalIgnoreCase)))
+            if (InputListItems.Any(item => string.Equals(item.Path, folderPath, StringComparison.OrdinalIgnoreCase)))
             {
-                // Folder has subdirectories
-                bool hasSubdirectories = false;
-                try
-                {
-                    hasSubdirectories = Directory.EnumerateDirectories(folder.Path).Any();
-                }
-                catch
-                {
-                    // Ignore access errors
-                }
-
-                // Create new input list item for folder
-                InputListItem inputListItem = new()
-                {
-                    Path = folder.Path,
-                    IsFolder = true,
-                    HasSubdirectories = hasSubdirectories,
-                    IncludeSubdirectories = hasSubdirectories
-                };
-
-                InputListItems.Add(inputListItem);
-                await ProcessFolderAsync(inputListItem);
+                return;
             }
+
+            // Check for subdirectories
+            bool hasSubdirectories = false;
+            try
+            {
+                hasSubdirectories = Directory.EnumerateDirectories(folderPath).Any();
+            }
+            catch
+            {
+                // Ignore access errors
+            }
+
+            // Create new input list item for folder
+            InputListItem inputListItem = new()
+            {
+                Path = folderPath,
+                IsFolder = true,
+                HasSubdirectories = hasSubdirectories,
+                IncludeSubdirectories = hasSubdirectories
+            };
+
+            InputListItems.Add(inputListItem);
+            await ProcessFolderAsync(inputListItem);
         }
 
         [RelayCommand]
         private async Task AddFilesAsync()
         {
-            FileOpenPicker fileOpenPicker = new()
-            {
-                ViewMode = PickerViewMode.Thumbnail,
-                SuggestedStartLocation = PickerLocationId.PicturesLibrary
-            };
+            IReadOnlyList<string> filePaths = await _dialogService.PickFilesAsync(
+                SupportedFileExtensions.SupportedImageExtensions,
+                "Select Images");
 
-            foreach (string ext in SupportedFileExtensions.SupportedImageExtensions)
+            if (filePaths.Count == 0)
             {
-                fileOpenPicker.FileTypeFilter.Add(ext);
+                return;
             }
 
-            // Initialize file picker
-            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
-            InitializeWithWindow.Initialize(fileOpenPicker, windowHandle);
+            IsBusy = true;
+            Status = $"Adding {filePaths.Count} files...";
 
-            IReadOnlyList<StorageFile> files = await fileOpenPicker.PickMultipleFilesAsync();
-
-            if (files != null && files.Count > 0)
+            try
             {
-                IsBusy = true;
-                Status = $"Adding {files.Count} files...";
+                List<SourceMedia> newSources = [];
 
-                try
+                foreach (string filePath in filePaths)
                 {
-                    List<SourceMedia> newSources = [];
+                    string extension = Path.GetExtension(filePath);
 
-                    foreach (StorageFile file in files)
+                    if (SupportedFileExtensions.IsImageFile(extension) && !InputListItems.Any(item => string.Equals(item.Path, filePath, StringComparison.OrdinalIgnoreCase)))
                     {
-                        if (SupportedFileExtensions.IsImageFile(file.FileType) && !InputListItems.Any(item => string.Equals(item.Path, file.Path, StringComparison.OrdinalIgnoreCase)))
+                        InputListItem inputListItem = new()
                         {
-                            InputListItem inputListItem = new()
-                            {
-                                Path = file.Path,
-                                IsFolder = false,
-                                HasSubdirectories = false,
-                                IncludeSubdirectories = false
-                            };
+                            Path = filePath,
+                            IsFolder = false,
+                            HasSubdirectories = false,
+                            IncludeSubdirectories = false
+                        };
 
-                            InputListItems.Add(inputListItem);
+                        InputListItems.Add(inputListItem);
 
-                            // Add to unique file paths
-                            SourceMedia source = SourceMedia.CreateLightweight(file.Path);
-                            AddSourceToTracking(file.Path, file.Path, source);
-                            newSources.Add(source);
-                        }
-                    }
-
-                    // Batch update AppState
-                    if (newSources.Count > 0)
-                    {
-                        UpdateAppStateSourceMedia();
-                        LogFilesAdded(newSources.Count);
+                        // Add to unique file paths
+                        SourceMedia source = SourceMedia.CreateLightweight(filePath);
+                        AddSourceToTracking(filePath, filePath, source);
+                        newSources.Add(source);
                     }
                 }
-                finally
+
+                // Batch update AppState
+                if (newSources.Count > 0)
                 {
-                    IsBusy = false;
-                    UpdateStatus();
+                    UpdateAppStateSourceMedia();
+                    LogFilesAdded(newSources.Count);
                 }
+            }
+            finally
+            {
+                IsBusy = false;
+                UpdateStatus();
             }
         }
 

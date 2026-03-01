@@ -8,13 +8,13 @@ using DeDupe.Models.Results;
 using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace DeDupe.ViewModels.Pages
 {
@@ -24,14 +24,18 @@ namespace DeDupe.ViewModels.Pages
         private readonly ISettingsService _settingsService;
         private readonly ISimilarityAnalysisService _similarityAnalysisService;
         private readonly IAutoSelectionService _autoSelectionService;
+        private readonly IFileOperationService _fileOperationService;
+        private readonly IDialogService _dialogService;
         private readonly ILogger<ManagementViewModel> _logger;
 
-        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, IFileOperationService fileOperationService, IDialogService dialogService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _similarityAnalysisService = similarityAnalysisService ?? throw new ArgumentNullException(nameof(similarityAnalysisService));
             _autoSelectionService = autoSelectionService ?? throw new ArgumentNullException(nameof(autoSelectionService));
+            _fileOperationService = fileOperationService ?? throw new ArgumentNullException(nameof(fileOperationService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Title = "Duplicate Management";
@@ -47,8 +51,8 @@ namespace DeDupe.ViewModels.Pages
         #region Similarity Analysis
 
         [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CanStartSimilarityAnalysis))]
-        [NotifyCanExecuteChangedFor(nameof(AnalyzeSimilarityCommand))]
+        [NotifyPropertyChangedFor(nameof(CanStartSimilarityAnalysis), nameof(IsCancellable))]
+        [NotifyCanExecuteChangedFor(nameof(AnalyzeSimilarityCommand), nameof(CancelAnalysisCommand))]
         public partial bool IsAnalyzingSimilarity { get; set; }
 
         [ObservableProperty]
@@ -76,6 +80,10 @@ namespace DeDupe.ViewModels.Pages
         public int TotalFileCount => _appStateService.SourceMediaCount;
 
         public int ExtractedFeaturesCount => _appStateService.ExtractedFeaturesCount;
+
+        private CancellationTokenSource? _analysisCts;
+
+        public bool IsCancellable => IsAnalyzingSimilarity;
 
         public string ModelName
         {
@@ -107,6 +115,15 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand(CanExecute = nameof(CanStartSimilarityAnalysis))]
         private async Task AnalyzeSimilarityAsync()
         {
+            // Cancel any existing analysis
+            if (_analysisCts is not null)
+            {
+                await _analysisCts.CancelAsync();
+            }
+
+            _analysisCts = new CancellationTokenSource();
+            CancellationToken ct = _analysisCts.Token;
+
             try
             {
                 IsAnalyzingSimilarity = true;
@@ -132,14 +149,20 @@ namespace DeDupe.ViewModels.Pages
                     Status = info.StatusText;
                 });
 
-                // Perform clustering
-                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, analysisProgress);
+                // Perform clustering with cancellation token
+                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, analysisProgress, ct);
 
                 HasSimilarityResults = true;
                 AnalysisProgressPercentage = 100;
                 Status = $"Analysis complete: {ResultSummary}";
 
                 LogSimilarityAnalysisCompleted(ResultSummary);
+            }
+            catch (OperationCanceledException)
+            {
+                Status = "Analysis cancelled";
+                AnalysisProgressPercentage = 0;
+                LogSimilarityAnalysisCancelled();
             }
             catch (Exception ex)
             {
@@ -159,6 +182,13 @@ namespace DeDupe.ViewModels.Pages
                     AnalysisProgressPercentage = 0;
                 }
             }
+        }
+
+        [RelayCommand(CanExecute = nameof(IsCancellable))]
+        private void CancelAnalysis()
+        {
+            _analysisCts?.Cancel();
+            Status = "Cancelling analysis...";
         }
 
         private void UpdateSimilarityGroups()
@@ -314,6 +344,20 @@ namespace DeDupe.ViewModels.Pages
                 paths.AddRange(group.GetSelectedFilePaths());
             }
             return paths;
+        }
+
+        public Dictionary<string, List<string>> GetSelectedFilePathsByGroup()
+        {
+            Dictionary<string, List<string>> result = [];
+            foreach (SimilarityGroup group in SimilarityGroups)
+            {
+                List<string> selectedPaths = group.GetSelectedFilePaths();
+                if (selectedPaths.Count > 0)
+                {
+                    result[group.Name] = selectedPaths;
+                }
+            }
+            return result;
         }
 
         private void OnGroupSelectionChanged(object? sender, EventArgs e)
@@ -478,41 +522,12 @@ namespace DeDupe.ViewModels.Pages
 
         private bool CanDeleteSelectedFiles => !IsDeleting && TotalSelectedCount > 0;
 
-        [RelayCommand(CanExecute = nameof(CanDeleteSelectedFiles))]
-        private async Task DeleteSelectedFilesAsync()
-        {
-            await ExecuteFileDeletionAsync(permanentDelete: false);
-        }
-
         /// <summary>
-        /// Permanently delete all selected files.
-        /// </summary>
-        [RelayCommand(CanExecute = nameof(CanDeleteSelectedFiles))]
-        private async Task DeletePermanentlyAsync()
-        {
-            await ExecuteFileDeletionAsync(permanentDelete: true);
-        }
-
-        public Dictionary<string, List<string>> GetSelectedFilePathsByGroup()
-        {
-            Dictionary<string, List<string>> result = [];
-            foreach (SimilarityGroup group in SimilarityGroups)
-            {
-                List<string> selectedPaths = group.GetSelectedFilePaths();
-                if (selectedPaths.Count > 0)
-                {
-                    result[group.Name] = selectedPaths;
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Move all selected files to single folder.
+        /// Move selected files to single folder.
         /// </summary>
         public async Task<FileOperationResult> MoveToSingleFolderAsync(string destinationFolder)
         {
-            return await ExecuteFileOperationAsync(destinationFolder, GetAllSelectedFilePaths(), FileOperationType.Move);
+            return await ExecuteMoveOrCopyAsync(GetAllSelectedFilePaths(), destinationFolder, FileOperationType.Move);
         }
 
         /// <summary>
@@ -520,15 +535,15 @@ namespace DeDupe.ViewModels.Pages
         /// </summary>
         public async Task<FileOperationResult> MoveToGroupFoldersAsync(string rootFolder)
         {
-            return await ExecuteGroupedFileOperationAsync(rootFolder, FileOperationType.Move);
+            return await ExecuteGroupedMoveOrCopyAsync(rootFolder, FileOperationType.Move);
         }
 
         /// <summary>
-        /// Copy all selected files to single folder.
+        /// Copy selected files to single folder.
         /// </summary>
         public async Task<FileOperationResult> CopyToSingleFolderAsync(string destinationFolder)
         {
-            return await ExecuteFileOperationAsync(destinationFolder, GetAllSelectedFilePaths(), FileOperationType.Copy);
+            return await ExecuteMoveOrCopyAsync(GetAllSelectedFilePaths(), destinationFolder, FileOperationType.Copy);
         }
 
         /// <summary>
@@ -536,14 +551,26 @@ namespace DeDupe.ViewModels.Pages
         /// </summary>
         public async Task<FileOperationResult> CopyToGroupFoldersAsync(string rootFolder)
         {
-            return await ExecuteGroupedFileOperationAsync(rootFolder, FileOperationType.Copy);
+            return await ExecuteGroupedMoveOrCopyAsync(rootFolder, FileOperationType.Copy);
         }
 
-        private async Task<FileOperationResult> ExecuteFileOperationAsync(string destinationFolder, List<string> filePaths, FileOperationType operationType)
+        [RelayCommand(CanExecute = nameof(CanDeleteSelectedFiles))]
+        private async Task DeleteSelectedFilesAsync()
+        {
+            await ExecuteFileDeletionAsync(permanentDelete: false);
+        }
+
+        [RelayCommand(CanExecute = nameof(CanDeleteSelectedFiles))]
+        private async Task DeletePermanentlyAsync()
+        {
+            await ExecuteFileDeletionAsync(permanentDelete: true);
+        }
+
+        private async Task<FileOperationResult> ExecuteMoveOrCopyAsync(List<string> filePaths, string destinationFolder, FileOperationType operationType)
         {
             if (filePaths.Count == 0 || string.IsNullOrEmpty(destinationFolder))
             {
-                return new FileOperationResult(0, 0, [], []);
+                return FileOperationResult.Empty;
             }
 
             try
@@ -553,44 +580,13 @@ namespace DeDupe.ViewModels.Pages
 
                 string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
                 Status = $"{operationName} {filePaths.Count} files...";
-                LogFileOperationStarting(operationType, filePaths.Count);
 
-                // Ensure destination folder exists
-                if (!Directory.Exists(destinationFolder))
-                {
-                    Directory.CreateDirectory(destinationFolder);
-                }
-
-                FileOperationResult result = await Task.Run(() =>
-                {
-                    int successCount = 0;
-                    int failCount = 0;
-                    List<string> successfulPaths = [];
-                    List<string> failedPaths = [];
-
-                    foreach (string sourcePath in filePaths)
-                    {
-                        (bool success, string? error) = ProcessSingleFile(sourcePath, destinationFolder, operationType);
-                        if (success)
-                        {
-                            successCount++;
-                            successfulPaths.Add(sourcePath);
-                        }
-                        else
-                        {
-                            failCount++;
-                            failedPaths.Add(sourcePath);
-                            LogFileOperationSkipped(operationType, sourcePath, error);
-                        }
-                    }
-
-                    return new FileOperationResult(successCount, failCount, successfulPaths, failedPaths);
-                });
+                FileOperationResult result = await _fileOperationService.ExecuteAsync(filePaths, destinationFolder, operationType);
 
                 // For move operations, refresh UI to remove moved files
                 if (operationType == FileOperationType.Move && result.SuccessfulPaths.Count > 0)
                 {
-                    UpdateAfterDeletion(result.SuccessfulPaths);
+                    UpdateAfterRemoval(result.SuccessfulPaths);
                 }
 
                 UpdateStatusAfterOperation(operationType, result);
@@ -599,7 +595,6 @@ namespace DeDupe.ViewModels.Pages
             catch (Exception ex)
             {
                 Status = $"Error during {operationType.ToString().ToLower()} operation: {ex.Message}";
-                LogFileOperationAborted(ex, operationType);
                 return new FileOperationResult(0, filePaths.Count, [], filePaths);
             }
             finally
@@ -610,11 +605,11 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        private async Task<FileOperationResult> ExecuteGroupedFileOperationAsync(string rootFolder, FileOperationType operationType)
+        private async Task<FileOperationResult> ExecuteGroupedMoveOrCopyAsync(string rootFolder, FileOperationType operationType)
         {
             if (TotalSelectedCount == 0 || string.IsNullOrEmpty(rootFolder))
             {
-                return new FileOperationResult(0, 0, [], []);
+                return FileOperationResult.Empty;
             }
 
             try
@@ -625,70 +620,12 @@ namespace DeDupe.ViewModels.Pages
                 Dictionary<string, List<string>> filesByGroup = GetSelectedFilePathsByGroup();
                 string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
                 Status = $"{operationName} files to group folders...";
-                LogFileOperationStarting(operationType, filesByGroup.Values.Sum(v => v.Count));
 
-                FileOperationResult result = await Task.Run(() =>
-                {
-                    int totalSuccess = 0;
-                    int totalFailed = 0;
-                    List<string> successfulPaths = [];
-                    List<string> failedPaths = [];
+                FileOperationResult result = await _fileOperationService.ExecuteGroupedAsync(filesByGroup, rootFolder, operationType);
 
-                    foreach (KeyValuePair<string, List<string>> groupEntry in filesByGroup)
-                    {
-                        string? groupName = FolderNameValidationService.Sanitize(groupEntry.Key);
-
-                        if (string.IsNullOrEmpty(groupName))
-                        {
-                            LogInvalidGroupName(groupEntry.Key);
-                            totalFailed += groupEntry.Value.Count;
-                            failedPaths.AddRange(groupEntry.Value);
-                            continue;
-                        }
-
-                        string groupFolder = Path.Combine(rootFolder, groupName);
-
-                        // Create group folder if it doesn't exist
-                        try
-                        {
-                            if (!Directory.Exists(groupFolder))
-                            {
-                                Directory.CreateDirectory(groupFolder);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            LogGroupFolderCreationFailed(ex, groupFolder);
-                            totalFailed += groupEntry.Value.Count;
-                            failedPaths.AddRange(groupEntry.Value);
-                            continue;
-                        }
-
-                        // Process files in this group
-                        foreach (string sourcePath in groupEntry.Value)
-                        {
-                            (bool success, string? error) = ProcessSingleFile(sourcePath, groupFolder, operationType);
-                            if (success)
-                            {
-                                totalSuccess++;
-                                successfulPaths.Add(sourcePath);
-                            }
-                            else
-                            {
-                                totalFailed++;
-                                failedPaths.Add(sourcePath);
-                                LogFileOperationSkipped(operationType, sourcePath, error);
-                            }
-                        }
-                    }
-
-                    return new FileOperationResult(totalSuccess, totalFailed, successfulPaths, failedPaths);
-                });
-
-                // Refresh UI to remove moved files
                 if (operationType == FileOperationType.Move && result.SuccessfulPaths.Count > 0)
                 {
-                    UpdateAfterDeletion(result.SuccessfulPaths);
+                    UpdateAfterRemoval(result.SuccessfulPaths);
                 }
 
                 UpdateStatusAfterOperation(operationType, result);
@@ -708,58 +645,56 @@ namespace DeDupe.ViewModels.Pages
             }
         }
 
-        private static (bool Success, string? Error) ProcessSingleFile(string sourcePath, string destinationFolder, FileOperationType operationType)
+        private async Task ExecuteFileDeletionAsync(bool permanentDelete)
         {
+            if (TotalSelectedCount == 0)
+            {
+                return;
+            }
+
             try
             {
-                if (!File.Exists(sourcePath))
+                IsDeleting = true;
+                IsBusy = true;
+
+                List<string> filesToDelete = GetAllSelectedFilePaths();
+
+                if (filesToDelete.Count == 0)
                 {
-                    return (false, "Source file not found");
+                    return;
                 }
 
-                string fileName = Path.GetFileName(sourcePath);
-                string destinationPath = Path.Combine(destinationFolder, fileName);
+                string deletionType = permanentDelete ? "Permanently deleting" : "Moving to Recycle Bin";
+                Status = $"{deletionType} {filesToDelete.Count} files...";
 
-                // Handle file name conflicts
-                destinationPath = GetUniqueFilePath(destinationPath);
+                FileOperationResult result = await _fileOperationService.DeleteAsync(filesToDelete, permanentDelete);
 
-                if (operationType == FileOperationType.Move)
+                if (result.SuccessfulPaths.Count > 0)
                 {
-                    File.Move(sourcePath, destinationPath);
+                    UpdateAfterRemoval(result.SuccessfulPaths);
+                }
+
+                string actionDescription = permanentDelete ? "permanently deleted" : "moved to Recycle Bin";
+                if (result.FailedCount == 0)
+                {
+                    Status = $"Successfully {actionDescription} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}";
                 }
                 else
                 {
-                    File.Copy(sourcePath, destinationPath, overwrite: false);
+                    Status = $"{(permanentDelete ? "Deleted" : "Moved")} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
                 }
-
-                return (true, null);
             }
             catch (Exception ex)
             {
-                return (false, ex.Message);
+                Status = $"Error during deletion: {ex.Message}";
+                LogDeletionAborted(ex);
             }
-        }
-
-        private static string GetUniqueFilePath(string filePath)
-        {
-            if (!File.Exists(filePath))
+            finally
             {
-                return filePath;
+                IsDeleting = false;
+                IsBusy = false;
+                UpdateSelectionSummary();
             }
-
-            string directory = Path.GetDirectoryName(filePath) ?? string.Empty;
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-            string extension = Path.GetExtension(filePath);
-
-            int counter = 1;
-            string newPath;
-            do
-            {
-                newPath = Path.Combine(directory, $"{fileNameWithoutExt} ({counter}){extension}");
-                counter++;
-            } while (File.Exists(newPath));
-
-            return newPath;
         }
 
         private void UpdateStatusAfterOperation(FileOperationType operationType, FileOperationResult result)
@@ -776,116 +711,11 @@ namespace DeDupe.ViewModels.Pages
             }
             else
             {
-                Status = $"{operationPastTense.First().ToString().ToUpper() + operationPastTense[1..]} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
-            }
-
-            LogFileOperationCompleted(operationType, result.SuccessCount, result.FailedCount);
-        }
-
-        private async Task ExecuteFileDeletionAsync(bool permanentDelete)
-        {
-            if (TotalSelectedCount == 0)
-            {
-                return;
-            }
-
-            try
-            {
-                IsDeleting = true;
-                IsBusy = true;
-
-                // Collect all selected file paths
-                List<string> filesToDelete = [];
-                foreach (SimilarityGroup group in SimilarityGroups)
-                {
-                    filesToDelete.AddRange(group.GetSelectedFilePaths());
-                }
-
-                if (filesToDelete.Count == 0)
-                {
-                    return;
-                }
-
-                string deletionType = permanentDelete ? "Permanently deleting" : "Moving to Recycle Bin";
-                Status = $"{deletionType} {filesToDelete.Count} files...";
-                LogDeletionStarting(permanentDelete, filesToDelete.Count);
-
-                // Perform file deletion on background thread
-                (int successCount, int failCount, List<string> successfullyDeleted) = await Task.Run(() =>
-                {
-                    int success = 0;
-                    int fail = 0;
-                    List<string> deleted = [];
-
-                    foreach (string filePath in filesToDelete)
-                    {
-                        try
-                        {
-                            if (File.Exists(filePath))
-                            {
-                                if (permanentDelete)
-                                {
-                                    // Permanent deletion
-                                    File.Delete(filePath);
-                                }
-                                else
-                                {
-                                    // Move to recycle bin
-                                    FileSystem.DeleteFile(filePath, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-                                }
-
-                                success++;
-                                deleted.Add(filePath);
-                            }
-                            else
-                            {
-                                LogFileNotFoundForDeletion(filePath);
-                                fail++;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            LogFileDeletionFailed(ex, filePath);
-                            fail++;
-                        }
-                    }
-
-                    return (success, fail, deleted);
-                });
-
-                // Update UI
-                if (successfullyDeleted.Count > 0)
-                {
-                    UpdateAfterDeletion(successfullyDeleted);
-                }
-
-                // Update status
-                string actionDescription = permanentDelete ? "permanently deleted" : "moved to Recycle Bin";
-                if (failCount == 0)
-                {
-                    Status = $"Successfully {actionDescription} {successCount} file{(successCount == 1 ? "" : "s")}";
-                }
-                else
-                {
-                    Status = $"{(permanentDelete ? "Deleted" : "Moved")} {successCount} file{(successCount == 1 ? "" : "s")}, {failCount} failed";
-                }
-
-                LogDeletionCompleted(permanentDelete, successCount, failCount);
-            }
-            catch (Exception ex)
-            {
-                Status = $"Error during deletion: {ex.Message}";
-                LogDeletionAborted(ex);
-            }
-            finally
-            {
-                IsDeleting = false;
-                IsBusy = false;
-                UpdateSelectionSummary();
+                Status = $"{operationPastTense[..1].ToUpper() + operationPastTense[1..]} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
             }
         }
 
-        private void UpdateAfterDeletion(List<string> deletedPaths)
+        private void UpdateAfterRemoval(List<string> removedPaths)
         {
             List<SimilarityGroup> groupsToRemove = [];
             int totalItemsRemoved = 0;
@@ -895,7 +725,7 @@ namespace DeDupe.ViewModels.Pages
 
             foreach (SimilarityGroup group in groupsSnapshot)
             {
-                int removedCount = group.RemoveItemsByPath(deletedPaths);
+                int removedCount = group.RemoveItemsByPath(removedPaths);
                 totalItemsRemoved += removedCount;
 
                 // No longer valid duplicate group
@@ -921,7 +751,7 @@ namespace DeDupe.ViewModels.Pages
             }
 
             // Remove items from AppStateService
-            int removedFromState = _appStateService.RemoveAnalysisItemsByPath(deletedPaths);
+            int removedFromState = _appStateService.RemoveAnalysisItemsByPath(removedPaths);
 
             // Update Configuration Info displays
             OnPropertyChanged(nameof(TotalFileCount));
@@ -931,7 +761,7 @@ namespace DeDupe.ViewModels.Pages
             OnPropertyChanged(nameof(DuplicateGroupsCount));
             UpdateSelectionSummary();
 
-            LogPostDeletionRefresh(totalItemsRemoved, groupsToRemove.Count, removedFromState);
+            LogPostRemovalRefresh(totalItemsRemoved, groupsToRemove.Count, removedFromState);
         }
 
         #endregion File Operations
@@ -942,6 +772,9 @@ namespace DeDupe.ViewModels.Pages
         {
             if (disposing)
             {
+                _analysisCts?.Cancel();
+                _analysisCts?.Dispose();
+
                 _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
 
                 SelectedGroup?.GroupSelectionChanged -= OnGroupSelectionChanged;
@@ -976,6 +809,9 @@ namespace DeDupe.ViewModels.Pages
         [LoggerMessage(Level = LogLevel.Information, Message = "Similarity analysis completed: {Summary}")]
         private partial void LogSimilarityAnalysisCompleted(string summary);
 
+        [LoggerMessage(Level = LogLevel.Information, Message = "Similarity analysis cancelled by user")]
+        private partial void LogSimilarityAnalysisCancelled();
+
         [LoggerMessage(Level = LogLevel.Error, Message = "Similarity analysis aborted")]
         private partial void LogSimilarityAnalysisAborted(Exception ex);
 
@@ -993,45 +829,15 @@ namespace DeDupe.ViewModels.Pages
         [LoggerMessage(Level = LogLevel.Debug, Message = "Groups filtered by {FilterOption}: showing {VisibleCount} of {TotalCount} groups")]
         private partial void LogGroupsFiltered(string filterOption, int visibleCount, int totalCount);
 
-        // File Operations - Move/Copy
-
-        [LoggerMessage(Level = LogLevel.Information, Message = "{Operation} starting for {FileCount} files")]
-        private partial void LogFileOperationStarting(FileOperationType operation, int fileCount);
-
-        [LoggerMessage(Level = LogLevel.Information, Message = "{Operation} completed, {SuccessCount} succeeded, {FailedCount} failed")]
-        private partial void LogFileOperationCompleted(FileOperationType operation, int successCount, int failedCount);
-
+        // File Operations
         [LoggerMessage(Level = LogLevel.Error, Message = "{Operation} operation aborted")]
         private partial void LogFileOperationAborted(Exception ex, FileOperationType operation);
-
-        [LoggerMessage(Level = LogLevel.Warning, Message = "File {Operation} skipped for {FilePath}: {Reason}")]
-        private partial void LogFileOperationSkipped(FileOperationType operation, string filePath, string? reason);
-
-        [LoggerMessage(Level = LogLevel.Error, Message = "Group folder creation failed for {FolderPath}")]
-        private partial void LogGroupFolderCreationFailed(Exception ex, string folderPath);
-
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Group name '{OriginalName}' produced invalid folder name, group skipped")]
-        private partial void LogInvalidGroupName(string originalName);
-
-        // File Operations - Deletion
-
-        [LoggerMessage(Level = LogLevel.Information, Message = "Deletion starting (Permanent: {Permanent}) for {FileCount} files")]
-        private partial void LogDeletionStarting(bool permanent, int fileCount);
-
-        [LoggerMessage(Level = LogLevel.Information, Message = "Deletion completed (Permanent: {Permanent}), {SuccessCount} succeeded, {FailedCount} failed")]
-        private partial void LogDeletionCompleted(bool permanent, int successCount, int failedCount);
 
         [LoggerMessage(Level = LogLevel.Error, Message = "Deletion operation aborted")]
         private partial void LogDeletionAborted(Exception ex);
 
-        [LoggerMessage(Level = LogLevel.Warning, Message = "File not found for deletion: {FilePath}")]
-        private partial void LogFileNotFoundForDeletion(string filePath);
-
-        [LoggerMessage(Level = LogLevel.Error, Message = "File deletion failed for {FilePath}")]
-        private partial void LogFileDeletionFailed(Exception ex, string filePath);
-
-        [LoggerMessage(Level = LogLevel.Debug, Message = "Post-deletion refresh, {ItemCount} items removed from groups, {GroupCount} groups dissolved, {StateCount} items removed from state")]
-        private partial void LogPostDeletionRefresh(int itemCount, int groupCount, int stateCount);
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Post-removal refresh: {ItemCount} items removed from groups, {GroupCount} groups dissolved, {StateCount} items removed from state")]
+        private partial void LogPostRemovalRefresh(int itemCount, int groupCount, int stateCount);
 
         #endregion Logging
     }
