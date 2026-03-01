@@ -19,7 +19,7 @@ namespace DeDupe.Models.Analysis
         public int Id { get; }
 
         [ObservableProperty]
-        private string _name;
+        public partial string Name { get; set; }
 
         /// <summary>
         /// Analysis items in this group (immutable after construction).
@@ -27,7 +27,7 @@ namespace DeDupe.Models.Analysis
         public IReadOnlyList<AnalysisItem> Items { get; }
 
         [ObservableProperty]
-        private double _averageSimilarity = 0.0;
+        public partial double AverageSimilarity { get; set; }
 
         public int Count => SelectableItems.Count;
 
