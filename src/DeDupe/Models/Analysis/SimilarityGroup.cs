@@ -45,7 +45,7 @@ namespace DeDupe.Models.Analysis
 
             Id = id;
             Items = items.ToList().AsReadOnly();
-            _name = name ?? $"Group {id + 1}";
+            Name = name ?? $"Group {id + 1}";
 
             SelectableItems = new ObservableCollection<SelectableItem>(Items.Select(CreateSelectableItem));
         }
