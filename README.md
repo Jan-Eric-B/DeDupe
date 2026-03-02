@@ -25,22 +25,47 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 
 ## Requirements
 
-- Windows 10/11
-- .NET 10 Runtime
-- Sufficient free disk space for temporary processing files.
+- Windows 10 version 1809 (build 17763) or later / Windows 11
+- Sufficient free disk space for temporary processing files
 
 ## Installation
 
 > [!WARNING]
 > This application is still in early development. Use at your own risk.
 
-### Microsoft Store (WIP)
+### Microsoft Store (Recommended)
 
-The easiest way to install DeDupe. Automatic updates and signing by Microsoft.
+The easiest way to install DeDupe is through the Microsoft Store.
 
-### GitHub Release
+[<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>](https://apps.microsoft.com/)
 
-Download the latest `.msixbundle` from the [Releases](../../releases) page.
+### GitHub Release (Sideload)
+
+Download the `.msix` for your architecture (x64, x86, or ARM64) from the [Releases](../../releases) page.
+
+Since the GitHub release is signed with a self-signed certificate, Windows will not install it by default. You have two options:
+
+<details>
+<summary><b>Option 1: Install the certificate (Recommended)</b></summary>
+
+1. Download `DeDupe.cer` from the release assets.
+2. Double-click the `.cer` file → **Install Certificate**.
+3. Select **Local Machine** → **Place all certificates in the following store** → Browse → **Trusted People** → OK.
+4. Complete the wizard, then double-click the `.msix` to install.
+
+</details>
+
+<details>
+<summary><b>Option 2: Enable Developer Mode</b></summary>
+
+1. Open **Settings** → **For developers** (Windows 11) or **Update & Security** → **For developers** (Windows 10).
+2. Enable **Developer Mode**.
+3. Double-click the `.msix` to install.
+
+> [!NOTE]
+> Developer Mode loosens some security restrictions on your system. Only enable this if you understand what you're doing.
+
+</details>
 
 ## Usage
 
@@ -70,20 +95,17 @@ Download the latest `.msixbundle` from the [Releases](../../releases) page.
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
     - .NET Desktop Development
     - Windows App SDK (C#)
+- [Windows 10/11 SDK](https://developer.microsoft.com/windows/downloads/windows-sdk/) (for packaging)
 
 ```bash
 git clone https://github.com/Jan-Eric-B/DeDupe.git
 cd DeDupe
 git lfs install
 git lfs pull
-dotnet restore
-dotnet build -c Release
+dotnet restore src\DeDupe\DeDupe.csproj
+dotnet build src\DeDupe\DeDupe.csproj -c Release -p:Platform=x64
 ```
 
-To create an MSIX package:
-```bash
-msbuild DeDupe.csproj /p:Configuration=Release /p:Platform=x64 /p:AppxPackageDir=".\AppPackages\" /p:GenerateAppxPackageOnBuild=true
-```
 
 ## Roadmap / Future Plans
 
