@@ -151,6 +151,12 @@ DeDupe is licensed under the **GNU General Public License v3.0**. See [LICENSE](
 
 This means you are free to use, modify, and distribute this software, provided that any derivative works are also distributed under GPL v3 and the source code is made available.
 
+## Disclaimer
+
+DeDupe is provided "as is", without warranty of any kind. The authors are not responsible for any data loss, file corruption, or other damage resulting from the use of this application. **Always back up your files before performing delete or move operations.** By using DeDupe, you acknowledge that you do so at your own risk.
+
+This software is in early development. While care is taken to ensure reliability, bugs and unexpected behavior may occur.
+
 ## Privacy
 
 DeDupe processes all images locally on your device. No images, metadata, or usage data are transmitted to any external server. 
