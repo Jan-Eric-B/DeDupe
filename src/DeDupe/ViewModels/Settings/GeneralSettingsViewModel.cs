@@ -7,6 +7,7 @@ using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DeDupe.ViewModels.Settings
@@ -15,33 +16,32 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IDialogService _dialogService;
-        private readonly ILocalizer _localizer;
         private readonly ILogger<GeneralSettingsViewModel> _logger;
 
-        public GeneralSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<GeneralSettingsViewModel> logger)
+        public GeneralSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<GeneralSettingsViewModel> logger) : base(localizer)
         {
             _settingsService = settingsService;
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _localizer.LanguageChanged += OnLanguageChanged;
+            Localizer.LanguageChanged += OnLanguageChanged;
 
-            Title = "General";
+            Title = L("GeneralSettings_PageTitle");
         }
 
         private void LoadSettings()
         {
-            ThemeOptions = _localizer.BuildLocalizedOptions<AppTheme>();
-            BackdropOptions = _localizer.BuildLocalizedOptions<AppBackdrop>();
-            AccentColorOptions = _localizer.BuildLocalizedOptions<AppAccentColor>();
+            ThemeOptions = Localizer.BuildLocalizedOptions<AppTheme>();
+            BackdropOptions = Localizer.BuildLocalizedOptions<AppBackdrop>();
+            AccentColorOptions = Localizer.BuildLocalizedOptions<AppAccentColor>();
 
             SelectedThemeIndex = (int)_settingsService.Theme;
             SelectedBackdropIndex = (int)_settingsService.Backdrop;
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
 
-            AvailableLanguages = [.. _localizer.GetAvailableLanguages()];
-            SelectedLanguage = _localizer.GetCurrentLanguage();
+            AvailableLanguages = [.. Localizer.GetAvailableLanguages().Select(code => new LanguageItem(code, $"Language_{code}"))];
+
+            SelectedLanguage = AvailableLanguages.FirstOrDefault(x => x.Language == Localizer.GetCurrentLanguage())!;
 
             string themeDescription = EnumExtensions.GetDescription(_settingsService.Theme);
             string backdropDescription = EnumExtensions.GetDescription(_settingsService.Backdrop);
@@ -110,40 +110,43 @@ namespace DeDupe.ViewModels.Settings
         #region Localization
 
         [ObservableProperty]
-        public partial string SelectedLanguage { get; set; } = string.Empty;
+        public partial LanguageItem SelectedLanguage { get; set; } = null!;
 
-        public IReadOnlyList<string> AvailableLanguages { get; private set; } = [];
+        public IReadOnlyList<LanguageItem> AvailableLanguages { get; private set; } = [];
 
-        partial void OnSelectedLanguageChanged(string value)
+        partial void OnSelectedLanguageChanged(LanguageItem value)
         {
-            if (string.IsNullOrEmpty(value))
+            if (value is null)
             {
                 return;
             }
 
-            if (_localizer.GetCurrentLanguage() != value)
+            if (Localizer.GetCurrentLanguage() != value.Language)
             {
-                _localizer.SetLanguage(value);
-                _settingsService.Language = value;
+                Localizer.SetLanguage(value.Language);
+                _settingsService.Language = value.Language;
             }
         }
 
         private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
         {
+            Title = L("GeneralSettings_PageTitle");
+
             // Get current selection
             int themeIdx = SelectedThemeIndex;
             int backdropIdx = SelectedBackdropIndex;
             int accentIdx = SelectedAccentColorIndex;
 
             // Rebuild dropdown items
-            ThemeOptions = _localizer.BuildLocalizedOptions<AppTheme>();
-            BackdropOptions = _localizer.BuildLocalizedOptions<AppBackdrop>();
-            AccentColorOptions = _localizer.BuildLocalizedOptions<AppAccentColor>();
+            ThemeOptions = Localizer.BuildLocalizedOptions<AppTheme>();
+            BackdropOptions = Localizer.BuildLocalizedOptions<AppBackdrop>();
+            AccentColorOptions = Localizer.BuildLocalizedOptions<AppAccentColor>();
 
             // Restore selections
             SelectedThemeIndex = themeIdx;
             SelectedBackdropIndex = backdropIdx;
             SelectedAccentColorIndex = accentIdx;
+            SelectedLanguage = AvailableLanguages.FirstOrDefault(x => x.Language == e.NewLanguage)!;
 
             LogLanguageChanged(e.NewLanguage);
         }

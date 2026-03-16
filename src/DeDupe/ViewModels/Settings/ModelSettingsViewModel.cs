@@ -20,19 +20,17 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
-        private readonly ILocalizer _localizer;
         private readonly ILogger<ModelSettingsViewModel> _logger;
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILocalizer localizer, ILogger<ModelSettingsViewModel> logger)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILocalizer localizer, ILogger<ModelSettingsViewModel> logger) : base(localizer)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _localizer.LanguageChanged += OnLanguageChanged;
+            Localizer.LanguageChanged += OnLanguageChanged;
 
-            Title = "Model Configuration";
+            Title = L("ModelSettings_PageTitle");
         }
 
         private void LoadSettings()
@@ -80,7 +78,7 @@ namespace DeDupe.ViewModels.Settings
             ? BundledModelInfo.DisplayName
             : !string.IsNullOrEmpty(CustomModelFilePath)
                 ? Path.GetFileName(CustomModelFilePath)
-                : _localizer.GetLocalizedString("Model_NoModelSelected");
+                : L("Model_NoModelSelected");
 
         public string ActiveModelPath => UseBundledModel
             ? _bundledModelService.GetModelPath()
@@ -92,7 +90,7 @@ namespace DeDupe.ViewModels.Settings
 
         public string CustomFileName => !string.IsNullOrEmpty(CustomModelFilePath)
             ? Path.GetFileName(CustomModelFilePath)
-            : _localizer.GetLocalizedString("Model_SelectModelFile");
+            : L("Model_SelectModelFile");
 
         [RelayCommand]
         private void OpenModelLocation()
@@ -256,6 +254,8 @@ namespace DeDupe.ViewModels.Settings
 
         private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
         {
+            Title = L("ModelSettings_PageTitle");
+
             // Refresh localized computed properties
             OnPropertyChanged(nameof(ModelDisplayName));
             OnPropertyChanged(nameof(CustomFileName));

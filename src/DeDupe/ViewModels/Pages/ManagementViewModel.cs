@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
+using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Configuration;
@@ -13,8 +14,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DeDupe.ViewModels.Pages
 {
@@ -28,7 +29,7 @@ namespace DeDupe.ViewModels.Pages
         private readonly IDialogService _dialogService;
         private readonly ILogger<ManagementViewModel> _logger;
 
-        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, IFileOperationService fileOperationService, IDialogService dialogService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, IFileOperationService fileOperationService, IDialogService dialogService, ILocalizer localizer, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -47,6 +48,15 @@ namespace DeDupe.ViewModels.Pages
 
             UpdateCanAnalyze();
         }
+
+        #region Localization
+
+        private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+        {
+            Title = "Duplicate Management";
+        }
+
+        #endregion Localization
 
         #region Similarity Analysis
 

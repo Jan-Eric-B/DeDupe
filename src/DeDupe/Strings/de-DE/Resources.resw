@@ -364,6 +364,9 @@
   <data name="ModelSettingsPage_ModelSelectionHeader.Text" xml:space="preserve">
     <value>Modellauswahl</value>
   </data>
+  <data name="ModelSettingsPage_ModelFileDrop.Caption" xml:space="preserve">
+    <value>Dieses Modell verwenden</value>
+  </data>
   <data name="ModelSettingsPage_ModelSourceCard.Header" xml:space="preserve">
     <value>Modellquelle</value>
   </data>
@@ -408,9 +411,6 @@
   </data>
   <data name="ModelSettingsPage_StdDevCard.Header" xml:space="preserve">
     <value>Standardabweichung (R, G, B)</value>
-  </data>
-  <data name="ModelSettingsPage_ModelFileDrop.Caption" xml:space="preserve">
-    <value>Dieses Modell verwenden</value>
   </data>
   <!-- AboutSettingsPage -->
   <data name="AboutSettingsPage_AppSpecifications.Header" xml:space="preserve">
@@ -475,5 +475,174 @@
   </data>
   <data name="AboutSettingsPage_LindaCard.Description" xml:space="preserve">
     <value>App- und Logo-Design</value>
+  </data>
+  <!-- ConfigurationPage -->
+  <data name="ConfigurationPage_Subtitle.Text" xml:space="preserve">
+    <value>Fügen Sie Dateien oder ganze Ordner hinzu, die nach Duplikaten und ähnlichen Bildern durchsucht werden sollen.</value>
+  </data>
+  <data name="ConfigurationPage_IncludeSubfolders.Content" xml:space="preserve">
+    <value>Unterordner einbeziehen</value>
+  </data>
+  <data name="ConfigurationPage_IncludeSubfolders.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alle verschachtelten Verzeichnisse nach Bildern durchsuchen</value>
+  </data>
+  <data name="ConfigurationPage_RemoveButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Eintrag entfernen</value>
+  </data>
+  <data name="ConfigurationPage_EmptyStateTitle.Text" xml:space="preserve">
+    <value>Dateien oder Ordner hierher ziehen</value>
+  </data>
+  <data name="ConfigurationPage_EmptyStateSubtitle.Text" xml:space="preserve">
+    <value>oder verwenden Sie die Schaltflächen unten zur Auswahl</value>
+  </data>
+  <data name="ConfigurationPage_CancelButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Aktuelle Operation abbrechen</value>
+  </data>
+  <data name="ConfigurationPage_AddFoldersButton.Content" xml:space="preserve">
+    <value>Ordner hinzufügen</value>
+  </data>
+  <data name="ConfigurationPage_AddFilesButton.Content" xml:space="preserve">
+    <value>Dateien hinzufügen</value>
+  </data>
+  <data name="ConfigurationPage_ScanButton.Content" xml:space="preserve">
+    <value>Scannen</value>
+  </data>
+  <data name="ConfigurationPage_ScanButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Bilder vorverarbeiten und Merkmalsvektoren extrahieren</value>
+  </data>
+  <data name="ConfigurationPage_FindDuplicatesButton.Content" xml:space="preserve">
+    <value>Duplikate finden</value>
+  </data>
+  <data name="ConfigurationPage_FindDuplicatesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zur Duplikatverwaltung wechseln (erfordert verarbeitete Dateien)</value>
+  </data>
+  <data name="ConfigurationPage_DragCaption" xml:space="preserve">
+    <value>Elemente hinzufügen</value>
+  </data>
+  <data name="ConfigurationPage_Title" xml:space="preserve">
+    <value>Dateien-Auswahl</value>
+  </data>
+  <data name="ConfigurationPage_Dialog_SelectFolder" xml:space="preserve">
+    <value>Ordner auswählen</value>
+  </data>
+  <data name="ConfigurationPage_Dialog_SelectImages" xml:space="preserve">
+    <value>Bilder auswählen</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoFilesAdded" xml:space="preserve">
+    <value>Keine Dateien hinzugefügt</value>
+  </data>
+  <data name="ConfigurationPage_Status_AddingFiles" xml:space="preserve">
+    <value>{0} Dateien werden hinzugefügt...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ScanningFolder" xml:space="preserve">
+    <value>Ordner wird gescannt...</value>
+  </data>
+  <data name="ConfigurationPage_Status_FoundImagesProgress" xml:space="preserve">
+    <value>{0} Bilder gefunden...</value>
+  </data>
+  <data name="ConfigurationPage_Status_FoundImages" xml:space="preserve">
+    <value>{0} Bilder gefunden</value>
+  </data>
+  <data name="ConfigurationPage_Status_ScanCancelled" xml:space="preserve">
+    <value>Scan abgebrochen</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorScanningFolder" xml:space="preserve">
+    <value>Fehler beim Scannen des Ordners: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoItemsToProcess" xml:space="preserve">
+    <value>Keine Elemente zum Verarbeiten</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingImages" xml:space="preserve">
+    <value>{0} Bilder werden verarbeitet...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingFailed" xml:space="preserve">
+    <value>Verarbeitung fehlgeschlagen: Es wurden keine Elemente verarbeitet.</value>
+  </data>
+  <data name="ConfigurationPage_Status_InitializingModel" xml:space="preserve">
+    <value>KI-Modell wird initialisiert...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ModelLoadFailed" xml:space="preserve">
+    <value>Merkmale können nicht extrahiert werden: Modell konnte nicht geladen werden.</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoProcessedItems" xml:space="preserve">
+    <value>Keine verarbeiteten Elemente für die Merkmalsextraktion verfügbar.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ExtractingFeatures" xml:space="preserve">
+    <value>Merkmale werden aus {0} Elementen extrahiert...</value>
+  </data>
+  <data name="ConfigurationPage_Status_Ready" xml:space="preserve">
+    <value>Bereit! {0} Merkmalsvektoren extrahiert. Klicken Sie auf „Duplikate finden", um fortzufahren.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ExtractionFailed" xml:space="preserve">
+    <value>Merkmalsextraktion fehlgeschlagen: Es wurden keine Merkmale extrahiert.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingCancelled" xml:space="preserve">
+    <value>Verarbeitung abgebrochen</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorProcessing" xml:space="preserve">
+    <value>Fehler bei der Verarbeitung: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Status_CancellingScan" xml:space="preserve">
+    <value>Scan wird abgebrochen...</value>
+  </data>
+  <data name="ConfigurationPage_Status_CancellingProcessing" xml:space="preserve">
+    <value>Verarbeitung wird abgebrochen...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ItemsPreprocessed" xml:space="preserve">
+    <value>{0} Elemente vorverarbeitet.</value>
+  </data>
+  <data name="ConfigurationPage_Status_FilesReadyToProcess" xml:space="preserve">
+    <value>{0} Dateien bereit zum Verarbeiten</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoValidModel" xml:space="preserve">
+    <value>Keine gültige Modelldatei gefunden.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorInitializingModel" xml:space="preserve">
+    <value>Fehler beim Initialisieren des Modells: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Operation_ProcessingImages" xml:space="preserve">
+    <value>Bilder werden verarbeitet</value>
+  </data>
+  <data name="ConfigurationPage_Operation_InitializingModel" xml:space="preserve">
+    <value>Modell wird initialisiert</value>
+  </data>
+  <data name="ConfigurationPage_Operation_ExtractingFeatures" xml:space="preserve">
+    <value>Merkmale werden extrahiert</value>
+  </data>
+  <data name="AboutSettings_PageTitle" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="AnalysisSettings_PageTitle" xml:space="preserve">
+    <value>Ähnlichkeits-Analyse</value>
+  </data>
+  <data name="GeneralSettings_PageTitle" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="ImageProcessingSettings_Dialog_SelectTempFolder" xml:space="preserve">
+    <value>Temporärer Ordner auswählen</value>
+  </data>
+  <data name="ImageProcessingSettings_PageTitle" xml:space="preserve">
+    <value>Bildverarbeitung</value>
+  </data>
+  <data name="ModelSettings_PageTitle" xml:space="preserve">
+    <value>Modellkonfiguration</value>
+  </data>
+  <data name="MainWindow_PageTitle" xml:space="preserve">
+    <value>DeDupe</value>
+  </data>
+  <data name="Settings_WindowTitle" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="SettingsWindow_NavigationOpen" xml:space="preserve">
+    <value>Navigation öffnen</value>
+  </data>
+  <data name="SettingsWindow_NavigationClose" xml:space="preserve">
+    <value>Navigation schließen</value>
+  </data>
+  <data name="Language_en-US.Text" xml:space="preserve">
+    <value>Englisch [English]</value>
+  </data>
+  <data name="Language_de-DE.Text" xml:space="preserve">
+    <value>Deutsch</value>
   </data>
 </root>

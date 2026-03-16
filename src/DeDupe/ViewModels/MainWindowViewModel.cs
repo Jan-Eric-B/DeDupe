@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DeDupe.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace DeDupe.ViewModels
@@ -14,10 +15,10 @@ namespace DeDupe.ViewModels
 
         public bool IsInConfigurationMode => !IsInManagementMode;
 
-        public MainWindowViewModel(ILogger<MainWindowViewModel> logger)
+        public MainWindowViewModel(ILocalizer localizer, ILogger<MainWindowViewModel> logger) : base(localizer)
         {
             _logger = logger;
-            Title = "DeDupe";
+            Title = "MainWindow_PageTitle";
         }
 
         [RelayCommand]

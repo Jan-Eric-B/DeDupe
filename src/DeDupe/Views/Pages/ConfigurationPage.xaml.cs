@@ -1,4 +1,5 @@
 using DeDupe.Constants;
+using DeDupe.Localization;
 using DeDupe.Models.Input;
 using DeDupe.Services;
 using DeDupe.ViewModels.Pages;
@@ -18,6 +19,7 @@ namespace DeDupe.Views.Pages
     {
         private readonly ILogger<ConfigurationPage> _logger = App.Current.GetService<ILogger<ConfigurationPage>>();
         private readonly IDialogService _dialogService = App.Current.GetService<IDialogService>();
+        private readonly ILocalizer _localizer = App.Current.GetService<ILocalizer>();
 
         private ConfigurationViewModel ViewModel { get; }
 
@@ -37,18 +39,18 @@ namespace DeDupe.Views.Pages
 
         #region Item Loading
 
-        private void LvInputList_DragOver(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private void LvInputList_DragOver(object sender, DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "Add items";
+                e.DragUIOverride.Caption = _localizer.GetLocalizedString("ConfigurationPage_DragCaption");
                 e.DragUIOverride.IsContentVisible = true;
                 e.DragUIOverride.IsCaptionVisible = true;
             }
         }
 
-        private async void LvInputList_Drop(object sender, Microsoft.UI.Xaml.DragEventArgs e)
+        private async void LvInputList_Drop(object sender, DragEventArgs e)
         {
             if (!e.DataView.Contains(StandardDataFormats.StorageItems))
             {

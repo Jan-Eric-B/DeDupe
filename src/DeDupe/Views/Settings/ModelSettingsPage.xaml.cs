@@ -1,5 +1,6 @@
 using CommunityToolkit.WinUI.Controls;
 using DeDupe.Constants;
+using DeDupe.Localization;
 using DeDupe.ViewModels.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -16,6 +17,7 @@ namespace DeDupe.Views.Settings
     public sealed partial class ModelSettingsPage : Page
     {
         private readonly ILogger<ModelSettingsPage> _logger;
+        private readonly ILocalizer _localizer;
 
         private ModelSettingsViewModel ViewModel { get; }
 
@@ -23,6 +25,7 @@ namespace DeDupe.Views.Settings
         {
             InitializeComponent();
             _logger = App.Current.GetService<ILogger<ModelSettingsPage>>();
+            _localizer = App.Current.GetService<ILocalizer>();
             ViewModel = App.Current.GetService<ModelSettingsViewModel>();
             DataContext = ViewModel;
         }
@@ -51,7 +54,7 @@ namespace DeDupe.Views.Settings
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 e.AcceptedOperation = DataPackageOperation.Copy;
-                e.DragUIOverride.Caption = "Use this model";
+                e.DragUIOverride.Caption = _localizer.GetLocalizedString("ModelSettingsPage_ModelFileDrop");
                 e.DragUIOverride.IsContentVisible = true;
                 e.DragUIOverride.IsCaptionVisible = true;
             }

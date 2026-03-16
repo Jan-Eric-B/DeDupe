@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using DeDupe.Localization;
 using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,12 +11,12 @@ namespace DeDupe.ViewModels.Settings
         private readonly ISettingsService _settingsService;
         private readonly ILogger<AnalysisSettingsViewModel> _logger;
 
-        public AnalysisSettingsViewModel(ISettingsService settingsService, ILogger<AnalysisSettingsViewModel> logger)
+        public AnalysisSettingsViewModel(ISettingsService settingsService, ILocalizer localizer, ILogger<AnalysisSettingsViewModel> logger) : base(localizer)
         {
             _settingsService = settingsService;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Title = "Similarity Analysis";
+            Title = L("AnalysisSettings_PageTitle");
         }
 
         private void LoadSettings()

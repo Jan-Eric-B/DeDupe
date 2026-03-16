@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
+using DeDupe.Localization;
 using DeDupe.Models;
 using Microsoft.Extensions.Logging;
 using System;
@@ -21,10 +22,10 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ILogger<AboutSettingsViewModel> _logger;
 
-        public AboutSettingsViewModel(ILogger<AboutSettingsViewModel> logger)
+        public AboutSettingsViewModel(ILocalizer localizer, ILogger<AboutSettingsViewModel> logger) : base(localizer)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            Title = "About";
+            Title = L("AboutSettings_PageTitle");
         }
 
         [ObservableProperty]

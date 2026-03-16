@@ -1,11 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using DeDupe.Localization;
 using System;
 using System.Threading.Tasks;
 using Windows.System;
 
 namespace DeDupe.ViewModels.Settings
 {
-    public abstract partial class SettingsPageViewModelBase : ViewModelBase
+    public abstract partial class SettingsPageViewModelBase(ILocalizer localizer) : ViewModelBase(localizer)
     {
         public virtual void OnNavigatedTo()
         {

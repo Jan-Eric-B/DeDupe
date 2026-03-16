@@ -43,9 +43,7 @@ namespace DeDupe.Localization
 
         public IEnumerable<string> GetAvailableLanguages()
         {
-            return [.. languageDictionaries
-            .Values
-            .Select(x => x.Language)];
+            return [.. languageDictionaries.Values.Select(x => x.Language)];
         }
 
         public string GetCurrentLanguage() => CurrentDictionary.Language;

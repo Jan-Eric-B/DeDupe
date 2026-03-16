@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Enums;
 using DeDupe.Helpers;
+using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Input;
 using DeDupe.Models.Media;
@@ -39,7 +40,7 @@ namespace DeDupe.ViewModels.Pages
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IDialogService dialogService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IImageProcessingService imageProcessingService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(() => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IDialogService dialogService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IImageProcessingService imageProcessingService, ILocalizer localizer, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -49,15 +50,26 @@ namespace DeDupe.ViewModels.Pages
             _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Title = "File Input";
-            Status = "No files added";
+            Title = L("ConfigurationPage_Title");
+            Status = L("ConfigurationPage_Status_NoFilesAdded");
             InputListItems.CollectionChanged += MediaPathItems_CollectionChanged;
             IsBusy = false;
 
             _settingsService.ModelConfigurationChanged += OnModelConfigurationChanged;
             _appStateService.SourceMediaChanged += OnSourceMediaChanged;
+            Localizer.LanguageChanged += OnLanguageChanged;
             PropertyChanged += OnOwnPropertyChanged;
         }
+
+        #region Localization
+
+        private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+        {
+            Title = L("ConfigurationPage_Title");
+            UpdateStatus();
+        }
+
+        #endregion Localization
 
         #region Item Input
 
@@ -83,7 +95,7 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand]
         private async Task AddFolderAsync()
         {
-            string? folderPath = await _dialogService.PickFolderAsync("Select Folder");
+            string? folderPath = await _dialogService.PickFolderAsync(L("ConfigurationPage_Dialog_SelectFolder"));
 
             if (string.IsNullOrEmpty(folderPath))
             {
@@ -125,7 +137,7 @@ namespace DeDupe.ViewModels.Pages
         {
             IReadOnlyList<string> filePaths = await _dialogService.PickFilesAsync(
                 SupportedFileExtensions.SupportedImageExtensions,
-                "Select Images");
+                L("ConfigurationPage_Dialog_SelectImages"));
 
             if (filePaths.Count == 0)
             {
@@ -133,7 +145,7 @@ namespace DeDupe.ViewModels.Pages
             }
 
             IsBusy = true;
-            Status = $"Adding {filePaths.Count} files...";
+            Status = L("ConfigurationPage_Status_AddingFiles", filePaths.Count);
 
             try
             {
@@ -240,7 +252,7 @@ namespace DeDupe.ViewModels.Pages
 
             IsBusy = true;
             IsScanning = true;
-            Status = "Scanning folder...";
+            Status = L("ConfigurationPage_Status_ScanningFolder");
             LogFolderScanStarting(folderItem.Path);
 
             try
@@ -301,7 +313,7 @@ namespace DeDupe.ViewModels.Pages
                         {
                             DispatchToUI(() =>
                             {
-                                Status = $"Found {count:N0} images...";
+                                Status = L("ConfigurationPage_Status_FoundImagesProgress", count.ToString("N0"));
                             });
                         }
                     }
@@ -310,7 +322,7 @@ namespace DeDupe.ViewModels.Pages
                 // Scan completed successfully
                 UpdateAppStateSourceMedia();
                 LogFolderScanCompleted(count, folderItem.Path);
-                Status = $"Found {count:N0} images";
+                Status = L("ConfigurationPage_Status_FoundImages", count.ToString("N0"));
             }
             catch (OperationCanceledException)
             {
@@ -320,11 +332,11 @@ namespace DeDupe.ViewModels.Pages
 
                 UpdateAppStateSourceMedia();
 
-                Status = "Scan cancelled";
+                Status = L("ConfigurationPage_Status_ScanCancelled");
             }
             catch (Exception ex)
             {
-                Status = $"Error scanning folder: {ex.Message}";
+                Status = L("ConfigurationPage_Status_ErrorScanningFolder", ex.Message);
                 LogFolderScanAborted(ex, folderItem.Path);
             }
             finally
@@ -520,7 +532,7 @@ namespace DeDupe.ViewModels.Pages
 
                 if (analysisItems.Count == 0)
                 {
-                    Status = "No items to process";
+                    Status = L("ConfigurationPage_Status_NoItemsToProcess");
                     return;
                 }
 
@@ -538,9 +550,9 @@ namespace DeDupe.ViewModels.Pages
                     });
                 });
 
-                CurrentOperation = "Processing images";
+                CurrentOperation = L("ConfigurationPage_Operation_ProcessingImages");
                 TotalItemsToProcess = analysisItems.Count;
-                Status = $"Processing {analysisItems.Count} images...";
+                Status = L("ConfigurationPage_Status_ProcessingImages", analysisItems.Count);
                 LogProcessingPipelineStarting(analysisItems.Count);
 
                 await _imageProcessingService.ProcessItemsAsync(analysisItems, imageProcessingProgress, ct);
@@ -549,7 +561,7 @@ namespace DeDupe.ViewModels.Pages
 
                 if (_appStateService.ProcessedItemCount == 0)
                 {
-                    Status = "Processing failed: No items were processed.";
+                    Status = L("ConfigurationPage_Status_ProcessingFailed");
                     return;
                 }
 
@@ -560,15 +572,15 @@ namespace DeDupe.ViewModels.Pages
                 // Initialize model if needed
                 if (!_featureExtractionService.IsInitialized)
                 {
-                    CurrentOperation = "Initializing model";
-                    Status = "Initializing AI model...";
+                    CurrentOperation = L("ConfigurationPage_Operation_InitializingModel");
+                    Status = L("ConfigurationPage_Status_InitializingModel");
                     ProgressPercentage = 0;
 
                     await InitializeFeatureExtractionAsync();
 
                     if (!_featureExtractionService.IsInitialized)
                     {
-                        Status = "Cannot extract features: Model failed to load.";
+                        Status = L("ConfigurationPage_Status_ModelLoadFailed");
                         return;
                     }
                 }
@@ -580,7 +592,7 @@ namespace DeDupe.ViewModels.Pages
 
                 if (processedItems.Count == 0)
                 {
-                    Status = "No processed items available for feature extraction.";
+                    Status = L("ConfigurationPage_Status_NoProcessedItems");
                     return;
                 }
 
@@ -597,11 +609,11 @@ namespace DeDupe.ViewModels.Pages
                     });
                 });
 
-                CurrentOperation = "Extracting features";
+                CurrentOperation = L("ConfigurationPage_Operation_ExtractingFeatures");
                 TotalItemsToProcess = processedItems.Count;
                 CurrentProcessedCount = 0;
                 ProgressPercentage = 0;
-                Status = $"Extracting features from {processedItems.Count} items...";
+                Status = L("ConfigurationPage_Status_ExtractingFeatures", processedItems.Count);
 
                 // Extract features
                 await _featureExtractionService.ExtractFeaturesAsync(processedItems, _settingsService.Normalization, featureExtractionProgress, ct);
@@ -620,22 +632,22 @@ namespace DeDupe.ViewModels.Pages
                 {
                     HasExtractedFeatures = true;
                     ProgressPercentage = 100;
-                    Status = $"Ready! Extracted {ExtractedFeaturesCount} feature vectors. Click 'Find Duplicates' to continue.";
+                    Status = L("ConfigurationPage_Status_Ready", ExtractedFeaturesCount);
                     LogProcessingPipelineCompleted(_appStateService.ProcessedItemCount, ExtractedFeaturesCount);
                 }
                 else
                 {
-                    Status = "Feature extraction failed: No features were extracted.";
+                    Status = L("ConfigurationPage_Status_ExtractionFailed");
                 }
             }
             catch (OperationCanceledException)
             {
                 LogProcessingPipelineCancelled();
-                Status = "Processing cancelled";
+                Status = L("ConfigurationPage_Status_ProcessingCancelled");
             }
             catch (Exception ex)
             {
-                Status = $"Error during processing: {ex.Message}";
+                Status = L("ConfigurationPage_Status_ErrorProcessing", ex.Message);
                 LogProcessingPipelineAborted(ex);
             }
             finally
@@ -662,12 +674,12 @@ namespace DeDupe.ViewModels.Pages
             if (IsScanning)
             {
                 _scanCts?.Cancel();
-                Status = "Cancelling scan...";
+                Status = L("ConfigurationPage_Status_CancellingScan");
             }
             else if (IsProcessing)
             {
                 _processingCts?.Cancel();
-                Status = "Cancelling processing...";
+                Status = L("ConfigurationPage_Status_CancellingProcessing");
             }
         }
 
@@ -696,19 +708,19 @@ namespace DeDupe.ViewModels.Pages
 
             if (TotalFileCount == 0)
             {
-                Status = "No files added";
+                Status = L("ConfigurationPage_Status_NoFilesAdded");
             }
             else if (HasExtractedFeatures)
             {
-                Status = $"Ready! {ExtractedFeaturesCount} feature vectors extracted. Click 'Find Duplicates' to continue.";
+                Status = L("ConfigurationPage_Status_Ready", ExtractedFeaturesCount);
             }
             else if (HasProcessedItems)
             {
-                Status = $"{_appStateService.ProcessedItemCount} items preprocessed.";
+                Status = L("ConfigurationPage_Status_ItemsPreprocessed", _appStateService.ProcessedItemCount);
             }
             else
             {
-                Status = $"{TotalFileCount} file{(TotalFileCount == 1 ? "" : "s")} ready to process";
+                Status = L("ConfigurationPage_Status_FilesReadyToProcess", TotalFileCount);
             }
         }
 
@@ -744,12 +756,12 @@ namespace DeDupe.ViewModels.Pages
                 }
                 else
                 {
-                    Status = "No valid model file found.";
+                    Status = L("ConfigurationPage_Status_NoValidModel");
                 }
             }
             catch (Exception ex)
             {
-                Status = $"Error initializing model: {ex.Message}";
+                Status = L("ConfigurationPage_Status_ErrorInitializingModel", ex.Message);
                 LogFeatureExtractionModelFailed(ex);
             }
         }
@@ -772,6 +784,7 @@ namespace DeDupe.ViewModels.Pages
                 _appStateService.SourceMediaChanged -= OnSourceMediaChanged;
                 InputListItems.CollectionChanged -= MediaPathItems_CollectionChanged;
                 _settingsService.ModelConfigurationChanged -= OnModelConfigurationChanged;
+                Localizer.LanguageChanged -= OnLanguageChanged;
 
                 foreach (InputListItem item in InputListItems)
                 {

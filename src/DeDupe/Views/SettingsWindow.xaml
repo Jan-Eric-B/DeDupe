@@ -40,9 +40,12 @@
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
             IsTitleBarAutoPaddingEnabled="False"
+            Loaded="NvSettings_Loaded"
             OpenPaneLength="210"
+            PaneClosing="NvSettings_PaneClosing"
             PaneDisplayMode="Left"
-            SelectionChanged="NavigationView_SelectionChanged">
+            PaneOpening="NvSettings_PaneOpening"
+            SelectionChanged="NvSettings_SelectionChanged">
 
             <NavigationView.MenuItems>
                 <NavigationViewItem l:Localization.Uid="SettingsWindow_NavGeneral" Tag="General">

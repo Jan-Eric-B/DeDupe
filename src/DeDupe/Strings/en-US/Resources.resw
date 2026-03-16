@@ -20,10 +20,16 @@
     </xsd:element>
   </xsd:schema>
   <!-- MainWindow -->
+  <data name="MainWindow_PageTitle" xml:space="preserve">
+    <value>DeDupe</value>
+  </data>
   <data name="MainWindow_SettingsButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Settings</value>
   </data>
   <!-- SettingsWindow -->
+  <data name="Settings_WindowTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
   <data name="SettingsWindow_Title.Text" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -42,7 +48,16 @@
   <data name="SettingsWindow_NavAbout.Content" xml:space="preserve">
     <value>About</value>
   </data>
+  <data name="SettingsWindow_NavigationOpen" xml:space="preserve">
+    <value>Open Navigation</value>
+  </data>
+  <data name="SettingsWindow_NavigationClose" xml:space="preserve">
+    <value>Close Navigation</value>
+  </data>
   <!-- GeneralSettingsPage -->
+  <data name="GeneralSettings_PageTitle" xml:space="preserve">
+    <value>General</value>
+  </data>
   <data name="GeneralSettingsPage_Title.Text" xml:space="preserve">
     <value>General</value>
   </data>
@@ -101,6 +116,9 @@
     <value>System Default</value>
   </data>
   <!-- AnalysisSettingsPage -->
+  <data name="AnalysisSettings_PageTitle" xml:space="preserve">
+    <value>Similarity Analysis</value>
+  </data>
   <data name="AnalysisSettingsPage_Title.Text" xml:space="preserve">
     <value>Similarity Analysis</value>
   </data>
@@ -123,6 +141,9 @@
     <value>On</value>
   </data>
   <!-- ImageProcessingSettingsPage -->
+  <data name="ImageProcessingSettings_PageTitle" xml:space="preserve">
+    <value>Image Processing</value>
+  </data>
   <data name="ImageProcessingSettingsPage_Title.Text" xml:space="preserve">
     <value>Image Processing</value>
   </data>
@@ -131,6 +152,9 @@
   </data>
   <data name="ImageProcessingSettingsPage_ParallelProcessingCard.Header" xml:space="preserve">
     <value>Parallel Processing</value>
+  </data>
+  <data name="ImageProcessingSettings_Dialog_SelectTempFolder" xml:space="preserve">
+    <value>Select Temp Folder</value>
   </data>
   <data name="ImageProcessingSettingsPage_ParallelProcessingCard.Description" xml:space="preserve">
     <value>Number of images processed simultaneously.</value>
@@ -358,6 +382,9 @@
     <value>BGR 16-bit</value>
   </data>
   <!-- ModelSettingsPage -->
+  <data name="ModelSettings_PageTitle" xml:space="preserve">
+    <value>Model Configuration</value>
+  </data>
   <data name="ModelSettingsPage_Title.Text" xml:space="preserve">
     <value>Model Configuration</value>
   </data>
@@ -413,6 +440,9 @@
     <value>Use this model</value>
   </data>
   <!-- AboutSettingsPage -->
+  <data name="AboutSettings_PageTitle" xml:space="preserve">
+    <value>About</value>
+  </data>
   <data name="AboutSettingsPage_AppSpecifications.Header" xml:space="preserve">
     <value>Application Specifications</value>
   </data>
@@ -475,5 +505,144 @@
   </data>
   <data name="AboutSettingsPage_LindaCard.Description" xml:space="preserve">
     <value>App and logo design</value>
+  </data>
+  <!-- ConfigurationPage -->
+  <data name="ConfigurationPage_Subtitle.Text" xml:space="preserve">
+    <value>Add multiple files or whole folders you want to scan for duplicates and similar images.</value>
+  </data>
+  <data name="ConfigurationPage_IncludeSubfolders.Content" xml:space="preserve">
+    <value>Include subfolders</value>
+  </data>
+  <data name="ConfigurationPage_IncludeSubfolders.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Scan all nested directories for images</value>
+  </data>
+  <data name="ConfigurationPage_RemoveButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Remove item</value>
+  </data>
+  <data name="ConfigurationPage_EmptyStateTitle.Text" xml:space="preserve">
+    <value>Drag and drop files or folders here</value>
+  </data>
+  <data name="ConfigurationPage_EmptyStateSubtitle.Text" xml:space="preserve">
+    <value>or use the buttons below to select files</value>
+  </data>
+  <data name="ConfigurationPage_CancelButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Cancel current operation</value>
+  </data>
+  <data name="ConfigurationPage_AddFoldersButton.Content" xml:space="preserve">
+    <value>Add Folders</value>
+  </data>
+  <data name="ConfigurationPage_AddFilesButton.Content" xml:space="preserve">
+    <value>Add Files</value>
+  </data>
+  <data name="ConfigurationPage_ScanButton.Content" xml:space="preserve">
+    <value>Scan</value>
+  </data>
+  <data name="ConfigurationPage_ScanButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Preprocess images and extract feature vectors</value>
+  </data>
+  <data name="ConfigurationPage_FindDuplicatesButton.Content" xml:space="preserve">
+    <value>Find Duplicates</value>
+  </data>
+  <data name="ConfigurationPage_FindDuplicatesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Go to duplicate management (requires processed files)</value>
+  </data>
+  <data name="ConfigurationPage_DragCaption" xml:space="preserve">
+    <value>Add items</value>
+  </data>
+  <data name="ConfigurationPage_Title" xml:space="preserve">
+    <value>File Selection</value>
+  </data>
+  <data name="ConfigurationPage_Dialog_SelectFolder" xml:space="preserve">
+    <value>Select Folder</value>
+  </data>
+  <data name="ConfigurationPage_Dialog_SelectImages" xml:space="preserve">
+    <value>Select Images</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoFilesAdded" xml:space="preserve">
+    <value>No files added</value>
+  </data>
+  <data name="ConfigurationPage_Status_AddingFiles" xml:space="preserve">
+    <value>Adding {0} files...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ScanningFolder" xml:space="preserve">
+    <value>Scanning folder...</value>
+  </data>
+  <data name="ConfigurationPage_Status_FoundImagesProgress" xml:space="preserve">
+    <value>Found {0} images...</value>
+  </data>
+  <data name="ConfigurationPage_Status_FoundImages" xml:space="preserve">
+    <value>Found {0} images</value>
+  </data>
+  <data name="ConfigurationPage_Status_ScanCancelled" xml:space="preserve">
+    <value>Scan cancelled</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorScanningFolder" xml:space="preserve">
+    <value>Error scanning folder: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoItemsToProcess" xml:space="preserve">
+    <value>No items to process</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingImages" xml:space="preserve">
+    <value>Processing {0} images...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingFailed" xml:space="preserve">
+    <value>Processing failed: No items were processed.</value>
+  </data>
+  <data name="ConfigurationPage_Status_InitializingModel" xml:space="preserve">
+    <value>Initializing AI model...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ModelLoadFailed" xml:space="preserve">
+    <value>Cannot extract features: Model failed to load.</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoProcessedItems" xml:space="preserve">
+    <value>No processed items available for feature extraction.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ExtractingFeatures" xml:space="preserve">
+    <value>Extracting features from {0} items...</value>
+  </data>
+  <data name="ConfigurationPage_Status_Ready" xml:space="preserve">
+    <value>Ready! Extracted {0} feature vectors. Click 'Find Duplicates' to continue.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ExtractionFailed" xml:space="preserve">
+    <value>Feature extraction failed: No features were extracted.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ProcessingCancelled" xml:space="preserve">
+    <value>Processing cancelled</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorProcessing" xml:space="preserve">
+    <value>Error during processing: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Status_CancellingScan" xml:space="preserve">
+    <value>Cancelling scan...</value>
+  </data>
+  <data name="ConfigurationPage_Status_CancellingProcessing" xml:space="preserve">
+    <value>Cancelling processing...</value>
+  </data>
+  <data name="ConfigurationPage_Status_ItemsPreprocessed" xml:space="preserve">
+    <value>{0} items preprocessed.</value>
+  </data>
+  <data name="ConfigurationPage_Status_FilesReadyToProcess" xml:space="preserve">
+    <value>{0} files ready to process</value>
+  </data>
+  <data name="ConfigurationPage_Status_NoValidModel" xml:space="preserve">
+    <value>No valid model file found.</value>
+  </data>
+  <data name="ConfigurationPage_Status_ErrorInitializingModel" xml:space="preserve">
+    <value>Error initializing model: {0}</value>
+  </data>
+  <data name="ConfigurationPage_Operation_ProcessingImages" xml:space="preserve">
+    <value>Processing images</value>
+  </data>
+  <data name="ConfigurationPage_Operation_InitializingModel" xml:space="preserve">
+    <value>Initializing model</value>
+  </data>
+  <data name="ConfigurationPage_Operation_ExtractingFeatures" xml:space="preserve">
+    <value>Extracting features</value>
+  </data>
+  <data name="Language_en-US.Text" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language_de-DE.Text" xml:space="preserve">
+    <value>German [Deutsch]</value>
   </data>
 </root>

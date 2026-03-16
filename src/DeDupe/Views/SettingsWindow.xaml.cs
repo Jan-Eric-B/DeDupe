@@ -1,3 +1,5 @@
+using CommunityToolkit.WinUI;
+using DeDupe.Localization;
 using DeDupe.Services;
 using DeDupe.ViewModels;
 using DeDupe.Views.Settings;
@@ -19,12 +21,14 @@ namespace DeDupe.Views
         private readonly WindowSizeService _windowsSizeService;
         private readonly IThemeService _themeService;
         private readonly ILogger<SettingsWindow> _logger;
+        private readonly ILocalizer _localizer;
 
         public SettingsWindow()
         {
             InitializeComponent();
 
             _logger = App.Current.GetService<ILogger<SettingsWindow>>();
+            _localizer = App.Current.GetService<ILocalizer>();
 
             // Set window size and minimum size
             nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -57,7 +61,7 @@ namespace DeDupe.Views
             _windowsSizeService?.Dispose();
         }
 
-        private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+        private void NvSettings_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             if (args.SelectedItem is NavigationViewItem selectedItem)
             {
@@ -94,6 +98,36 @@ namespace DeDupe.Views
 
         [DllImport("user32.dll")]
         private static extern uint GetDpiForWindow(nint hWnd);
+
+        #region Localization
+
+        private void NvSettings_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdatePaneToggleTooltip();
+        }
+
+        private void NvSettings_PaneOpening(NavigationView sender, object args)
+        {
+            UpdatePaneToggleTooltip();
+        }
+
+        private void NvSettings_PaneClosing(NavigationView sender, NavigationViewPaneClosingEventArgs args)
+        {
+            UpdatePaneToggleTooltip();
+        }
+
+        private void UpdatePaneToggleTooltip()
+        {
+            if (nvSettings.FindDescendant("TogglePaneButton") is Button toggleButton)
+            {
+                string tooltip = nvSettings.IsPaneOpen
+                    ? _localizer.GetLocalizedString("SettingsWindow_NavigationClose")
+                    : _localizer.GetLocalizedString("SettingsWindow_NavigationOpen");
+                ToolTipService.SetToolTip(toggleButton, tooltip);
+            }
+        }
+
+        #endregion Localization
 
         #region Logging
 

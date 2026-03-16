@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DeDupe.Localization;
 using System;
 
 namespace DeDupe.ViewModels
@@ -18,7 +19,7 @@ namespace DeDupe.ViewModels
 
         public RelayCommand NavigateToNextCommand { get; }
 
-        public PageViewModelBase(Action? navigateToNextAction = null)
+        public PageViewModelBase(ILocalizer localizer, Action? navigateToNextAction = null) : base(localizer)
         {
             _navigateToNextAction = navigateToNextAction;
             NavigateToNextCommand = new RelayCommand(NavigateToNext, () => CanNavigateToNext);

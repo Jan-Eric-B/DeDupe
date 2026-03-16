@@ -15,28 +15,26 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IDialogService _dialogService;
-        private readonly ILocalizer _localizer;
         private readonly ILogger<ImageProcessingSettingsViewModel> _logger;
 
-        public ImageProcessingSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<ImageProcessingSettingsViewModel> logger)
+        public ImageProcessingSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<ImageProcessingSettingsViewModel> logger) : base(localizer)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            _localizer.LanguageChanged += OnLanguageChanged;
+            Localizer.LanguageChanged += OnLanguageChanged;
 
-            Title = "Image Processing";
+            Title = L("ImageProcessingSettings_PageTitle");
         }
 
         private void LoadSettings()
         {
-            TensorLayoutOptions = _localizer.BuildLocalizedOptions<TensorLayout>();
-            ResizeMethodOptions = _localizer.BuildLocalizedOptions<ResizeMethod>();
-            InterpolationMethodOptions = _localizer.BuildLocalizedOptions<InterpolationMethod>();
-            OutputFormatOptions = _localizer.BuildLocalizedOptions<OutputFormat>();
-            ColorFormatOptions = _localizer.BuildLocalizedOptions<ColorFormat>();
+            TensorLayoutOptions = Localizer.BuildLocalizedOptions<TensorLayout>();
+            ResizeMethodOptions = Localizer.BuildLocalizedOptions<ResizeMethod>();
+            InterpolationMethodOptions = Localizer.BuildLocalizedOptions<InterpolationMethod>();
+            OutputFormatOptions = Localizer.BuildLocalizedOptions<OutputFormat>();
+            ColorFormatOptions = Localizer.BuildLocalizedOptions<ColorFormat>();
 
             // Performance
             ParallelProcessingCores = _settingsService.ParallelProcessingCores;
@@ -102,8 +100,8 @@ namespace DeDupe.ViewModels.Settings
             get
             {
                 return EnableGpuAcceleration
-                    ? _localizer.GetLocalizedString("ImageProcessing_GpuAccelerationEnabled")
-                    : _localizer.GetLocalizedString("ImageProcessing_CpuOnlyMode");
+                    ? L("ImageProcessing_GpuAccelerationEnabled")
+                    : L("ImageProcessing_CpuOnlyMode");
             }
         }
 
@@ -242,11 +240,11 @@ namespace DeDupe.ViewModels.Settings
             {
                 return BorderDetectionTolerance switch
                 {
-                    < 20 => _localizer.GetLocalizedString("BorderDetection_VeryConservative"),
-                    < 50 => _localizer.GetLocalizedString("BorderDetection_Conservative"),
-                    < 100 => _localizer.GetLocalizedString("BorderDetection_Balanced"),
-                    < 150 => _localizer.GetLocalizedString("BorderDetection_Aggressive"),
-                    _ => _localizer.GetLocalizedString("BorderDetection_VeryAggressive")
+                    < 20 => L("BorderDetection_VeryConservative"),
+                    < 50 => L("BorderDetection_Conservative"),
+                    < 100 => L("BorderDetection_Balanced"),
+                    < 150 => L("BorderDetection_Aggressive"),
+                    _ => L("BorderDetection_VeryAggressive")
                 };
             }
         }
@@ -323,7 +321,7 @@ namespace DeDupe.ViewModels.Settings
         {
             try
             {
-                string? folderPath = await _dialogService.PickFolderAsync("Select Temp Folder");
+                string? folderPath = await _dialogService.PickFolderAsync(L("ImageProcessingSettings_Dialog_SelectTempFolder"));
 
                 if (!string.IsNullOrEmpty(folderPath))
                 {
@@ -373,6 +371,8 @@ namespace DeDupe.ViewModels.Settings
 
         private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
         {
+            Title = L("ImageProcessingSettings_PageTitle");
+
             // Rebuild all localized dropdown items
             int tensorIdx = SelectedTensorLayoutIndex;
             int resizeIdx = SelectedResizeMethodIndex;
@@ -381,11 +381,11 @@ namespace DeDupe.ViewModels.Settings
             int outputIdx = SelectedOutputFormatIndex;
             int colorIdx = SelectedColorFormatIndex;
 
-            TensorLayoutOptions = _localizer.BuildLocalizedOptions<TensorLayout>();
-            ResizeMethodOptions = _localizer.BuildLocalizedOptions<ResizeMethod>();
-            InterpolationMethodOptions = _localizer.BuildLocalizedOptions<InterpolationMethod>();
-            OutputFormatOptions = _localizer.BuildLocalizedOptions<OutputFormat>();
-            ColorFormatOptions = _localizer.BuildLocalizedOptions<ColorFormat>();
+            TensorLayoutOptions = Localizer.BuildLocalizedOptions<TensorLayout>();
+            ResizeMethodOptions = Localizer.BuildLocalizedOptions<ResizeMethod>();
+            InterpolationMethodOptions = Localizer.BuildLocalizedOptions<InterpolationMethod>();
+            OutputFormatOptions = Localizer.BuildLocalizedOptions<OutputFormat>();
+            ColorFormatOptions = Localizer.BuildLocalizedOptions<ColorFormat>();
 
             SelectedTensorLayoutIndex = tensorIdx;
             SelectedResizeMethodIndex = resizeIdx;
