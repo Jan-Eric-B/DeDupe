@@ -85,7 +85,15 @@ namespace DeDupe.ViewModels.Settings
                 StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(new Uri(AppInformation.DependenciesJsonUri));
                 string json = await FileIO.ReadTextAsync(file);
 
-                List<DependencyPackageEntry>? dependencies = JsonSerializer.Deserialize<List<DependencyPackageEntry>>(json, jsonOptions);
+                List<DependencyPackageEntry>? dependencies = JsonSerializer.Deserialize<List<DependencyPackageEntry>>(json, jsonOptions) ?? [];
+
+                // Vendored dependency
+                dependencies.Add(new DependencyPackageEntry
+                {
+                    Id = "WinUI3Localizer (modified)",
+                    ResolvedVersion = "1.2.0",
+                    Url = "https://github.com/AndrewKeepCoding/WinUI3Localizer"
+                });
 
                 return dependencies ?? [];
             }

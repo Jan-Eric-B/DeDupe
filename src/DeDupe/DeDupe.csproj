@@ -112,6 +112,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.24.2" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.24.2" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1-RTM" />
@@ -178,6 +179,20 @@
     <Page Update="Views\Settings\ImageProcessingSettingsPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Strings\en-US\" />
+    <Folder Include="Strings\de-DE\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Strings\**\*.resw">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Localization\*.cs" />
   </ItemGroup>
 
   <!--

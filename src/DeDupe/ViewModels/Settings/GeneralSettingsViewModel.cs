@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
 using DeDupe.Helpers;
+using DeDupe.Localization;
 using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,22 +15,33 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IDialogService _dialogService;
+        private readonly ILocalizer _localizer;
         private readonly ILogger<GeneralSettingsViewModel> _logger;
 
-        public GeneralSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILogger<GeneralSettingsViewModel> logger)
+        public GeneralSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<GeneralSettingsViewModel> logger)
         {
             _settingsService = settingsService;
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _localizer.LanguageChanged += OnLanguageChanged;
 
             Title = "General";
         }
 
         private void LoadSettings()
         {
+            ThemeOptions = _localizer.BuildLocalizedOptions<AppTheme>();
+            BackdropOptions = _localizer.BuildLocalizedOptions<AppBackdrop>();
+            AccentColorOptions = _localizer.BuildLocalizedOptions<AppAccentColor>();
+
             SelectedThemeIndex = (int)_settingsService.Theme;
             SelectedBackdropIndex = (int)_settingsService.Backdrop;
             SelectedAccentColorIndex = (int)_settingsService.AccentColor;
+
+            AvailableLanguages = [.. _localizer.GetAvailableLanguages()];
+            SelectedLanguage = _localizer.GetCurrentLanguage();
 
             string themeDescription = EnumExtensions.GetDescription(_settingsService.Theme);
             string backdropDescription = EnumExtensions.GetDescription(_settingsService.Backdrop);
@@ -48,14 +60,22 @@ namespace DeDupe.ViewModels.Settings
         [ObservableProperty]
         public partial int SelectedAccentColorIndex { get; set; }
 
-        public IEnumerable<AppTheme> ThemeOptions => Enum.GetValues<AppTheme>();
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<AppTheme>> ThemeOptions { get; set; } = [];
 
-        public IEnumerable<AppBackdrop> BackdropOptions => Enum.GetValues<AppBackdrop>();
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<AppBackdrop>> BackdropOptions { get; set; } = [];
 
-        public IEnumerable<AppAccentColor> AccentColorOptions => Enum.GetValues<AppAccentColor>();
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<AppAccentColor>> AccentColorOptions { get; set; } = [];
 
         partial void OnSelectedThemeIndexChanged(int value)
         {
+            if (value < 0)
+            {
+                return;
+            }
+
             _settingsService.Theme = (AppTheme)value;
 
             LogSelectedThemeIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
@@ -63,6 +83,11 @@ namespace DeDupe.ViewModels.Settings
 
         partial void OnSelectedBackdropIndexChanged(int value)
         {
+            if (value < 0)
+            {
+                return;
+            }
+
             _settingsService.Backdrop = (AppBackdrop)value;
 
             LogSelectedBackdropIndexChanged(EnumExtensions.GetDescription((AppBackdrop)value));
@@ -70,12 +95,60 @@ namespace DeDupe.ViewModels.Settings
 
         partial void OnSelectedAccentColorIndexChanged(int value)
         {
+            if (value < 0)
+            {
+                return;
+            }
+
             _settingsService.AccentColor = (AppAccentColor)value;
 
             LogSelectedAccentColorIndexChanged(EnumExtensions.GetDescription((AppAccentColor)value));
         }
 
         #endregion Appearance
+
+        #region Localization
+
+        [ObservableProperty]
+        public partial string SelectedLanguage { get; set; } = string.Empty;
+
+        public IReadOnlyList<string> AvailableLanguages { get; private set; } = [];
+
+        partial void OnSelectedLanguageChanged(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return;
+            }
+
+            if (_localizer.GetCurrentLanguage() != value)
+            {
+                _localizer.SetLanguage(value);
+                _settingsService.Language = value;
+            }
+        }
+
+        private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+        {
+            // Get current selection
+            int themeIdx = SelectedThemeIndex;
+            int backdropIdx = SelectedBackdropIndex;
+            int accentIdx = SelectedAccentColorIndex;
+
+            // Rebuild dropdown items
+            ThemeOptions = _localizer.BuildLocalizedOptions<AppTheme>();
+            BackdropOptions = _localizer.BuildLocalizedOptions<AppBackdrop>();
+            AccentColorOptions = _localizer.BuildLocalizedOptions<AppAccentColor>();
+
+            // Restore selections
+            SelectedThemeIndex = themeIdx;
+            SelectedBackdropIndex = backdropIdx;
+            SelectedAccentColorIndex = accentIdx;
+
+            LogLanguageChanged(e.NewLanguage);
+        }
+
+        #endregion Localization
 
         #region Log Folder
 
@@ -125,6 +198,9 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Information, Message = "AccentColor changed to {SelectedAccentColor}")]
         private partial void LogSelectedAccentColorIndexChanged(string selectedAccentColor);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Language changed to {Language}")]
+        private partial void LogLanguageChanged(string language);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Log folder open failed")]
         private partial void LogLogFolderOpenFailed(Exception ex);

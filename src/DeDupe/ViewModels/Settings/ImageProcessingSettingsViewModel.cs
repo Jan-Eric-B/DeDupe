@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
-using DeDupe.Helpers;
+using DeDupe.Localization;
 using DeDupe.Services;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,32 +15,42 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IDialogService _dialogService;
+        private readonly ILocalizer _localizer;
         private readonly ILogger<ImageProcessingSettingsViewModel> _logger;
 
-        public ImageProcessingSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILogger<ImageProcessingSettingsViewModel> logger)
+        public ImageProcessingSettingsViewModel(ISettingsService settingsService, IDialogService dialogService, ILocalizer localizer, ILogger<ImageProcessingSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _localizer.LanguageChanged += OnLanguageChanged;
 
             Title = "Image Processing";
         }
 
         private void LoadSettings()
         {
+            TensorLayoutOptions = _localizer.BuildLocalizedOptions<TensorLayout>();
+            ResizeMethodOptions = _localizer.BuildLocalizedOptions<ResizeMethod>();
+            InterpolationMethodOptions = _localizer.BuildLocalizedOptions<InterpolationMethod>();
+            OutputFormatOptions = _localizer.BuildLocalizedOptions<OutputFormat>();
+            ColorFormatOptions = _localizer.BuildLocalizedOptions<ColorFormat>();
+
             // Performance
             ParallelProcessingCores = _settingsService.ParallelProcessingCores;
             EnableGpuAcceleration = _settingsService.EnableGpuAcceleration;
             InferenceBatchSize = _settingsService.InferenceBatchSize;
-            TensorLayout = _settingsService.TensorLayout;
+            SelectedTensorLayoutIndex = (int)_settingsService.TensorLayout;
 
             // Resize
             EnableResizing = _settingsService.EnableResizing;
             ResizeSize = _settingsService.ResizeSize;
-            ResizeMethod = _settingsService.ResizeMethod;
+            SelectedResizeMethodIndex = (int)_settingsService.ResizeMethod;
             PaddingColor = _settingsService.PaddingColor;
-            DownsamplingMethod = _settingsService.DownsamplingMethod;
-            UpsamplingMethod = _settingsService.UpsamplingMethod;
+            SelectedDownsamplingMethodIndex = (int)_settingsService.DownsamplingMethod;
+            SelectedUpsamplingMethodIndex = (int)_settingsService.UpsamplingMethod;
             Compand = _settingsService.Compand;
 
             // Border Detection
@@ -48,9 +58,9 @@ namespace DeDupe.ViewModels.Settings
             BorderDetectionTolerance = _settingsService.BorderDetectionTolerance;
 
             // Output
-            OutputFormat = _settingsService.OutputFormat;
+            SelectedOutputFormatIndex = (int)_settingsService.OutputFormat;
             Dpi = _settingsService.Dpi;
-            ColorFormat = _settingsService.ColorFormat;
+            SelectedColorFormatIndex = (int)_settingsService.ColorFormat;
 
             // Temp Folder
             UseCustomTempFolder = _settingsService.UseCustomTempFolder;
@@ -74,7 +84,10 @@ namespace DeDupe.ViewModels.Settings
         public partial int InferenceBatchSize { get; set; }
 
         [ObservableProperty]
-        public partial TensorLayout TensorLayout { get; set; }
+        public partial int SelectedTensorLayoutIndex { get; set; }
+
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<TensorLayout>> TensorLayoutOptions { get; set; } = [];
 
         public int MaxParallelCores => Environment.ProcessorCount;
 
@@ -84,9 +97,15 @@ namespace DeDupe.ViewModels.Settings
 
         public string BatchSizeDisplayText => InferenceBatchSize.ToString();
 
-        public string GpuAccelerationDescription => EnableGpuAcceleration ? "GPU acceleration" : "CPU-only mode";
-
-        public IEnumerable<TensorLayout> TensorLayouts => Enum.GetValues<TensorLayout>();
+        public string GpuAccelerationDescription
+        {
+            get
+            {
+                return EnableGpuAcceleration
+                    ? _localizer.GetLocalizedString("ImageProcessing_GpuAccelerationEnabled")
+                    : _localizer.GetLocalizedString("ImageProcessing_CpuOnlyMode");
+            }
+        }
 
         partial void OnParallelProcessingCoresChanged(int value)
         {
@@ -106,9 +125,14 @@ namespace DeDupe.ViewModels.Settings
             _settingsService.InferenceBatchSize = value;
         }
 
-        partial void OnTensorLayoutChanged(TensorLayout value)
+        partial void OnSelectedTensorLayoutIndexChanged(int value)
         {
-            _settingsService.TensorLayout = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.TensorLayout = (TensorLayout)value;
         }
 
         #endregion Performance
@@ -124,27 +148,29 @@ namespace DeDupe.ViewModels.Settings
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(IsPaddingColorVisible))]
-        public partial ResizeMethod ResizeMethod { get; set; }
+        public partial int SelectedResizeMethodIndex { get; set; }
 
         [ObservableProperty]
         public partial Color PaddingColor { get; set; }
 
         [ObservableProperty]
-        public partial InterpolationMethod DownsamplingMethod { get; set; }
+        public partial int SelectedDownsamplingMethodIndex { get; set; }
 
         [ObservableProperty]
-        public partial InterpolationMethod UpsamplingMethod { get; set; }
+        public partial int SelectedUpsamplingMethodIndex { get; set; }
 
         [ObservableProperty]
         public partial bool Compand { get; set; }
 
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<ResizeMethod>> ResizeMethodOptions { get; set; } = [];
+
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<InterpolationMethod>> InterpolationMethodOptions { get; set; } = [];
+
         public bool IsResizeEnabled => EnableResizing;
 
-        public bool IsPaddingColorVisible => ResizeMethod == ResizeMethod.Padding;
-
-        public IEnumerable<InterpolationMethod> InterpolationMethods => Enum.GetValues<InterpolationMethod>();
-
-        public IEnumerable<ResizeMethod> ResizeMethods => Enum.GetValues<ResizeMethod>();
+        public bool IsPaddingColorVisible => SelectedResizeMethodIndex >= 0 && (ResizeMethod)SelectedResizeMethodIndex == ResizeMethod.Padding;
 
         partial void OnEnableResizingChanged(bool value)
         {
@@ -156,9 +182,14 @@ namespace DeDupe.ViewModels.Settings
             _settingsService.ResizeSize = value;
         }
 
-        partial void OnResizeMethodChanged(ResizeMethod value)
+        partial void OnSelectedResizeMethodIndexChanged(int value)
         {
-            _settingsService.ResizeMethod = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.ResizeMethod = (ResizeMethod)value;
         }
 
         partial void OnPaddingColorChanged(Color value)
@@ -166,14 +197,24 @@ namespace DeDupe.ViewModels.Settings
             _settingsService.PaddingColor = value;
         }
 
-        partial void OnDownsamplingMethodChanged(InterpolationMethod value)
+        partial void OnSelectedDownsamplingMethodIndexChanged(int value)
         {
-            _settingsService.DownsamplingMethod = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.DownsamplingMethod = (InterpolationMethod)value;
         }
 
-        partial void OnUpsamplingMethodChanged(InterpolationMethod value)
+        partial void OnSelectedUpsamplingMethodIndexChanged(int value)
         {
-            _settingsService.UpsamplingMethod = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.UpsamplingMethod = (InterpolationMethod)value;
         }
 
         partial void OnCompandChanged(bool value)
@@ -195,14 +236,20 @@ namespace DeDupe.ViewModels.Settings
 
         public bool IsBorderDetectionEnabled => EnableBorderDetection;
 
-        public string BorderDetectionAggressivenessLabel => BorderDetectionTolerance switch
+        public string BorderDetectionAggressivenessLabel
         {
-            < 20 => "Very Conservative",
-            < 50 => "Conservative",
-            < 100 => "Balanced",
-            < 150 => "Aggressive",
-            _ => "Very Aggressive"
-        };
+            get
+            {
+                return BorderDetectionTolerance switch
+                {
+                    < 20 => _localizer.GetLocalizedString("BorderDetection_VeryConservative"),
+                    < 50 => _localizer.GetLocalizedString("BorderDetection_Conservative"),
+                    < 100 => _localizer.GetLocalizedString("BorderDetection_Balanced"),
+                    < 150 => _localizer.GetLocalizedString("BorderDetection_Aggressive"),
+                    _ => _localizer.GetLocalizedString("BorderDetection_VeryAggressive")
+                };
+            }
+        }
 
         partial void OnEnableBorderDetectionChanged(bool value)
         {
@@ -219,21 +266,28 @@ namespace DeDupe.ViewModels.Settings
         #region Output
 
         [ObservableProperty]
-        public partial OutputFormat OutputFormat { get; set; }
+        public partial int SelectedOutputFormatIndex { get; set; }
 
         [ObservableProperty]
         public partial uint Dpi { get; set; }
 
         [ObservableProperty]
-        public partial ColorFormat ColorFormat { get; set; }
+        public partial int SelectedColorFormatIndex { get; set; }
 
-        public IEnumerable<OutputFormat> OutputFormats => Enum.GetValues<OutputFormat>();
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<OutputFormat>> OutputFormatOptions { get; set; } = [];
 
-        public IEnumerable<ColorFormat> ColorFormats => Enum.GetValues<ColorFormat>();
+        [ObservableProperty]
+        public partial IReadOnlyList<LocalizedEnumOption<ColorFormat>> ColorFormatOptions { get; set; } = [];
 
-        partial void OnOutputFormatChanged(OutputFormat value)
+        partial void OnSelectedOutputFormatIndexChanged(int value)
         {
-            _settingsService.OutputFormat = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.OutputFormat = (OutputFormat)value;
         }
 
         partial void OnDpiChanged(uint value)
@@ -241,9 +295,14 @@ namespace DeDupe.ViewModels.Settings
             _settingsService.Dpi = value;
         }
 
-        partial void OnColorFormatChanged(ColorFormat value)
+        partial void OnSelectedColorFormatIndexChanged(int value)
         {
-            _settingsService.ColorFormat = value;
+            if (value < 0)
+            {
+                return;
+            }
+
+            _settingsService.ColorFormat = (ColorFormat)value;
         }
 
         #endregion Output
@@ -309,6 +368,38 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Temp Folder
+
+        #region Language Changed
+
+        private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+        {
+            // Rebuild all localized dropdown items
+            int tensorIdx = SelectedTensorLayoutIndex;
+            int resizeIdx = SelectedResizeMethodIndex;
+            int downsampleIdx = SelectedDownsamplingMethodIndex;
+            int upsampleIdx = SelectedUpsamplingMethodIndex;
+            int outputIdx = SelectedOutputFormatIndex;
+            int colorIdx = SelectedColorFormatIndex;
+
+            TensorLayoutOptions = _localizer.BuildLocalizedOptions<TensorLayout>();
+            ResizeMethodOptions = _localizer.BuildLocalizedOptions<ResizeMethod>();
+            InterpolationMethodOptions = _localizer.BuildLocalizedOptions<InterpolationMethod>();
+            OutputFormatOptions = _localizer.BuildLocalizedOptions<OutputFormat>();
+            ColorFormatOptions = _localizer.BuildLocalizedOptions<ColorFormat>();
+
+            SelectedTensorLayoutIndex = tensorIdx;
+            SelectedResizeMethodIndex = resizeIdx;
+            SelectedDownsamplingMethodIndex = downsampleIdx;
+            SelectedUpsamplingMethodIndex = upsampleIdx;
+            SelectedOutputFormatIndex = outputIdx;
+            SelectedColorFormatIndex = colorIdx;
+
+            // Refresh localized computed text
+            OnPropertyChanged(nameof(GpuAccelerationDescription));
+            OnPropertyChanged(nameof(BorderDetectionAggressivenessLabel));
+        }
+
+        #endregion Language Changed
 
         #region Navigation
 

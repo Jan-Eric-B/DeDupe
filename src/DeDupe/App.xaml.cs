@@ -1,4 +1,5 @@
-﻿using DeDupe.Services;
+﻿using DeDupe.Localization;
+using DeDupe.Services;
 using DeDupe.Services.Analysis;
 using DeDupe.Services.Model;
 using DeDupe.Services.Processing;
@@ -124,6 +125,20 @@ namespace DeDupe
             // Auto Selection
             services.AddSingleton<IAutoSelectionService, AutoSelectionService>();
 
+            // Localization
+            services.AddSingleton<ILocalizer>(sp =>
+            {
+                ISettingsService settingsService = sp.GetRequiredService<ISettingsService>();
+                string stringsFolderPath = Path.Combine(AppContext.BaseDirectory, "Strings");
+
+                return new LocalizerBuilder()
+                    .AddStringResourcesFolderForLanguageDictionaries(stringsFolderPath)
+                    .SetLogger(sp.GetRequiredService<ILogger<Localizer>>())
+                    .SetDefaultLanguage(settingsService.Language)
+                    .SetDisableDefaultLocalizationActions(false)
+                    .Build();
+            });
+
             // Logging
             services.AddLogging();
         }
@@ -159,6 +174,10 @@ namespace DeDupe
 
             _logger = _serviceProvider.GetRequiredService<ILogger<App>>();
             LogApplicationStarted();
+
+            // Resolve the localizer to ensure it's built before any UI loads.
+            // The DI factory handles all initialization (loading dictionaries, setting language, etc.).
+            _ = _serviceProvider.GetRequiredService<ILocalizer>();
 
             IThemeService themeService = _serviceProvider.GetRequiredService<IThemeService>();
             themeService.Initialize();

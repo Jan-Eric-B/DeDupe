@@ -2,8 +2,9 @@
 <Window
     x:Class="DeDupe.Views.SettingsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Settings"
     mc:Ignorable="d">
@@ -27,9 +28,9 @@
                 Glyph="&#xE713;" />
             <TextBlock
                 VerticalAlignment="Center"
+                l:Localization.Uid="SettingsWindow_Title"
                 Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="Settings" />
+                Style="{StaticResource CaptionTextBlockStyle}" />
         </StackPanel>
 
         <!--  Navigation View  -->
@@ -44,22 +45,22 @@
             SelectionChanged="NavigationView_SelectionChanged">
 
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="General" Tag="General">
+                <NavigationViewItem l:Localization.Uid="SettingsWindow_NavGeneral" Tag="General">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xF259;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Image Processing" Tag="ImageProcessing">
+                <NavigationViewItem l:Localization.Uid="SettingsWindow_NavImageProcessing" Tag="ImageProcessing">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE91B;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Model Configuration" Tag="ModelConfiguration">
+                <NavigationViewItem l:Localization.Uid="SettingsWindow_NavModelConfiguration" Tag="ModelConfiguration">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xF0B9;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Similarity Analysis" Tag="SimilarityAnalysis">
+                <NavigationViewItem l:Localization.Uid="SettingsWindow_NavSimilarityAnalysis" Tag="SimilarityAnalysis">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE9D9;" />
                     </NavigationViewItem.Icon>
@@ -67,7 +68,7 @@
             </NavigationView.MenuItems>
 
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem Content="About" Tag="About">
+                <NavigationViewItem l:Localization.Uid="SettingsWindow_NavAbout" Tag="About">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE946;" />
                     </NavigationViewItem.Icon>

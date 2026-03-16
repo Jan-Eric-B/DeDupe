@@ -40,7 +40,7 @@ namespace DeDupe.Services
         Task<IReadOnlyList<string>> PickFilesAsync(IEnumerable<string> fileTypeFilters, string commitButtonText = "Select Files");
 
         /// <summary>
-        /// Opens folder in file explorer. 
+        /// Opens folder in file explorer.
         /// </summary>
         Task OpenFolderInExplorerAsync(string folderPath, bool createIfMissing = true);
     }

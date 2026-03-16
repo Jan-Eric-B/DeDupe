@@ -7,6 +7,7 @@
     xmlns:constants="using:DeDupe.Constants"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models"
     xmlns:ui="using:CommunityToolkit.WinUI"
@@ -57,17 +58,17 @@
                 </StackPanel>
             </Grid>
 
-            <!--  Application  Specifications  -->
+            <!--  Application Specifications  -->
             <controls:SettingsExpander
                 Margin="0,29,0,0"
-                Header="Application specifications"
+                l:Localization.Uid="AboutSettingsPage_AppSpecifications"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE946;}"
                 IsExpanded="True">
 
                 <Button
                     Padding="28,5"
-                    Command="{x:Bind ViewModel.CopyToClipboardCommand}"
-                    Content="Copy" />
+                    l:Localization.Uid="AboutSettingsPage_CopyButton"
+                    Command="{x:Bind ViewModel.CopyToClipboardCommand}" />
 
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard>
@@ -92,7 +93,7 @@
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Application" />
+                                    l:Localization.Uid="AboutSettingsPage_ApplicationLabel" />
                                 <TextBlock
                                     Grid.Row="0"
                                     Grid.Column="1"
@@ -104,7 +105,7 @@
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Publisher" />
+                                    l:Localization.Uid="AboutSettingsPage_PublisherLabel" />
                                 <TextBlock
                                     Grid.Row="1"
                                     Grid.Column="1"
@@ -116,7 +117,7 @@
                                     Grid.Row="2"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Version" />
+                                    l:Localization.Uid="AboutSettingsPage_VersionLabel" />
                                 <TextBlock
                                     Grid.Row="2"
                                     Grid.Column="1"
@@ -128,7 +129,7 @@
                                     Grid.Row="3"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Commit" />
+                                    l:Localization.Uid="AboutSettingsPage_CommitLabel" />
                                 <TextBlock
                                     Grid.Row="3"
                                     Grid.Column="1"
@@ -140,7 +141,7 @@
                                     Grid.Row="4"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text=".NET version" />
+                                    l:Localization.Uid="AboutSettingsPage_DotNetVersionLabel" />
                                 <TextBlock
                                     Grid.Row="4"
                                     Grid.Column="1"
@@ -158,9 +159,9 @@
                                 <TextBlock
                                     Margin="0,0,8,0"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="AboutSettingsPage_RelatedLinks"
                                     FontWeight="SemiBold"
-                                    Style="{StaticResource BodyTextBlockStyle}"
-                                    Text="Related links" />
+                                    Style="{StaticResource BodyTextBlockStyle}" />
                                 <HyperlinkButton
                                     Command="{x:Bind ViewModel.OpenLinkCommand}"
                                     CommandParameter="{x:Bind constants:AppInformation.GitHubRepo}"
@@ -170,7 +171,7 @@
                                             Width="25"
                                             Height="25"
                                             Source="{ThemeResource GitHubIcon}" />
-                                        <TextBlock VerticalAlignment="Center">Source Code</TextBlock>
+                                        <TextBlock VerticalAlignment="Center" l:Localization.Uid="AboutSettingsPage_SourceCodeLink" />
                                     </StackPanel>
                                 </HyperlinkButton>
                                 <HyperlinkButton
@@ -182,7 +183,7 @@
                                             Width="25"
                                             Height="25"
                                             Source="{ThemeResource GitHubIcon}" />
-                                        <TextBlock VerticalAlignment="Center">License</TextBlock>
+                                        <TextBlock VerticalAlignment="Center" l:Localization.Uid="AboutSettingsPage_LicenseLink" />
                                     </StackPanel>
                                 </HyperlinkButton>
                                 <HyperlinkButton
@@ -194,7 +195,7 @@
                                             Width="25"
                                             Height="25"
                                             Source="{ThemeResource GitHubIcon}" />
-                                        <TextBlock VerticalAlignment="Center">Privacy Policy</TextBlock>
+                                        <TextBlock VerticalAlignment="Center" l:Localization.Uid="AboutSettingsPage_PrivacyPolicyLink" />
                                     </StackPanel>
                                 </HyperlinkButton>
                             </StackPanel>
@@ -204,7 +205,7 @@
             </controls:SettingsExpander>
 
             <!--  Bundled Model  -->
-            <controls:SettingsExpander Header="Bundled Model" HeaderIcon="{ui:FontIcon Glyph=&#xF0B9;}">
+            <controls:SettingsExpander l:Localization.Uid="AboutSettingsPage_BundledModel" HeaderIcon="{ui:FontIcon Glyph=&#xF0B9;}">
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard>
                         <controls:SettingsCard.Header>
@@ -224,7 +225,7 @@
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Model" />
+                                    l:Localization.Uid="AboutSettingsPage_ModelLabel" />
                                 <TextBlock
                                     Grid.Row="0"
                                     Grid.Column="1"
@@ -237,7 +238,7 @@
                                     Grid.Row="1"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="License" />
+                                    l:Localization.Uid="AboutSettingsPage_ModelLicenseLabel" />
                                 <TextBlock
                                     Grid.Row="1"
                                     Grid.Column="1"
@@ -250,7 +251,7 @@
                                     Grid.Row="2"
                                     Grid.Column="0"
                                     VerticalAlignment="Center"
-                                    Text="Developer" />
+                                    l:Localization.Uid="AboutSettingsPage_DeveloperLabel" />
                                 <TextBlock
                                     Grid.Row="2"
                                     Grid.Column="1"
@@ -268,9 +269,9 @@
                                 <TextBlock
                                     Margin="0,0,8,0"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="AboutSettingsPage_BundledModelRelatedLinks"
                                     FontWeight="SemiBold"
-                                    Style="{StaticResource BodyTextBlockStyle}"
-                                    Text="Related links" />
+                                    Style="{StaticResource BodyTextBlockStyle}" />
 
                                 <HyperlinkButton
                                     Command="{x:Bind ViewModel.OpenLinkCommand}"
@@ -291,7 +292,7 @@
             </controls:SettingsExpander>
 
             <!--  Dependencies  -->
-            <controls:SettingsExpander Header="Third-party Dependencies" HeaderIcon="{ui:FontIcon Glyph=&#xE946;}">
+            <controls:SettingsExpander l:Localization.Uid="AboutSettingsPage_Dependencies" HeaderIcon="{ui:FontIcon Glyph=&#xE946;}">
                 <controls:SettingsExpander.Items>
                     <controls:SettingsCard>
                         <controls:SettingsCard.Header>
@@ -311,12 +312,12 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock
                                                 Grid.Column="0"
-                                                FontWeight="Bold"
-                                                Text="Package ID" />
+                                                l:Localization.Uid="AboutSettingsPage_PackageIdHeader"
+                                                FontWeight="Bold" />
                                             <TextBlock
                                                 Grid.Column="1"
-                                                FontWeight="Bold"
-                                                Text="Version" />
+                                                l:Localization.Uid="AboutSettingsPage_PackageVersionHeader"
+                                                FontWeight="Bold" />
                                         </Grid>
                                     </DataTemplate>
                                 </ListView.HeaderTemplate>
@@ -330,14 +331,21 @@
 
                                             <HyperlinkButton
                                                 Grid.Column="0"
-                                                NavigateUri="{x:Bind NuGetUrl}"
-                                                ToolTipService.ToolTip="{x:Bind NuGetUrl}">
+                                                NavigateUri="{x:Bind PackageUrl}"
+                                                ToolTipService.ToolTip="{x:Bind PackageUrl}">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <Image
                                                         Width="16"
                                                         Height="16"
                                                         VerticalAlignment="Center"
-                                                        Source="{StaticResource NuGetIcon}" />
+                                                        Source="{StaticResource NuGetIcon}"
+                                                        Visibility="{x:Bind IsNuGetPackage}" />
+                                                    <Image
+                                                        Width="16"
+                                                        Height="16"
+                                                        VerticalAlignment="Center"
+                                                        Source="{ThemeResource GitHubIcon}"
+                                                        Visibility="{x:Bind IsNotNuGetPackage}" />
                                                     <TextBlock VerticalAlignment="Center" Text="{x:Bind Id}" />
                                                 </StackPanel>
                                             </HyperlinkButton>
@@ -358,9 +366,9 @@
             </controls:SettingsExpander>
 
             <!--  Special Thanks  -->
-            <controls:SettingsExpander Header="Special Thanks" HeaderIcon="{ui:FontIcon Glyph=&#xEB51;}">
+            <controls:SettingsExpander l:Localization.Uid="AboutSettingsPage_SpecialThanks" HeaderIcon="{ui:FontIcon Glyph=&#xEB51;}">
                 <controls:SettingsExpander.Items>
-                    <controls:SettingsCard Description="App and logo design" Header="Linda">
+                    <controls:SettingsCard l:Localization.Uid="AboutSettingsPage_LindaCard" Header="Linda">
                         <controls:SettingsCard.HeaderIcon>
                             <FontIcon Foreground="#8C63EA" Glyph="&#xEB52;" />
                         </controls:SettingsCard.HeaderIcon>

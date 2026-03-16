@@ -129,15 +129,16 @@ Feature requests would also be great!
 
 DeDupe is built on the following libraries:
 
-| Library                                                               | License      | Purpose                        |
-| --------------------------------------------------------------------- | ------------ | ------------------------------ |
-| [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet)   | MIT          | MVVM architecture              |
-| [CommunityToolkit.WinUI](https://github.com/CommunityToolkit/Windows) | MIT          | UI controls                    |
-| [Microsoft.Extensions.Hosting](https://github.com/dotnet/runtime)     | MIT          | Dependency injection & hosting |
-| [Microsoft.ML.OnnxRuntime](https://github.com/microsoft/onnxruntime)  | MIT          | Neural network inference       |
-| [Serilog](https://github.com/serilog/serilog)                         | Apache 2.0   | Logging                        |
-| [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp)       | Apache 2.0 ¹ | Image preprocessing            |
-| [Windows App SDK](https://github.com/microsoft/WindowsAppSDK)         | MIT          | WinUI 3 framework              |
+| Library                                                                | License      | Purpose                            |
+| ---------------------------------------------------------------------- | ------------ | ---------------------------------- |
+| [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet)    | MIT          | MVVM architecture                  |
+| [CommunityToolkit.WinUI](https://github.com/CommunityToolkit/Windows)  | MIT          | UI controls                        |
+| [Microsoft.Extensions.Hosting](https://github.com/dotnet/runtime)      | MIT          | Dependency injection & hosting     |
+| [Microsoft.ML.OnnxRuntime](https://github.com/microsoft/onnxruntime)   | MIT          | Neural network inference           |
+| [Serilog](https://github.com/serilog/serilog)                          | Apache 2.0   | Logging                            |
+| [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp)        | Apache 2.0 ¹ | Image preprocessing                |
+| [Windows App SDK](https://github.com/microsoft/WindowsAppSDK)          | MIT          | WinUI 3 framework                  |
+| [WinUI3Localizer](https://github.com/AndrewKeepCoding/WinUI3Localizer) | MIT          | Localization (vendored & modified) |
 
 ¹ ImageSharp is licensed under the [Six Labors Split License](https://github.com/SixLabors/ImageSharp/blob/main/LICENSE). 
 It is granted under Apache 2.0 for open source projects.

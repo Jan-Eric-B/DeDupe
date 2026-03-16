@@ -7,37 +7,35 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:l="using:DeDupe.Localization"
     Background="Transparent"
     mc:Ignorable="d">
     <ScrollViewer>
         <StackPanel Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Similarity analysis" />
+                l:Localization.Uid="AnalysisSettingsPage_Title"
+                Style="{StaticResource TitleTextBlockStyle}" />
 
             <!--  Automation  -->
             <TextBlock
                 Margin="0,0,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Automation" />
+                l:Localization.Uid="AnalysisSettingsPage_Automation"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Auto Analyze Similarity  -->
-            <controls:SettingsCard Header="Auto analyze similarities" HeaderIcon="{ui:FontIcon Glyph=&#xE72C;}">
-                <ToggleSwitch
-                    IsOn="{x:Bind ViewModel.AutoAnalyzeSimilarity, Mode=TwoWay}"
-                    OffContent="Off"
-                    OnContent="On" />
+            <controls:SettingsCard l:Localization.Uid="AnalysisSettingsPage_AutoAnalysisSimilarity" HeaderIcon="{ui:FontIcon Glyph=&#xE72C;}">
+                <ToggleSwitch l:Localization.Uid="AnalysisSettingsPage_AutoAnalyzeSimilarityToggle" IsOn="{x:Bind ViewModel.AutoAnalyzeSimilarity, Mode=TwoWay}" />
             </controls:SettingsCard>
 
             <!--  Threshold  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Threshold" />
+                l:Localization.Uid="AnalysisSettingsPage_Threshold"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Similarity Threshold  -->
-            <controls:SettingsCard Header="Similarity threshold" HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
+            <controls:SettingsCard l:Localization.Uid="AnalysisSettingsPage_SimilarityThreshold" HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
                 <NumberBox
                     LargeChange="0.1"
                     Maximum="1.0"

@@ -20,7 +20,6 @@ using System.Threading.Tasks;
 
 namespace DeDupe.Services.Processing
 {
-
     /// <inheritdoc />
     public partial class ImageProcessingService : IImageProcessingService
     {

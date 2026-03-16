@@ -36,6 +36,12 @@ namespace DeDupe.Services
 
         #endregion Appearance
 
+        #region Language
+
+        string Language { get; set; }
+
+        #endregion Language
+
         #region Performance
 
         int ParallelProcessingCores { get; set; }

@@ -2,17 +2,15 @@
 <Page
     x:Class="DeDupe.Views.Settings.ImageProcessingSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converters="using:DeDupe.Converters"
-    xmlns:enums="using:DeDupe.Enums"
     Background="Transparent"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
         <Style x:Key="CustomColorPickerStyle" TargetType="ColorPicker">
             <Setter Property="IsAlphaEnabled" Value="False" />
             <Setter Property="IsAlphaSliderVisible" Value="False" />
@@ -26,30 +24,27 @@
         <StackPanel Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="Image processing" />
+                l:Localization.Uid="ImageProcessingSettingsPage_Title"
+                Style="{StaticResource TitleTextBlockStyle}" />
 
             <!--  Performance Settings  -->
             <TextBlock
                 Margin="0,0,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Performance" />
+                l:Localization.Uid="ImageProcessingSettingsPage_PerformanceHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Parallel Processing  -->
-            <controls:SettingsCard
-                Description="Images processed simultaneously. Higher values are faster but use more memory."
-                Header="Parallel processing"
-                HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_ParallelProcessingCard" HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Slider
                         x:Name="ParallelCoresSlider"
                         Width="150"
+                        l:Localization.Uid="ImageProcessingSettingsPage_ParallelCoresSlider"
                         Maximum="{x:Bind ViewModel.MaxParallelCores, Mode=OneTime}"
                         Minimum="1"
                         StepFrequency="1"
                         TickFrequency="1"
                         TickPlacement="Outside"
-                        ToolTipService.ToolTip="Higher values increase speed but use more memory"
                         Value="{x:Bind ViewModel.ParallelProcessingCores, Mode=TwoWay}" />
                     <TextBlock
                         Width="60"
@@ -61,21 +56,17 @@
 
             <!--  GPU Acceleration  -->
             <controls:SettingsExpander
-                Description="Use GPU for faster feature extraction via DirectML (Intel, AMD, NVIDIA)"
-                Header="GPU acceleration"
+                l:Localization.Uid="ImageProcessingSettingsPage_GpuAccelerationCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE950;}"
                 IsExpanded="True">
-                <ToggleSwitch
-                    IsOn="{x:Bind ViewModel.EnableGpuAcceleration, Mode=TwoWay}"
-                    OffContent="CPU only"
-                    OnContent="Enabled" />
+                <ToggleSwitch l:Localization.Uid="ImageProcessingSettingsPage_GpuAccelerationToggle" IsOn="{x:Bind ViewModel.EnableGpuAcceleration, Mode=TwoWay}" />
                 <controls:SettingsExpander.Items>
                     <!--  Batch Size  -->
-                    <controls:SettingsCard Header="Inference batch size" HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
+                    <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_InferenceBatchSizeCard" HeaderIcon="{ui:FontIcon Glyph=&#xE8F1;}">
                         <controls:SettingsCard.Description>
                             <StackPanel>
-                                <TextBlock>Number of images processed per inference call.</TextBlock>
-                                <TextBlock>Higher values are faster but require more GPU power and memory.</TextBlock>
+                                <TextBlock l:Localization.Uid="ImageProcessingSettingsPage_InferenceBatchSizeDescription_Line1" />
+                                <TextBlock l:Localization.Uid="ImageProcessingSettingsPage_InferenceBatchSizeDescription_Line2" />
                             </StackPanel>
                         </controls:SettingsCard.Description>
                         <StackPanel Orientation="Horizontal" Spacing="10">
@@ -96,17 +87,15 @@
                     </controls:SettingsCard>
 
                     <!--  Tensor Layout  -->
-                    <controls:SettingsCard
-                        Description="NCHW (channels first) is standard for most models. Use NHWC only if your model requires it."
-                        Header="Tensor layout"
-                        HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
+                    <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_TensorLayoutCard" HeaderIcon="{ui:FontIcon Glyph=&#xE9D9;}">
                         <ComboBox
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{x:Bind ViewModel.TensorLayouts}"
-                            SelectedItem="{x:Bind ViewModel.TensorLayout, Mode=TwoWay}">
+                            MinWidth="150"
+                            VerticalAlignment="Center"
+                            ItemsSource="{x:Bind ViewModel.TensorLayoutOptions, Mode=OneWay}"
+                            SelectedIndex="{x:Bind ViewModel.SelectedTensorLayoutIndex, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="enums:TensorLayout">
-                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -117,11 +106,11 @@
             <!--  Resize  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Resize" />
+                l:Localization.Uid="ImageProcessingSettingsPage_ResizeHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Enable Resize  -->
-            <controls:SettingsCard Header="Resize image" HeaderIcon="{ui:FontIcon Glyph=&#xE799;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_ResizeImageCard" HeaderIcon="{ui:FontIcon Glyph=&#xE799;}">
                 <ToggleSwitch
                     IsOn="{x:Bind ViewModel.EnableResizing, Mode=TwoWay}"
                     OffContent="Off"
@@ -130,8 +119,7 @@
 
             <!--  Size  -->
             <controls:SettingsCard
-                Description="Width × Height (px)"
-                Header="Target size"
+                l:Localization.Uid="ImageProcessingSettingsPage_TargetSizeCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE9A6;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <NumberBox
@@ -143,8 +131,7 @@
 
             <!--  Method  -->
             <controls:SettingsCard
-                Description="How to handle images that don't match the target aspect ratio"
-                Header="Aspect ratio handling"
+                l:Localization.Uid="ImageProcessingSettingsPage_AspectRatioCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE740;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -155,34 +142,40 @@
 
                     <ComboBox
                         x:Name="ResizeMethodComboBox"
-                        Grid.Column="0"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{x:Bind ViewModel.ResizeMethods}"
-                        SelectedItem="{x:Bind ViewModel.ResizeMethod, Mode=TwoWay}" />
+                        MinWidth="150"
+                        VerticalAlignment="Center"
+                        ItemsSource="{x:Bind ViewModel.ResizeMethodOptions, Mode=OneWay}"
+                        SelectedIndex="{x:Bind ViewModel.SelectedResizeMethodIndex, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayName}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </StackPanel>
             </controls:SettingsCard>
 
             <!--  Interpolation Methods  -->
             <controls:SettingsExpander
-                Description="Used algorithm when images are scaled up or down"
-                Header="Interpolation methods"
+                l:Localization.Uid="ImageProcessingSettingsPage_InterpolationMethodsCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE158;}"
                 IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                 <controls:SettingsExpander.Items>
 
                     <!--  Upsampling  -->
                     <controls:SettingsCard
-                        Header="Upsampling"
+                        l:Localization.Uid="ImageProcessingSettingsPage_UpsamplingCard"
                         HeaderIcon="{ui:FontIcon Glyph=&#xEE47;}"
                         IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                         <ComboBox
                             x:Name="UpsamplingComboBox"
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
-                            SelectedItem="{x:Bind ViewModel.UpsamplingMethod, Mode=TwoWay}">
+                            MinWidth="150"
+                            VerticalAlignment="Center"
+                            ItemsSource="{x:Bind ViewModel.InterpolationMethodOptions, Mode=OneWay}"
+                            SelectedIndex="{x:Bind ViewModel.SelectedUpsamplingMethodIndex, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="enums:InterpolationMethod">
-                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -190,17 +183,18 @@
 
                     <!--  Downsampling  -->
                     <controls:SettingsCard
-                        Header="Downsampling"
+                        l:Localization.Uid="ImageProcessingSettingsPage_DownsamplingCard"
                         HeaderIcon="{ui:FontIcon Glyph=&#xEE49;}"
                         IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                         <ComboBox
                             x:Name="DownsamplingComboBox"
-                            HorizontalAlignment="Stretch"
-                            ItemsSource="{x:Bind ViewModel.InterpolationMethods}"
-                            SelectedItem="{x:Bind ViewModel.DownsamplingMethod, Mode=TwoWay}">
+                            MinWidth="150"
+                            VerticalAlignment="Center"
+                            ItemsSource="{x:Bind ViewModel.InterpolationMethodOptions, Mode=OneWay}"
+                            SelectedIndex="{x:Bind ViewModel.SelectedDownsamplingMethodIndex, Mode=TwoWay}">
                             <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="enums:InterpolationMethod">
-                                    <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -208,8 +202,7 @@
 
                     <!--  Companding  -->
                     <controls:SettingsCard
-                        Description="Apply gamma compression/expansion during resize for perceptually accurate scaling"
-                        Header="Companding"
+                        l:Localization.Uid="ImageProcessingSettingsPage_CompandingCard"
                         HeaderIcon="{ui:FontIcon Glyph=&#xE793;}"
                         IsEnabled="{x:Bind ViewModel.IsResizeEnabled, Mode=OneWay}">
                         <ToggleSwitch
@@ -223,14 +216,11 @@
             <!--  Border Detection  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Border detection" />
+                l:Localization.Uid="ImageProcessingSettingsPage_BorderDetectionHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Enable Border Removal  -->
-            <controls:SettingsCard
-                Description="Automatically crop black bars or uniform borders from images"
-                Header="Remove borders/letterboxing"
-                HeaderIcon="{ui:FontIcon Glyph=&#xEF2E;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_BorderRemovalCard" HeaderIcon="{ui:FontIcon Glyph=&#xEF2E;}">
                 <ToggleSwitch
                     x:Name="BorderDetectionCheckBox"
                     IsOn="{x:Bind ViewModel.EnableBorderDetection, Mode=TwoWay}"
@@ -240,8 +230,7 @@
 
             <!--  Detection Aggressiveness  -->
             <controls:SettingsExpander
-                Description="How aggressively borders are detected and removed"
-                Header="Detection sensitivity"
+                l:Localization.Uid="ImageProcessingSettingsPage_DetectionSensitivityCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE790;}"
                 IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}"
                 IsExpanded="True">
@@ -250,18 +239,18 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Text="{x:Bind ViewModel.BorderDetectionAggressivenessLabel, Mode=OneWay}" />
                 <controls:SettingsExpander.Items>
-                    <controls:SettingsCard Header="Color tolerance" IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}">
+                    <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_ColorToleranceCard" IsEnabled="{x:Bind ViewModel.IsBorderDetectionEnabled, Mode=OneWay}">
                         <controls:SettingsCard.Description>
                             <StackPanel>
-                                <TextBlock>Lower values detect only very uniform borders (like pure black).</TextBlock>
-                                <TextBlock>Higher values detect borders with more color variation (like dark gray or noisy edges).</TextBlock>
+                                <TextBlock l:Localization.Uid="ImageProcessingSettingsPage_ColorToleranceDescription_Line1" />
+                                <TextBlock l:Localization.Uid="ImageProcessingSettingsPage_ColorToleranceDescription_Line2" />
                             </StackPanel>
                         </controls:SettingsCard.Description>
                         <StackPanel Orientation="Horizontal" Spacing="10">
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="Conservative" />
+                                l:Localization.Uid="ImageProcessingSettingsPage_ConservativeLabel"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <Slider
                                 Width="180"
                                 Maximum="255"
@@ -270,8 +259,8 @@
                                 Value="{x:Bind ViewModel.BorderDetectionTolerance, Mode=TwoWay}" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="Aggressive" />
+                                l:Localization.Uid="ImageProcessingSettingsPage_AggressiveLabel"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <Border
                                 MinWidth="35"
                                 Padding="8,4"
@@ -290,19 +279,26 @@
             <!--  Output  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Output" />
+                l:Localization.Uid="ImageProcessingSettingsPage_OutputHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  File Format  -->
-            <controls:SettingsCard Header="File format" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_FileFormatCard" HeaderIcon="{ui:FontIcon Glyph=&#xE91B;}">
                 <ComboBox
-                    HorizontalAlignment="Stretch"
-                    ItemsSource="{x:Bind ViewModel.OutputFormats}"
-                    SelectedItem="{x:Bind ViewModel.OutputFormat, Mode=TwoWay}" />
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.OutputFormatOptions, Mode=OneWay}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedOutputFormatIndex, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </controls:SettingsCard>
 
             <!--  DPI  -->
-            <controls:SettingsCard Header="DPI" HeaderIcon="{ui:FontIcon Glyph=&#xE7F4;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_DpiCard" HeaderIcon="{ui:FontIcon Glyph=&#xE7F4;}">
                 <NumberBox
                     HorizontalAlignment="Stretch"
                     LargeChange="1"
@@ -313,41 +309,44 @@
             </controls:SettingsCard>
 
             <!--  Color Format  -->
-            <controls:SettingsCard Header="Color format" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
+            <controls:SettingsCard l:Localization.Uid="ImageProcessingSettingsPage_ColorFormatCard" HeaderIcon="{ui:FontIcon Glyph=&#xEB9F;}">
                 <ComboBox
-                    HorizontalAlignment="Stretch"
-                    ItemsSource="{x:Bind ViewModel.ColorFormats}"
-                    SelectedItem="{x:Bind ViewModel.ColorFormat, Mode=TwoWay}" />
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.ColorFormatOptions, Mode=OneWay}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedColorFormatIndex, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </controls:SettingsCard>
 
             <!--  Temp Folder  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Temporary folder" />
+                l:Localization.Uid="ImageProcessingSettingsPage_TempFolderHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Temp Folder  -->
             <controls:SettingsExpander
-                Description="Location for storing pre-processed images temporarily"
-                Header="Temporary folder"
+                l:Localization.Uid="ImageProcessingSettingsPage_TempFolderCard"
                 HeaderIcon="{ui:FontIcon Glyph=&#xE8B7;}"
                 IsExpanded="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <ToggleSwitch
-                        IsOn="{x:Bind ViewModel.UseCustomTempFolder, Mode=TwoWay}"
-                        OffContent="Application Temporary folder"
-                        OnContent="Custom" />
+                    <ToggleSwitch l:Localization.Uid="ImageProcessingSettingsPage_TempFolderToggle" IsOn="{x:Bind ViewModel.UseCustomTempFolder, Mode=TwoWay}" />
                     <Button
                         HorizontalAlignment="Stretch"
-                        Command="{x:Bind ViewModel.OpenTempFolderCommand}"
-                        ToolTipService.ToolTip="Open folder in Explorer">
+                        l:Localization.Uid="ImageProcessingSettingsPage_OpenTempFolderButton"
+                        Command="{x:Bind ViewModel.OpenTempFolderCommand}">
                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8DA;" />
                     </Button>
                 </StackPanel>
                 <controls:SettingsExpander.Items>
                     <!--  Custom Temp Folder  -->
                     <controls:SettingsCard
-                        Header="Custom directory"
+                        l:Localization.Uid="ImageProcessingSettingsPage_CustomDirectoryCard"
                         HeaderIcon="{ui:FontIcon Glyph=&#xE838;}"
                         IsEnabled="{x:Bind ViewModel.IsCustomTempFolderEnabled, Mode=OneWay}">
 
@@ -369,8 +368,8 @@
                             </Border>
                             <Button
                                 HorizontalAlignment="Stretch"
-                                Command="{x:Bind ViewModel.BrowseTempFolderCommand}"
-                                ToolTipService.ToolTip="Browse for folder">
+                                l:Localization.Uid="ImageProcessingSettingsPage_BrowseTempFolderButton"
+                                Command="{x:Bind ViewModel.BrowseTempFolderCommand}">
                                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
                             </Button>
                         </StackPanel>

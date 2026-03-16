@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Helpers;
+using DeDupe.Localization;
 using DeDupe.Models.Configuration;
 using DeDupe.Services;
 using DeDupe.Services.Model;
@@ -19,13 +20,17 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
+        private readonly ILocalizer _localizer;
         private readonly ILogger<ModelSettingsViewModel> _logger;
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILogger<ModelSettingsViewModel> logger)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILocalizer localizer, ILogger<ModelSettingsViewModel> logger)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _localizer.LanguageChanged += OnLanguageChanged;
 
             Title = "Model Configuration";
         }
@@ -75,7 +80,7 @@ namespace DeDupe.ViewModels.Settings
             ? BundledModelInfo.DisplayName
             : !string.IsNullOrEmpty(CustomModelFilePath)
                 ? Path.GetFileName(CustomModelFilePath)
-                : "No model selected";
+                : _localizer.GetLocalizedString("Model_NoModelSelected");
 
         public string ActiveModelPath => UseBundledModel
             ? _bundledModelService.GetModelPath()
@@ -87,7 +92,7 @@ namespace DeDupe.ViewModels.Settings
 
         public string CustomFileName => !string.IsNullOrEmpty(CustomModelFilePath)
             ? Path.GetFileName(CustomModelFilePath)
-            : "Select a model file...";
+            : _localizer.GetLocalizedString("Model_SelectModelFile");
 
         [RelayCommand]
         private void OpenModelLocation()
@@ -246,6 +251,17 @@ namespace DeDupe.ViewModels.Settings
         }
 
         #endregion Normalization
+
+        #region Language Changed
+
+        private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
+        {
+            // Refresh localized computed properties
+            OnPropertyChanged(nameof(ModelDisplayName));
+            OnPropertyChanged(nameof(CustomFileName));
+        }
+
+        #endregion Language Changed
 
         #region Navigation
 

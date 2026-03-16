@@ -102,6 +102,16 @@ namespace DeDupe.Services
 
         #endregion Appearance
 
+        #region Language
+
+        public string Language
+        {
+            get => ApplicationData.Current.LocalSettings.Values[nameof(Language)] as string ?? "en-US";
+            set => ApplicationData.Current.LocalSettings.Values[nameof(Language)] = value;
+        }
+
+        #endregion Language
+
         #region Performance
 
         private const string ParallelProcessingCoresKey = "ParallelProcessingCores";

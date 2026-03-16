@@ -2,88 +2,99 @@
 <Page
     x:Class="DeDupe.Views.Settings.GeneralSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:converter="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:enums="using:DeDupe.Enums"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="using:CommunityToolkit.WinUI"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:l="using:DeDupe.Localization"
     Background="Transparent"
     mc:Ignorable="d">
-    <Page.Resources>
-        <converter:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
-    </Page.Resources>
     <ScrollViewer>
         <StackPanel Spacing="4">
             <TextBlock
                 Margin="0,0,0,8"
-                Style="{StaticResource TitleTextBlockStyle}"
-                Text="General" />
+                l:Localization.Uid="GeneralSettingsPage_Title"
+                Style="{StaticResource TitleTextBlockStyle}" />
 
             <!--  Appearance  -->
             <TextBlock
                 Margin="0,0,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Appearance" />
+                l:Localization.Uid="GeneralSettingsPage_AppearanceHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Theme  -->
-            <controls:SettingsCard Header="Theme" HeaderIcon="{ui:FontIcon Glyph=&#xE793;}">
+            <controls:SettingsCard l:Localization.Uid="GeneralSettingsPage_ThemeCard" HeaderIcon="{ui:FontIcon Glyph=&#xE793;}">
                 <ComboBox
                     MinWidth="150"
                     VerticalAlignment="Center"
-                    ItemsSource="{x:Bind ViewModel.ThemeOptions}"
+                    ItemsSource="{x:Bind ViewModel.ThemeOptions, Mode=OneWay}"
                     SelectedIndex="{x:Bind ViewModel.SelectedThemeIndex, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="enums:AppTheme">
-                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </controls:SettingsCard>
 
             <!--  Backdrop  -->
-            <controls:SettingsCard Header="Window backdrop" HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">
+            <controls:SettingsCard l:Localization.Uid="GeneralSettingsPage_BackdropCard" HeaderIcon="{ui:FontIcon Glyph=&#xE790;}">
                 <ComboBox
                     MinWidth="150"
                     VerticalAlignment="Center"
-                    ItemsSource="{x:Bind ViewModel.BackdropOptions}"
+                    ItemsSource="{x:Bind ViewModel.BackdropOptions, Mode=OneWay}"
                     SelectedIndex="{x:Bind ViewModel.SelectedBackdropIndex, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="enums:AppBackdrop">
-                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </controls:SettingsCard>
 
             <!--  Accent Color  -->
-            <controls:SettingsCard Header="Accent color" HeaderIcon="{ui:FontIcon Glyph=&#xE771;}">
+            <controls:SettingsCard l:Localization.Uid="GeneralSettingsPage_AccentColorCard" HeaderIcon="{ui:FontIcon Glyph=&#xE771;}">
                 <ComboBox
                     MinWidth="150"
                     VerticalAlignment="Center"
-                    ItemsSource="{x:Bind ViewModel.AccentColorOptions}"
+                    ItemsSource="{x:Bind ViewModel.AccentColorOptions, Mode=OneWay}"
                     SelectedIndex="{x:Bind ViewModel.SelectedAccentColorIndex, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="enums:AppAccentColor">
-                            <TextBlock Text="{x:Bind Converter={StaticResource EnumDescriptionConverter}}" />
+                        <DataTemplate>
+                            <TextBlock Text="{Binding DisplayName}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
             </controls:SettingsCard>
 
+            <!--  Language  -->
+            <TextBlock
+                Margin="0,29,0,3"
+                l:Localization.Uid="GeneralSettingsPage_LanguageHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}"
+                Text="Language" />
+
+            <controls:SettingsCard l:Localization.Uid="GeneralSettingsPage_LanguageCard" HeaderIcon="{ui:FontIcon Glyph=&#xE774;}">
+                <ComboBox
+                    MinWidth="150"
+                    VerticalAlignment="Center"
+                    ItemsSource="{x:Bind ViewModel.AvailableLanguages}"
+                    SelectedItem="{x:Bind ViewModel.SelectedLanguage, Mode=TwoWay}" />
+            </controls:SettingsCard>
+
             <!--  Logging  -->
             <TextBlock
                 Margin="0,29,0,3"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                Text="Logging" />
+                l:Localization.Uid="GeneralSettingsPage_LoggingHeader"
+                Style="{StaticResource BodyStrongTextBlockStyle}" />
 
             <!--  Log Folder  -->
-            <controls:SettingsCard Header="Log folder" HeaderIcon="{ui:FontIcon Glyph=&#xE838;}">
+            <controls:SettingsCard l:Localization.Uid="GeneralSettingsPage_LogFolderCard" HeaderIcon="{ui:FontIcon Glyph=&#xE838;}">
                 <Button
                     HorizontalAlignment="Stretch"
-                    Command="{x:Bind ViewModel.OpenLogFolderCommand}"
-                    ToolTipService.ToolTip="Open folder in Explorer">
+                    l:Localization.Uid="GeneralSettingsPage_LogFolderButton"
+                    Command="{x:Bind ViewModel.OpenLogFolderCommand}">
                     <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xED25;" />
                 </Button>
             </controls:SettingsCard>

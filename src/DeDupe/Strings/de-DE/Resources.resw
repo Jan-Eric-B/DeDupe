@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <!-- MainWindow -->
+  <data name="MainWindow_SettingsButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <!-- SettingsWindow -->
+  <data name="SettingsWindow_Title.Text" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="SettingsWindow_NavGeneral.Content" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="SettingsWindow_NavImageProcessing.Content" xml:space="preserve">
+    <value>Bildverarbeitung</value>
+  </data>
+  <data name="SettingsWindow_NavModelConfiguration.Content" xml:space="preserve">
+    <value>Modellkonfiguration</value>
+  </data>
+  <data name="SettingsWindow_NavSimilarityAnalysis.Content" xml:space="preserve">
+    <value>Ähnlichkeits-Analyse</value>
+  </data>
+  <data name="SettingsWindow_NavAbout.Content" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <!-- GeneralSettingsPage -->
+  <data name="GeneralSettingsPage_Title.Text" xml:space="preserve">
+    <value>Allgemein</value>
+  </data>
+  <data name="GeneralSettingsPage_AppearanceHeader.Text" xml:space="preserve">
+    <value>Darstellung</value>
+  </data>
+  <data name="GeneralSettingsPage_ThemeCard.Header" xml:space="preserve">
+    <value>Design</value>
+  </data>
+  <data name="GeneralSettingsPage_BackdropCard.Header" xml:space="preserve">
+    <value>Fensterhintergrund</value>
+  </data>
+  <data name="GeneralSettingsPage_AccentColorCard.Header" xml:space="preserve">
+    <value>Akzentfarbe</value>
+  </data>
+  <data name="GeneralSettingsPage_LanguageHeader.Text" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="GeneralSettingsPage_LanguageCard.Header" xml:space="preserve">
+    <value>Anzeigesprache</value>
+  </data>
+  <data name="GeneralSettingsPage_LoggingHeader.Text" xml:space="preserve">
+    <value>Protokollierung</value>
+  </data>
+  <data name="GeneralSettingsPage_LogFolderCard.Header" xml:space="preserve">
+    <value>Protokollordner</value>
+  </data>
+  <data name="GeneralSettingsPage_LogFolderButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ordner im Explorer öffnen</value>
+  </data>
+  <data name="AppTheme_System.Text" xml:space="preserve">
+    <value>Systemstandard</value>
+  </data>
+  <data name="AppTheme_Light.Text" xml:space="preserve">
+    <value>Hell</value>
+  </data>
+  <data name="AppTheme_Dark.Text" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="AppBackdrop_None.Text" xml:space="preserve">
+    <value>Kein</value>
+  </data>
+  <data name="AppBackdrop_Mica.Text" xml:space="preserve">
+    <value>Mica</value>
+  </data>
+  <data name="AppBackdrop_MicaAlt.Text" xml:space="preserve">
+    <value>Mica Alt</value>
+  </data>
+  <data name="AppBackdrop_Acrylic.Text" xml:space="preserve">
+    <value>Acrylic</value>
+  </data>
+  <data name="AppAccentColor_Application.Text" xml:space="preserve">
+    <value>Lila</value>
+  </data>
+  <data name="AppAccentColor_System.Text" xml:space="preserve">
+    <value>Systemstandard</value>
+  </data>
+  <!-- AnalysisSettingsPage -->
+  <data name="AnalysisSettingsPage_Title.Text" xml:space="preserve">
+    <value>Ähnlichkeits-Analyse</value>
+  </data>
+  <data name="AnalysisSettingsPage_Automation.Text" xml:space="preserve">
+    <value>Verhalten</value>
+  </data>
+  <data name="AnalysisSettingsPage_AutoAnalysisSimilarity.Header" xml:space="preserve">
+    <value>Ähnlichkeiten automatisch analysieren</value>
+  </data>
+  <data name="AnalysisSettingsPage_Threshold.Text" xml:space="preserve">
+    <value>Ähnlichkeits-Grenze</value>
+  </data>
+  <data name="AnalysisSettingsPage_SimilarityThreshold.Header" xml:space="preserve">
+    <value>Standard Ähnlichkeits-Grenze</value>
+  </data>
+  <data name="AnalysisSettingsPage_AutoAnalyzeSimilarityToggle.OffContent" xml:space="preserve">
+    <value>Aus</value>
+  </data>
+  <data name="AnalysisSettingsPage_AutoAnalyzeSimilarityToggle.OnContent" xml:space="preserve">
+    <value>An</value>
+  </data>
+  <!-- ImageProcessingSettingsPage -->
+  <data name="ImageProcessingSettingsPage_Title.Text" xml:space="preserve">
+    <value>Bildverarbeitung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_PerformanceHeader.Text" xml:space="preserve">
+    <value>Leistung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ParallelProcessingCard.Header" xml:space="preserve">
+    <value>Parallelverarbeitung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ParallelProcessingCard.Description" xml:space="preserve">
+    <value>Gleichzeitig verarbeitete Bilder.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ParallelCoresSlider.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Höhere Werte erhöhen die Geschwindigkeit, verbrauchen aber mehr Arbeitsspeicher</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_GpuAccelerationCard.Header" xml:space="preserve">
+    <value>GPU-Beschleunigung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_GpuAccelerationCard.Description" xml:space="preserve">
+    <value>Für schnellere Merkmalsextraktion verwenden (Intel, AMD, NVIDIA).</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_GpuAccelerationToggle.OnContent" xml:space="preserve">
+    <value>An</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_GpuAccelerationToggle.OffContent" xml:space="preserve">
+    <value>Aus</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_InferenceBatchSizeCard.Header" xml:space="preserve">
+    <value>Inferenz-Batchgröße</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_InferenceBatchSizeDescription_Line1.Text" xml:space="preserve">
+    <value>Anzahl der Bilder pro Inferenzaufruf.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_InferenceBatchSizeDescription_Line2.Text" xml:space="preserve">
+    <value>Höhere Werte sind schneller, benötigen aber mehr GPU-Leistung und Arbeitsspeicher.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TensorLayoutCard.Header" xml:space="preserve">
+    <value>Tensor-Layout</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ResizeHeader.Text" xml:space="preserve">
+    <value>Größenänderung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ResizeImageCard.Header" xml:space="preserve">
+    <value>Bildgröße ändern</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TargetSizeCard.Header" xml:space="preserve">
+    <value>Zielgröße</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TargetSizeCard.Description" xml:space="preserve">
+    <value>Breite × Höhe (px)</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_AspectRatioCard.Header" xml:space="preserve">
+    <value>Seitenverhältnis</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_AspectRatioCard.Description" xml:space="preserve">
+    <value>Verhalten bei Bildern, die nicht dem Zielseitenverhältnis entsprechen.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_InterpolationMethodsCard.Header" xml:space="preserve">
+    <value>Interpolationsmethoden</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_InterpolationMethodsCard.Description" xml:space="preserve">
+    <value>Verwendeter Algorithmus beim Hoch- oder Herunterskalieren von Bildern.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_UpsamplingCard.Header" xml:space="preserve">
+    <value>Hochskalierung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_DownsamplingCard.Header" xml:space="preserve">
+    <value>Herunterskalierung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_CompandingCard.Header" xml:space="preserve">
+    <value>Kompandierung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_CompandingCard.Description" xml:space="preserve">
+    <value>Gamma-Kompression/-Expansion bei der Größenänderung für wahrnehmungsgetreue Skalierung anwenden.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_BorderDetectionHeader.Text" xml:space="preserve">
+    <value>Rand Erkennung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_BorderRemovalCard.Header" xml:space="preserve">
+    <value>Ränder/Letterboxing entfernen</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_BorderRemovalCard.Description" xml:space="preserve">
+    <value>Entfernt schwarze Balken oder gleichmäßige Ränder aus Bildern.</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_DetectionSensitivityCard.Header" xml:space="preserve">
+    <value>Erkennungsempfindlichkeit</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_DetectionSensitivityCard.Description" xml:space="preserve">
+    <value>Intensität der Randerkennung und -entfernung</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ColorToleranceCard.Header" xml:space="preserve">
+    <value>Farbtoleranz</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ColorToleranceDescription_Line1.Text" xml:space="preserve">
+    <value>Niedrigere Werte erkennen nur sehr gleichmäßige Ränder (z. B. reines Schwarz).</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ColorToleranceDescription_Line2.Text" xml:space="preserve">
+    <value>Höhere Werte erkennen Ränder mit mehr Farbvariation (z. B. Dunkelgrau oder verrauschte Kanten).</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ConservativeLabel.Text" xml:space="preserve">
+    <value>Konservativ</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_AggressiveLabel.Text" xml:space="preserve">
+    <value>Aggressiv</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_OutputHeader.Text" xml:space="preserve">
+    <value>Ausgabe</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_FileFormatCard.Header" xml:space="preserve">
+    <value>Dateiformat</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_DpiCard.Header" xml:space="preserve">
+    <value>DPI</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_ColorFormatCard.Header" xml:space="preserve">
+    <value>Farbformat</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TempFolderHeader.Text" xml:space="preserve">
+    <value>Temporärer Ordner</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TempFolderCard.Header" xml:space="preserve">
+    <value>Temporärer Ordner</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TempFolderCard.Description" xml:space="preserve">
+    <value>Speicherort für temporär vorverarbeitete Bilder</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TempFolderToggle.OffContent" xml:space="preserve">
+    <value>Temporärer Anwendungsordner</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_TempFolderToggle.OnContent" xml:space="preserve">
+    <value>Benutzerdefiniert</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_OpenTempFolderButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ordner im Explorer öffnen</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_CustomDirectoryCard.Header" xml:space="preserve">
+    <value>Benutzerdefinierter Order</value>
+  </data>
+  <data name="ImageProcessingSettingsPage_BrowseTempFolderButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ordner durchsuchen</value>
+  </data>
+  <data name="ToggleSwitch_On.OnContent" xml:space="preserve">
+    <value>An</value>
+  </data>
+  <data name="ToggleSwitch_Off.OffContent" xml:space="preserve">
+    <value>Aus</value>
+  </data>
+  <data name="ImageProcessing_GpuAccelerationEnabled.Text" xml:space="preserve">
+    <value>GPU-Beschleunigung</value>
+  </data>
+  <data name="ImageProcessing_CpuOnlyMode.Text" xml:space="preserve">
+    <value>Nur CPU</value>
+  </data>
+  <data name="BorderDetection_VeryConservative.Text" xml:space="preserve">
+    <value>Sehr konservativ</value>
+  </data>
+  <data name="BorderDetection_Conservative.Text" xml:space="preserve">
+    <value>Konservativ</value>
+  </data>
+  <data name="BorderDetection_Balanced.Text" xml:space="preserve">
+    <value>Ausgewogen</value>
+  </data>
+  <data name="BorderDetection_Aggressive.Text" xml:space="preserve">
+    <value>Aggressiv</value>
+  </data>
+  <data name="BorderDetection_VeryAggressive.Text" xml:space="preserve">
+    <value>Sehr aggressiv</value>
+  </data>
+  <data name="Model_NoModelSelected.Text" xml:space="preserve">
+    <value>Kein Modell ausgewählt</value>
+  </data>
+  <data name="Model_SelectModelFile.Text" xml:space="preserve">
+    <value>Modelldatei auswählen...</value>
+  </data>
+  <data name="TensorLayout_NCHW" xml:space="preserve">
+    <value>NCHW (Kanäle zuerst)</value>
+  </data>
+  <data name="TensorLayout_NHWC" xml:space="preserve">
+    <value>NHWC (Kanäle zuletzt)</value>
+  </data>
+  <data name="ResizeMethod_Padding" xml:space="preserve">
+    <value>Auffüllung</value>
+  </data>
+  <data name="ResizeMethod_Stretch" xml:space="preserve">
+    <value>Strecken</value>
+  </data>
+  <data name="ResizeMethod_Crop" xml:space="preserve">
+    <value>Zuschneiden</value>
+  </data>
+  <data name="InterpolationMethod_NearestNeighbor" xml:space="preserve">
+    <value>Nächster Nachbar</value>
+  </data>
+  <data name="InterpolationMethod_Bilinear" xml:space="preserve">
+    <value>Bilinear</value>
+  </data>
+  <data name="InterpolationMethod_Bicubic" xml:space="preserve">
+    <value>Bikubisch</value>
+  </data>
+  <data name="InterpolationMethod_MitchellNetravali" xml:space="preserve">
+    <value>Mitchell-Netravali</value>
+  </data>
+  <data name="InterpolationMethod_Lanczos" xml:space="preserve">
+    <value>Lanczos</value>
+  </data>
+  <data name="OutputFormat_PNG" xml:space="preserve">
+    <value>PNG</value>
+  </data>
+  <data name="OutputFormat_JPEG" xml:space="preserve">
+    <value>JPEG</value>
+  </data>
+  <data name="OutputFormat_BMP" xml:space="preserve">
+    <value>BMP</value>
+  </data>
+  <data name="OutputFormat_TIFF" xml:space="preserve">
+    <value>TIFF</value>
+  </data>
+  <data name="OutputFormat_WebP" xml:space="preserve">
+    <value>WebP</value>
+  </data>
+  <data name="ColorFormat_RGB8" xml:space="preserve">
+    <value>RGB 8-Bit</value>
+  </data>
+  <data name="ColorFormat_BGR8" xml:space="preserve">
+    <value>BGR 8-Bit</value>
+  </data>
+  <data name="ColorFormat_Gray8" xml:space="preserve">
+    <value>Graustufen 8-Bit</value>
+  </data>
+  <data name="ColorFormat_RGB16" xml:space="preserve">
+    <value>RGB 16-Bit</value>
+  </data>
+  <data name="ColorFormat_BGR16" xml:space="preserve">
+    <value>BGR 16-Bit</value>
+  </data>
+  <!-- ModelSettingsPage -->
+  <data name="ModelSettingsPage_Title.Text" xml:space="preserve">
+    <value>Modellkonfiguration</value>
+  </data>
+  <data name="ModelSettingsPage_ModelSelectionHeader.Text" xml:space="preserve">
+    <value>Modellauswahl</value>
+  </data>
+  <data name="ModelSettingsPage_ModelSourceCard.Header" xml:space="preserve">
+    <value>Modellquelle</value>
+  </data>
+  <data name="ModelSettingsPage_ModelSourceCard.Description" xml:space="preserve">
+    <value>Zwischen dem mitgelieferten Modell und Ihrer eigenen ONNX-Datei wechseln.</value>
+  </data>
+  <data name="ModelSettingsPage_ModelSourceBundled.Content" xml:space="preserve">
+    <value>Mitgeliefert</value>
+  </data>
+  <data name="ModelSettingsPage_ModelSourceCustom.Content" xml:space="preserve">
+    <value>Benutzerdefiniert</value>
+  </data>
+  <data name="ModelSettingsPage_ModelFileCard.Header" xml:space="preserve">
+    <value>Modelldatei</value>
+  </data>
+  <data name="ModelSettingsPage_ModelFileCard.Description" xml:space="preserve">
+    <value>Per Drag-and-Drop oder über Durchsuchen eine eigene .onnx-Datei auswählen.</value>
+  </data>
+  <data name="ModelSettingsPage_BrowseButton.Content" xml:space="preserve">
+    <value>Durchsuchen</value>
+  </data>
+  <data name="ModelSettingsPage_NeedModelCard.Header" xml:space="preserve">
+    <value>Modell benötigt?</value>
+  </data>
+  <data name="ModelSettingsPage_NeedModelCard.Description" xml:space="preserve">
+    <value>Kompatible ONNX-Modelle aus diesen Repositories finden.</value>
+  </data>
+  <data name="ModelSettingsPage_AdvancedHeader.Text" xml:space="preserve">
+    <value>Erweitert</value>
+  </data>
+  <data name="ModelSettingsPage_NormalizationCard.Header" xml:space="preserve">
+    <value>Normalisierung</value>
+  </data>
+  <data name="ModelSettingsPage_NormalizationCard.Description" xml:space="preserve">
+    <value>Bildvorverarbeitung konfigurieren. Wird beim Zurückwechseln zum mitgelieferten Modell automatisch angewendet.</value>
+  </data>
+  <data name="ModelSettingsPage_ApplyDefaultsButton.Content" xml:space="preserve">
+    <value>Standardwerte des mitgelieferten Modells anwenden.</value>
+  </data>
+  <data name="ModelSettingsPage_MeanCard.Header" xml:space="preserve">
+    <value>Mittelwert (R, G, B)</value>
+  </data>
+  <data name="ModelSettingsPage_StdDevCard.Header" xml:space="preserve">
+    <value>Standardabweichung (R, G, B)</value>
+  </data>
+  <data name="ModelSettingsPage_ModelFileDrop.Caption" xml:space="preserve">
+    <value>Dieses Modell verwenden</value>
+  </data>
+  <!-- AboutSettingsPage -->
+  <data name="AboutSettingsPage_AppSpecifications.Header" xml:space="preserve">
+    <value>App-Informationen</value>
+  </data>
+  <data name="AboutSettingsPage_CopyButton.Content" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="AboutSettingsPage_ApplicationLabel.Text" xml:space="preserve">
+    <value>Anwendung</value>
+  </data>
+  <data name="AboutSettingsPage_PublisherLabel.Text" xml:space="preserve">
+    <value>Herausgeber</value>
+  </data>
+  <data name="AboutSettingsPage_VersionLabel.Text" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutSettingsPage_CommitLabel.Text" xml:space="preserve">
+    <value>Commit</value>
+  </data>
+  <data name="AboutSettingsPage_DotNetVersionLabel.Text" xml:space="preserve">
+    <value>.NET-Version</value>
+  </data>
+  <data name="AboutSettingsPage_RelatedLinks.Text" xml:space="preserve">
+    <value>Verwandte Links</value>
+  </data>
+  <data name="AboutSettingsPage_SourceCodeLink.Text" xml:space="preserve">
+    <value>Quellcode</value>
+  </data>
+  <data name="AboutSettingsPage_LicenseLink.Text" xml:space="preserve">
+    <value>Lizenz</value>
+  </data>
+  <data name="AboutSettingsPage_PrivacyPolicyLink.Text" xml:space="preserve">
+    <value>Datenschutzrichtlinie</value>
+  </data>
+  <data name="AboutSettingsPage_BundledModel.Header" xml:space="preserve">
+    <value>Integriertes Modell</value>
+  </data>
+  <data name="AboutSettingsPage_ModelLabel.Text" xml:space="preserve">
+    <value>Modell</value>
+  </data>
+  <data name="AboutSettingsPage_ModelLicenseLabel.Text" xml:space="preserve">
+    <value>Lizenz</value>
+  </data>
+  <data name="AboutSettingsPage_DeveloperLabel.Text" xml:space="preserve">
+    <value>Entwickler</value>
+  </data>
+  <data name="AboutSettingsPage_BundledModelRelatedLinks.Text" xml:space="preserve">
+    <value>Verwandte Links</value>
+  </data>
+  <data name="AboutSettingsPage_Dependencies.Header" xml:space="preserve">
+    <value>Drittanbieter-Abhängigkeiten</value>
+  </data>
+  <data name="AboutSettingsPage_PackageIdHeader.Text" xml:space="preserve">
+    <value>Paket-ID</value>
+  </data>
+  <data name="AboutSettingsPage_PackageVersionHeader.Text" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AboutSettingsPage_SpecialThanks.Header" xml:space="preserve">
+    <value>Besonderer Dank</value>
+  </data>
+  <data name="AboutSettingsPage_LindaCard.Description" xml:space="preserve">
+    <value>App- und Logo-Design</value>
+  </data>
+</root>

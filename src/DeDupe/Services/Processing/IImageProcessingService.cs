@@ -13,7 +13,9 @@ namespace DeDupe.Services.Processing
     public interface IImageProcessingService
     {
         bool ClearTempFolder();
+
         bool InitializeTempFolder();
+
         Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
     }
 }
