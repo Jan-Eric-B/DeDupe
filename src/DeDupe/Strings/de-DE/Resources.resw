@@ -692,7 +692,7 @@
     <value>Nur ähnliche (&lt;100%)</value>
   </data>
   <data name="ManagementPage_SimilarityThresholdLabel.Text" xml:space="preserve">
-    <value>Ähnlichkeitsschwelle:</value>
+    <value>Ähnlichkeits-Grenze:</value>
   </data>
   <data name="ManagementPage_SimilaritySlider.ToolTipService.ToolTip" xml:space="preserve">
     <value>Wie ähnlich Bilder sein müssen, um gruppiert zu werden</value>
