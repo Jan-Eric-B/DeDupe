@@ -7,7 +7,7 @@
     xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:enums="using:DeDupe.Enums"
-    xmlns:helpers="using:DeDupe.Helpers"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
     xmlns:pages="using:DeDupe.ViewModels.Pages"
@@ -15,7 +15,6 @@
     d:DataContext="{d:DesignInstance Type=pages:ManagementViewModel}"
     mc:Ignorable="d">
     <Page.Resources>
-        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
         <converters:SimilarityToPercentageConverter x:Key="SimilarityToPercentageConverter" />
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
         <converters:PercentageConverter x:Key="PercentageConverter" />
@@ -110,57 +109,56 @@
                 <!--  Auto-Selection  -->
                 <DropDownButton
                     Grid.Column="0"
-                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
-                    ToolTipService.ToolTip="Apply auto selection to all groups">
+                    l:Localization.Uid="ManagementPage_AutoSelectAllButton"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xF16E;" />
-                        <TextBlock Text="Auto-Select All" />
+                        <TextBlock l:Localization.Uid="ManagementPage_AutoSelectAllText" />
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
-
-                            <MenuFlyoutSubItem Text="By Resolution">
+                            <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByResolution">
                                 <MenuFlyoutSubItem.Icon>
                                     <FontIcon Glyph="&#xE9E9;" />
                                 </MenuFlyoutSubItem.Icon>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepHighestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepHighestResolution)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepHighestResolution" Click="ApplyStrategyToAll_KeepHighestResolution">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE9E9;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepLowestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLowestResolution)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepLowestResolution" Click="ApplyStrategyToAll_KeepLowestResolution">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE9E9;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                             </MenuFlyoutSubItem>
 
-                            <MenuFlyoutSubItem Text="By File Size">
+                            <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByFileSize">
                                 <MenuFlyoutSubItem.Icon>
                                     <FontIcon Glyph="&#xE729;" />
                                 </MenuFlyoutSubItem.Icon>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepLargestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLargestFileSize)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepLargestFileSize" Click="ApplyStrategyToAll_KeepLargestFileSize">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE729;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepSmallestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepSmallestFileSize)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepSmallestFileSize" Click="ApplyStrategyToAll_KeepSmallestFileSize">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE729;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
                             </MenuFlyoutSubItem>
 
-                            <MenuFlyoutSubItem Text="By Date">
+                            <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByDate">
                                 <MenuFlyoutSubItem.Icon>
                                     <FontIcon Glyph="&#xE787;" />
                                 </MenuFlyoutSubItem.Icon>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepNewest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepNewest)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepNewest" Click="ApplyStrategyToAll_KeepNewest">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE823;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="ApplyStrategyToAll_KeepOldest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepOldest)}">
+                                <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepOldest" Click="ApplyStrategyToAll_KeepOldest">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74B;" />
                                     </MenuFlyoutItem.Icon>
@@ -169,13 +167,13 @@
 
                             <MenuFlyoutSeparator />
 
-                            <MenuFlyoutItem Click="SelectAllCheckBox_Click" Text="Select All">
+                            <MenuFlyoutItem l:Localization.Uid="ManagementPage_SelectAllMenuItem" Click="SelectAllCheckBox_Click">
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE73A;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
 
-                            <MenuFlyoutItem Click="ClearAllSelections_Click" Text="Clear All">
+                            <MenuFlyoutItem l:Localization.Uid="ManagementPage_ClearAllMenuItem" Click="ClearAllSelections_Click">
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE739;" />
                                 </MenuFlyoutItem.Icon>
@@ -187,38 +185,38 @@
                 <!--  Sort Dropdown  -->
                 <DropDownButton
                     Grid.Column="1"
-                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
-                    ToolTipService.ToolTip="Sort duplicate groups">
+                    l:Localization.Uid="ManagementPage_SortButton"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xE8CB;" />
                         <TextBlock>
-                            <Run Text="Sort: " />
-                            <Run Text="{x:Bind ViewModel.CurrentSortOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                            <Run l:Localization.Uid="ManagementPage_SortPrefix" />
+                            <Run Text="{x:Bind ViewModel.CurrentSortOptionDisplay, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_SortSimilarity"
                                 Click="SortBy_Similarity"
                                 GroupName="SortGroup"
-                                IsChecked="True"
-                                Text="Similarity (High to Low)">
+                                IsChecked="True">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE9D9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_SortImageCount"
                                 Click="SortBy_ImageCount"
-                                GroupName="SortGroup"
-                                Text="Image Count">
+                                GroupName="SortGroup">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8B9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_SortGroupName"
                                 Click="SortBy_Name"
-                                GroupName="SortGroup"
-                                Text="Group Name">
+                                GroupName="SortGroup">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8AC;" />
                                 </RadioMenuFlyoutItem.Icon>
@@ -230,38 +228,38 @@
                 <!--  Filter Dropdown  -->
                 <DropDownButton
                     Grid.Column="2"
-                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}"
-                    ToolTipService.ToolTip="Filter duplicate groups">
+                    l:Localization.Uid="ManagementPage_FilterButton"
+                    IsEnabled="{x:Bind ViewModel.HasSimilarityResults, Mode=OneWay}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontSize="14" Glyph="&#xE71C;" />
                         <TextBlock>
-                            <Run Text="Filter: " />
-                            <Run Text="{x:Bind ViewModel.CurrentFilterOption, Mode=OneWay, Converter={StaticResource EnumDescriptionConverter}}" />
+                            <Run l:Localization.Uid="ManagementPage_FilterPrefix" />
+                            <Run Text="{x:Bind ViewModel.CurrentFilterOptionDisplay, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
                     <DropDownButton.Flyout>
                         <MenuFlyout Placement="Bottom">
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_FilterAll"
                                 Click="FilterBy_All"
                                 GroupName="FilterGroup"
-                                IsChecked="True"
-                                Text="All Groups">
+                                IsChecked="True">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE8B9;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_FilterExact"
                                 Click="FilterBy_ExactMatchesOnly"
-                                GroupName="FilterGroup"
-                                Text="Exact Matches (100%)">
+                                GroupName="FilterGroup">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE73E;" />
                                 </RadioMenuFlyoutItem.Icon>
                             </RadioMenuFlyoutItem>
                             <RadioMenuFlyoutItem
+                                l:Localization.Uid="ManagementPage_FilterSimilar"
                                 Click="FilterBy_SimilarOnly"
-                                GroupName="FilterGroup"
-                                Text="Similar Only (&lt;100%)">
+                                GroupName="FilterGroup">
                                 <RadioMenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xE9D9;" />
                                 </RadioMenuFlyoutItem.Icon>
@@ -286,18 +284,18 @@
                     Spacing="8">
                     <TextBlock
                         VerticalAlignment="Center"
+                        l:Localization.Uid="ManagementPage_SimilarityThresholdLabel"
                         FontSize="13"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="Similarity Threshold:" />
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <Slider
                         x:Name="SimilaritySlider"
                         Width="100"
                         VerticalAlignment="Center"
+                        l:Localization.Uid="ManagementPage_SimilaritySlider"
                         Maximum="1.0"
                         Minimum="0.3"
                         StepFrequency="0.01"
                         ThumbToolTipValueConverter="{StaticResource SimilarityToPercentageConverter}"
-                        ToolTipService.ToolTip="How similar images must be to be grouped"
                         Value="{x:Bind ViewModel.SimilarityThreshold, Mode=TwoWay}" />
                     <TextBlock
                         Width="40"
@@ -305,12 +303,12 @@
                         FontWeight="SemiBold"
                         Text="{x:Bind ViewModel.SimilarityThreshold, Mode=OneWay, Converter={StaticResource SimilarityToPercentageConverter}}" />
                     <Button
+                        l:Localization.Uid="ManagementPage_AnalyzeButton"
                         Command="{x:Bind ViewModel.AnalyzeSimilarityCommand}"
-                        Style="{StaticResource AccentButtonStyle}"
-                        ToolTipService.ToolTip="Re-analyze with current threshold">
+                        Style="{StaticResource AccentButtonStyle}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon FontSize="14" Glyph="&#xE9D9;" />
-                            <TextBlock Text="Analyze" />
+                            <TextBlock l:Localization.Uid="ManagementPage_AnalyzeText" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -329,9 +327,9 @@
                     Spacing="12">
 
                     <StackPanel
+                        l:Localization.Uid="ManagementPage_ItemCountPanel"
                         Orientation="Horizontal"
-                        Spacing="12"
-                        ToolTipService.ToolTip="Item Count">
+                        Spacing="12">
                         <StackPanel Orientation="Horizontal" Spacing="4">
                             <FontIcon
                                 FontSize="14"
@@ -339,9 +337,9 @@
                                 Glyph="&#xE8B8;" />
                             <TextBlock
                                 VerticalAlignment="Center"
+                                l:Localization.Uid="ManagementPage_ModelNameText"
                                 FontSize="12"
-                                Text="{x:Bind ViewModel.ModelName, Mode=OneWay}"
-                                ToolTipService.ToolTip="AI Model" />
+                                Text="{x:Bind ViewModel.ModelName, Mode=OneWay}" />
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Spacing="4">
@@ -356,10 +354,10 @@
                     </StackPanel>
 
                     <!--  Back to Config Button  -->
-                    <Button Click="BackToConfiguration_Click" ToolTipService.ToolTip="Back to configuration">
+                    <Button l:Localization.Uid="ManagementPage_BackToConfigButton" Click="BackToConfiguration_Click">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon FontSize="14" Glyph="&#xE72B;" />
-                            <TextBlock Text="Configuration" />
+                            <TextBlock l:Localization.Uid="ManagementPage_ConfigurationText" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -396,7 +394,7 @@
                         Margin="0,0,0,16"
                         Spacing="4">
                         <TextBlock FontSize="20" FontWeight="SemiBold">
-                            <Run Text="Duplicate Groups" />
+                            <Run l:Localization.Uid="ManagementPage_DuplicateGroupsHeader" />
                             <Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=" (" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="{x:Bind ViewModel.DuplicateGroupsCount, Mode=OneWay}" /><Run Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text=")" />
                         </TextBlock>
                         <TextBlock
@@ -433,9 +431,9 @@
                                 Margin="4,0,0,0"
                                 Padding="6"
                                 VerticalAlignment="Center"
+                                l:Localization.Uid="ManagementPage_CancelAnalysisButton"
                                 Command="{x:Bind ViewModel.CancelAnalysisCommand}"
-                                Style="{StaticResource SubtleButtonStyle}"
-                                ToolTipService.ToolTip="Cancel analysis">
+                                Style="{StaticResource SubtleButtonStyle}">
                                 <FontIcon
                                     FontSize="12"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
@@ -458,14 +456,14 @@
                         <StackPanel HorizontalAlignment="Center" Spacing="8">
                             <TextBlock
                                 HorizontalAlignment="Center"
+                                l:Localization.Uid="ManagementPage_EmptyStateTitle"
                                 FontSize="16"
                                 FontWeight="SemiBold"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="No Results Yet" />
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             <TextBlock
                                 HorizontalAlignment="Center"
+                                l:Localization.Uid="ManagementPage_EmptyStateSubtitle"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                Text="Adjust the similarity threshold and click Analyze"
                                 TextAlignment="Center" />
                         </StackPanel>
                     </StackPanel>
@@ -546,18 +544,18 @@
                                     x:Name="GroupNameTextBlock"
                                     Padding="0,3.5"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="ManagementPage_GroupNameDisplay"
                                     DoubleTapped="GroupNameTextBlock_DoubleTapped"
                                     FontSize="20"
                                     FontWeight="SemiBold"
-                                    Text="{x:Bind ViewModel.SelectedGroup.Name, Mode=OneWay}"
-                                    ToolTipService.ToolTip="Double-click to rename" />
+                                    Text="{x:Bind ViewModel.SelectedGroup.Name, Mode=OneWay}" />
                                 <Button
                                     x:Name="EditGroupNameButton"
                                     Padding="6"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="ManagementPage_RenameGroupButton"
                                     Click="EditGroupNameButton_Click"
-                                    Style="{StaticResource SubtleButtonStyle}"
-                                    ToolTipService.ToolTip="Rename group">
+                                    Style="{StaticResource SubtleButtonStyle}">
                                     <FontIcon FontSize="12" Glyph="&#xE70F;" />
                                 </Button>
                             </StackPanel>
@@ -572,26 +570,26 @@
                                     x:Name="GroupNameTextBox"
                                     MinWidth="200"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="ManagementPage_GroupNameTextBox"
                                     FontSize="16"
                                     KeyDown="GroupNameTextBox_KeyDown"
-                                    LostFocus="GroupNameTextBox_LostFocus"
-                                    PlaceholderText="Enter group name" />
+                                    LostFocus="GroupNameTextBox_LostFocus" />
                                 <Button
                                     x:Name="ConfirmRenameButton"
                                     Padding="6"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="ManagementPage_ConfirmRenameButton"
                                     Click="ConfirmRenameButton_Click"
-                                    Style="{StaticResource AccentButtonStyle}"
-                                    ToolTipService.ToolTip="Confirm (Enter)">
+                                    Style="{StaticResource AccentButtonStyle}">
                                     <FontIcon FontSize="12" Glyph="&#xE8FB;" />
                                 </Button>
                                 <Button
                                     x:Name="CancelRenameButton"
                                     Padding="6"
                                     VerticalAlignment="Center"
+                                    l:Localization.Uid="ManagementPage_CancelRenameButton"
                                     Click="CancelRenameButton_Click"
-                                    Style="{StaticResource SubtleButtonStyle}"
-                                    ToolTipService.ToolTip="Cancel (Escape)">
+                                    Style="{StaticResource SubtleButtonStyle}">
                                     <FontIcon FontSize="12" Glyph="&#xE711;" />
                                 </Button>
                             </StackPanel>
@@ -601,9 +599,9 @@
                         <Button
                             Grid.Column="1"
                             VerticalAlignment="Top"
+                            l:Localization.Uid="ManagementPage_CloseDetailsButton"
                             Click="CloseGroupContentPanel_Click"
-                            Style="{StaticResource SubtleButtonStyle}"
-                            ToolTipService.ToolTip="Close details">
+                            Style="{StaticResource SubtleButtonStyle}">
                             <FontIcon FontSize="16" Glyph="&#xE711;" />
                         </Button>
                     </Grid>
@@ -628,9 +626,9 @@
                                 MinWidth="0"
                                 MinHeight="0"
                                 VerticalAlignment="Center"
+                                l:Localization.Uid="ManagementPage_SelectAllGroupCheckBox"
                                 Click="SelectAllGroupCheckBox_Click"
-                                IsThreeState="True"
-                                ToolTipService.ToolTip="Select/deselect all in this group" />
+                                IsThreeState="True" />
 
                             <!--  Selection Count  -->
                             <TextBlock
@@ -642,55 +640,55 @@
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
                             <!--  Auto-Select Dropdown  -->
-                            <DropDownButton Grid.Column="2" ToolTipService.ToolTip="Auto selection for this group">
+                            <DropDownButton Grid.Column="2" l:Localization.Uid="ManagementPage_AutoSelectGroupButton">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon FontSize="14" Glyph="&#xF16E;" />
-                                    <TextBlock Text="Auto-Select" />
+                                    <TextBlock l:Localization.Uid="ManagementPage_AutoSelectText" />
                                 </StackPanel>
                                 <DropDownButton.Flyout>
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                        <MenuFlyoutSubItem Text="By Resolution">
+                                        <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByResolution">
                                             <MenuFlyoutSubItem.Icon>
                                                 <FontIcon Glyph="&#xE9E9;" />
                                             </MenuFlyoutSubItem.Icon>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepHighestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepHighestResolution                                                 )}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepHighestResolution" Click="ApplyStrategy_KeepHighestResolution">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE9E9;" />
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepLowestResolution" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLowestResolution)}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepLowestResolution" Click="ApplyStrategy_KeepLowestResolution">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE9E9;" />
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                         </MenuFlyoutSubItem>
 
-                                        <MenuFlyoutSubItem Text="By File Size">
+                                        <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByFileSize">
                                             <MenuFlyoutSubItem.Icon>
                                                 <FontIcon Glyph="&#xE729;" />
                                             </MenuFlyoutSubItem.Icon>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepLargestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepLargestFileSize)}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepLargestFileSize" Click="ApplyStrategy_KeepLargestFileSize">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE729;" />
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepSmallestFileSize" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepSmallestFileSize)}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepSmallestFileSize" Click="ApplyStrategy_KeepSmallestFileSize">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE729;" />
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                         </MenuFlyoutSubItem>
 
-                                        <MenuFlyoutSubItem Text="By Date">
+                                        <MenuFlyoutSubItem l:Localization.Uid="ManagementPage_ByDate">
                                             <MenuFlyoutSubItem.Icon>
                                                 <FontIcon Glyph="&#xE787;" />
                                             </MenuFlyoutSubItem.Icon>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepNewest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepNewest)}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepNewest" Click="ApplyStrategy_KeepNewest">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE823;" />
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Click="ApplyStrategy_KeepOldest" Text="{x:Bind helpers:EnumExtensions.GetDescription(enums:SelectionStrategy.KeepOldest)}">
+                                            <MenuFlyoutItem l:Localization.Uid="SelectionStrategy_KeepOldest" Click="ApplyStrategy_KeepOldest">
                                                 <MenuFlyoutItem.Icon>
                                                     <FontIcon Glyph="&#xE74B;" />
                                                 </MenuFlyoutItem.Icon>
@@ -761,13 +759,13 @@
 
                     <!--  Clear All Button  -->
                     <Button
+                        l:Localization.Uid="ManagementPage_ClearAllSelectionsButton"
                         Click="ClearAllSelections_Click"
                         Style="{StaticResource SubtleButtonStyle}"
-                        ToolTipService.ToolTip="Clear all selections"
                         Visibility="{x:Bind ViewModel.HasAnySelectedItems, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <FontIcon FontSize="12" Glyph="&#xE711;" />
-                            <TextBlock Text="Clear All" />
+                            <TextBlock l:Localization.Uid="ManagementPage_ClearAllText" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -779,19 +777,19 @@
                     Spacing="8">
 
                     <!--  Copy  -->
-                    <DropDownButton IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}" ToolTipService.ToolTip="Copy selected files to a folder">
+                    <DropDownButton l:Localization.Uid="ManagementPage_CopyDropDown" IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xE8C8;" />
-                            <TextBlock Text="Copy" />
+                            <TextBlock l:Localization.Uid="ManagementPage_CopyText" />
                         </StackPanel>
                         <DropDownButton.Flyout>
                             <MenuFlyout Placement="Top">
-                                <MenuFlyoutItem Click="CopyToSingleFolder_Click" Text="Copy all to one folder...">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_CopyToOneFolder" Click="CopyToSingleFolder_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE8C8;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="CopyToGroupFolders_Click" Text="Organize into group folders">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_CopyToGroupFolders" Click="CopyToGroupFolders_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xF413;" />
                                     </MenuFlyoutItem.Icon>
@@ -801,19 +799,19 @@
                     </DropDownButton>
 
                     <!--  Move  -->
-                    <DropDownButton IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}" ToolTipService.ToolTip="Move selected files to a folder">
+                    <DropDownButton l:Localization.Uid="ManagementPage_MoveDropDown" IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xE8C6;" />
-                            <TextBlock Text="Move" />
+                            <TextBlock l:Localization.Uid="ManagementPage_MoveText" />
                         </StackPanel>
                         <DropDownButton.Flyout>
                             <MenuFlyout Placement="Top">
-                                <MenuFlyoutItem Click="MoveToSingleFolder_Click" Text="Move all to one folder...">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_MoveToOneFolder" Click="MoveToSingleFolder_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE8DE;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="MoveToGroupFolders_Click" Text="Organize into group folders">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_MoveToGroupFolders" Click="MoveToGroupFolders_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xF413;" />
                                     </MenuFlyoutItem.Icon>
@@ -831,24 +829,24 @@
                     <!--  Delete Button  -->
                     <SplitButton
                         x:Name="DeleteSelectedButton"
+                        l:Localization.Uid="ManagementPage_DeleteSplitButton"
                         Click="DeleteSplitButton_Click"
-                        IsEnabled="{x:Bind ViewModel.HasAnySelectedItems, Mode=OneWay}"
-                        ToolTipService.ToolTip="Move selected files to Recycle Bin">
+                        IsEnabled="{x:Bind ViewModel.HasAnySelectedItems, Mode=OneWay}">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
                             <TextBlock>
-                                <Run Text="Delete" />
+                                <Run l:Localization.Uid="ManagementPage_DeleteLabel" />
                                 <Run Text="(" /><Run Text="{x:Bind ViewModel.TotalSelectedCount, Mode=OneWay}" /><Run Text=")" />
                             </TextBlock>
                         </StackPanel>
                         <SplitButton.Flyout>
                             <MenuFlyout Placement="Top">
-                                <MenuFlyoutItem Click="DeleteToRecycleBin_Click" Text="Move to Recycle Bin">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_MoveToRecycleBin" Click="DeleteToRecycleBin_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE74D;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Click="DeletePermanently_Click" Text="Delete Permanently">
+                                <MenuFlyoutItem l:Localization.Uid="ManagementPage_DeletePermanently" Click="DeletePermanently_Click">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Foreground="{ThemeResource SystemFillColorCriticalBrush}" Glyph="&#xE894;" />
                                     </MenuFlyoutItem.Icon>

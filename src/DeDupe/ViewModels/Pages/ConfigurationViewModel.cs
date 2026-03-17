@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
 using DeDupe.Enums;
-using DeDupe.Helpers;
 using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Input;
@@ -36,6 +35,7 @@ namespace DeDupe.ViewModels.Pages
         private readonly IFeatureExtractionService _featureExtractionService;
         private readonly IImageProcessingService _imageProcessingService;
         private readonly ILogger<ConfigurationViewModel> _logger;
+        private readonly ILocalizer _localizer;
 
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
@@ -49,6 +49,7 @@ namespace DeDupe.ViewModels.Pages
             _featureExtractionService = featureExtractionService ?? throw new ArgumentNullException(nameof(featureExtractionService));
             _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
 
             Title = L("ConfigurationPage_Title");
             Status = L("ConfigurationPage_Status_NoFilesAdded");
@@ -135,9 +136,7 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand]
         private async Task AddFilesAsync()
         {
-            IReadOnlyList<string> filePaths = await _dialogService.PickFilesAsync(
-                SupportedFileExtensions.SupportedImageExtensions,
-                L("ConfigurationPage_Dialog_SelectImages"));
+            IReadOnlyList<string> filePaths = await _dialogService.PickFilesAsync(SupportedFileExtensions.SupportedImageExtensions, L("ConfigurationPage_Dialog_SelectImages"));
 
             if (filePaths.Count == 0)
             {
@@ -555,7 +554,7 @@ namespace DeDupe.ViewModels.Pages
                 Status = L("ConfigurationPage_Status_ProcessingImages", analysisItems.Count);
                 LogProcessingPipelineStarting(analysisItems.Count);
 
-                await _imageProcessingService.ProcessItemsAsync(analysisItems, imageProcessingProgress, ct);
+                await _imageProcessingService.ProcessItemsAsync(analysisItems, _localizer, imageProcessingProgress, ct);
 
                 ct.ThrowIfCancellationRequested();
 
@@ -616,7 +615,7 @@ namespace DeDupe.ViewModels.Pages
                 Status = L("ConfigurationPage_Status_ExtractingFeatures", processedItems.Count);
 
                 // Extract features
-                await _featureExtractionService.ExtractFeaturesAsync(processedItems, _settingsService.Normalization, featureExtractionProgress, ct);
+                await _featureExtractionService.ExtractFeaturesAsync(processedItems, _settingsService.Normalization, _localizer, featureExtractionProgress, ct);
                 _appStateService.NotifyFeaturesExtracted();
 
                 // Release ImageSharp's pooled memory.

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Documents;
 using Serilog;
 using Serilog.Events;
 using SixLabors.ImageSharp;
@@ -20,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
+using static DeDupe.Localization.LocalizationActions;
 
 namespace DeDupe
 {
@@ -136,6 +138,15 @@ namespace DeDupe
                     .SetLogger(sp.GetRequiredService<ILogger<Localizer>>())
                     .SetDefaultLanguage(settingsService.Language)
                     .SetDisableDefaultLocalizationActions(false)
+                    .AddLocalizationAction(
+                        new LocalizationAction(typeof(Hyperlink), args =>
+                        {
+                            if (args.DependencyObject is Hyperlink { Inlines.Count: 0 } target)
+                            {
+                                target.Inlines.Clear();
+                                target.Inlines.Add(new Run() { Text = args.Value });
+                            }
+                        }))
                     .Build();
             });
 

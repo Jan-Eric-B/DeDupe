@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Results;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ namespace DeDupe.Services.Processing
             InitializeTempFolder();
         }
 
-        public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
+        public async Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, ILocalizer localizer, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             // Clear processing state
             _appStateService.ClearProcessedState();
@@ -56,6 +57,10 @@ namespace DeDupe.Services.Processing
 
             LogImageProcessingStarting(totalCount, maxParallelism);
 
+            // Cache localized strings before parallel execution
+            string processingMessage = localizer.GetLocalizedString("ImageProcessing_Progress_ProcessingImages");
+            string completeMessage = localizer.GetLocalizedString("ImageProcessing_Progress_ProcessingComplete");
+
             // Track progress
             int processedCount = 0;
             int successCount = 0;
@@ -65,7 +70,7 @@ namespace DeDupe.Services.Processing
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Report initial progress
-            progress?.Report(new ProgressInfo(0, totalCount, "Processing images"));
+            progress?.Report(new ProgressInfo(0, totalCount, processingMessage));
 
             await Parallel.ForEachAsync(
                 itemList,
@@ -97,7 +102,7 @@ namespace DeDupe.Services.Processing
                             // Report progress
                             if (processedCount % 5 == 0 || processedCount == totalCount)
                             {
-                                progress?.Report(new ProgressInfo(processedCount, totalCount, "Processing images", item.Source?.Metadata?.FileName));
+                                progress?.Report(new ProgressInfo(processedCount, totalCount, processingMessage, item.Source?.Metadata?.FileName));
                             }
                         }
                     }
@@ -114,7 +119,7 @@ namespace DeDupe.Services.Processing
 
                             if (processedCount % 5 == 0 || processedCount == totalCount)
                             {
-                                progress?.Report(new ProgressInfo(processedCount, totalCount, "Processing images"));
+                                progress?.Report(new ProgressInfo(processedCount, totalCount, processingMessage));
                             }
                         }
                         LogImageItemFailed(item.Source?.Metadata?.FileName ?? "unknown", ex);
@@ -124,7 +129,7 @@ namespace DeDupe.Services.Processing
             stopwatch.Stop();
 
             // Final progress report
-            progress?.Report(new ProgressInfo(totalCount, totalCount, "Processing complete"));
+            progress?.Report(new ProgressInfo(totalCount, totalCount, completeMessage));
 
             LogImageProcessingCompleted(successCount, totalCount, failedCount, stopwatch.Elapsed.TotalSeconds);
         }

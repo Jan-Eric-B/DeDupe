@@ -1,4 +1,5 @@
-﻿using DeDupe.Models;
+﻿using DeDupe.Localization;
+using DeDupe.Models;
 using DeDupe.Models.Results;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,6 @@ namespace DeDupe.Services.Processing
 
         bool InitializeTempFolder();
 
-        Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
+        Task ProcessItemsAsync(IEnumerable<AnalysisItem> items, ILocalizer localizer, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
     }
 }

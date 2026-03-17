@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DeDupe.Localization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -69,19 +70,17 @@ namespace DeDupe.Models.Analysis
             return new SimilarityResult(similarityThreshold);
         }
 
-        public string GetSummary()
+        public string GetSummary(ILocalizer localizer)
         {
             if (IsEmpty)
             {
-                return "No items were analyzed.";
+                return localizer.GetLocalizedString("SimilarityResult_Summary_Empty");
             }
-
             if (DuplicateGroupsCount == 0)
             {
-                return $"No duplicate groups found. All {TotalItemsAnalyzed} items are unique.";
+                return string.Format(localizer.GetLocalizedString("SimilarityResult_Summary_NoDuplicates"), TotalItemsAnalyzed);
             }
-
-            return $"Found {DuplicateGroupsCount} duplicate group{(DuplicateGroupsCount == 1 ? "" : "s")} containing {TotalDuplicateItems} item{(TotalDuplicateItems == 1 ? "" : "s")}. {SingletonGroupCount} item{(SingletonGroupCount == 1 ? "" : "s")} unique.";
+            return string.Format(localizer.GetLocalizedString("SimilarityResult_Summary_WithDuplicates"), DuplicateGroupsCount, TotalDuplicateItems, SingletonGroupCount);
         }
     }
 }

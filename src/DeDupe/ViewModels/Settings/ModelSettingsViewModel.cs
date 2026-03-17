@@ -1,18 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Constants;
-using DeDupe.Helpers;
 using DeDupe.Localization;
 using DeDupe.Models.Configuration;
 using DeDupe.Services;
 using DeDupe.Services.Model;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Pickers;
 
 namespace DeDupe.ViewModels.Settings
 {
@@ -20,12 +16,14 @@ namespace DeDupe.ViewModels.Settings
     {
         private readonly ISettingsService _settingsService;
         private readonly IBundledModelService _bundledModelService;
+        private readonly IDialogService _dialogService;
         private readonly ILogger<ModelSettingsViewModel> _logger;
 
-        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, ILocalizer localizer, ILogger<ModelSettingsViewModel> logger) : base(localizer)
+        public ModelSettingsViewModel(ISettingsService settingsService, IBundledModelService bundledModelService, IDialogService dialogService, ILocalizer localizer, ILogger<ModelSettingsViewModel> logger) : base(localizer)
         {
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _bundledModelService = bundledModelService ?? throw new ArgumentNullException(nameof(bundledModelService));
+            _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             Localizer.LanguageChanged += OnLanguageChanged;
@@ -93,23 +91,9 @@ namespace DeDupe.ViewModels.Settings
             : L("Model_SelectModelFile");
 
         [RelayCommand]
-        private void OpenModelLocation()
+        private async Task OpenModelLocationAsync()
         {
-            string pathToOpen = ActiveModelPath;
-
-            if (string.IsNullOrEmpty(pathToOpen) || !File.Exists(pathToOpen))
-            {
-                return;
-            }
-
-            try
-            {
-                Process.Start("explorer.exe", $"/select,\"{pathToOpen}\"");
-            }
-            catch (Exception ex)
-            {
-                LogModelLocationOpenFailed(pathToOpen, ex);
-            }
+            await _dialogService.OpenFileInExplorerAsync(ActiveModelPath);
         }
 
         [RelayCommand]
@@ -117,25 +101,13 @@ namespace DeDupe.ViewModels.Settings
         {
             try
             {
-                FileOpenPicker fileOpenPicker = new()
-                {
-                    ViewMode = PickerViewMode.List,
-                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary
-                };
+                string? path = await _dialogService.PickFileAsync(SupportedFileExtensions.SupportedModelExtensions, L("Model_SelectFile"));
 
-                foreach (string ext in SupportedFileExtensions.SupportedModelExtensions)
+                if (path is not null)
                 {
-                    fileOpenPicker.FileTypeFilter.Add(ext);
-                }
-                fileOpenPicker.InitializeForCurrentWindow();
-
-                StorageFile? file = await fileOpenPicker.PickSingleFileAsync();
-                if (file != null)
-                {
-                    CustomModelFilePath = file.Path;
+                    CustomModelFilePath = path;
                     UseBundledModel = false;
-
-                    LogCustomModelFileSelected(file.Path);
+                    LogCustomModelFileSelected(path);
                 }
             }
             catch (Exception ex)
@@ -289,9 +261,6 @@ namespace DeDupe.ViewModels.Settings
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Custom model file selection picker failed")]
         private partial void LogCustomModelFileSelectionFailed(Exception ex);
-
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Model location open failed for {FilePath}")]
-        private partial void LogModelLocationOpenFailed(string filePath, Exception ex);
 
         #endregion Logging
     }

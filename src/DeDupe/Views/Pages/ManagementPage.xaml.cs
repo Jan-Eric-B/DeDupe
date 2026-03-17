@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Localization;
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
 using DeDupe.Services;
@@ -17,6 +18,7 @@ namespace DeDupe.Views.Pages
     {
         private readonly ILogger<ManagementPage> _logger = App.Current.GetService<ILogger<ManagementPage>>();
         private readonly IDialogService _dialogService = App.Current.GetService<IDialogService>();
+        private readonly ILocalizer _localizer = App.Current.GetService<ILocalizer>();
 
         private ManagementViewModel ViewModel { get; }
 
@@ -31,6 +33,10 @@ namespace DeDupe.Views.Pages
 
             Loaded += ManagementPage_Loaded;
         }
+
+        private string L(string key) => _localizer.GetLocalizedString(key) ?? key;
+
+        private string L(string key, params object[] args) => string.Format(_localizer.GetLocalizedString(key) ?? key, args);
 
         private async void ManagementPage_Loaded(object sender, RoutedEventArgs e)
         {
@@ -243,7 +249,7 @@ namespace DeDupe.Views.Pages
 
             SelectAllCheckBox.IsChecked = group.IsSelected;
 
-            SelectionCountText.Text = $"{group.SelectedCount} of {group.Count} selected";
+            SelectionCountText.Text = L("ManagementPage_GroupSelectionCount", group.SelectedCount, group.Count);
         }
 
         private void SelectAllGroupCheckBox_Click(object sender, RoutedEventArgs e)
@@ -358,13 +364,16 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await _dialogService.PickFolderAsync("Select destination folder");
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectDestination"));
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Move", $"Move {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}", "Move");
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmMove"),
+                L("ManagementPage_Dialog_MoveMessage", count, folderPath),
+                L("ManagementPage_Dialog_MoveButton"));
             if (!confirmed)
             {
                 return;
@@ -374,7 +383,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.MoveToSingleFolderAsync(folderPath);
 
-            await _dialogService.ShowOperationResultAsync("Move", result.SuccessCount, result.FailedCount);
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_MoveButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private async void MoveToGroupFolders_Click(object sender, RoutedEventArgs e)
@@ -386,14 +395,17 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await _dialogService.PickFolderAsync("Select root folder for group organization");
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectRootFolder"));
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            string groupInfo = $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group.";
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Move", $"Move {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}{groupInfo}", "Move");
+            string groupInfo = L("ManagementPage_Dialog_GroupFolderInfo", groupCount);
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmMove"),
+                L("ManagementPage_Dialog_MoveMessage", count, folderPath) + groupInfo,
+                L("ManagementPage_Dialog_MoveButton"));
             if (!confirmed)
             {
                 return;
@@ -403,7 +415,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.MoveToGroupFoldersAsync(folderPath);
 
-            await _dialogService.ShowOperationResultAsync("Move", result.SuccessCount, result.FailedCount);
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_MoveButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private async void CopyToSingleFolder_Click(object sender, RoutedEventArgs e)
@@ -414,13 +426,16 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await _dialogService.PickFolderAsync("Select destination folder");
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectDestination"));
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Copy", $"Copy {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}", "Copy");
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmCopy"),
+                L("ManagementPage_Dialog_CopyMessage", count, folderPath),
+                L("ManagementPage_Dialog_CopyButton"));
             if (!confirmed)
             {
                 return;
@@ -430,7 +445,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.CopyToSingleFolderAsync(folderPath);
 
-            await _dialogService.ShowOperationResultAsync("Copy", result.SuccessCount, result.FailedCount);
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_CopyButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private async void CopyToGroupFolders_Click(object sender, RoutedEventArgs e)
@@ -442,14 +457,17 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            string? folderPath = await _dialogService.PickFolderAsync("Select root folder for group organization");
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectRootFolder"));
             if (string.IsNullOrEmpty(folderPath))
             {
                 return;
             }
 
-            string groupInfo = $"\n\nThis will create {groupCount} folder{(groupCount == 1 ? "" : "s")} named after each group.";
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Copy", $"Copy {count} file{(count == 1 ? "" : "s")} to:\n{folderPath}{groupInfo}", "Copy");
+            string groupInfo = L("ManagementPage_Dialog_GroupFolderInfo", groupCount);
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmCopy"),
+                L("ManagementPage_Dialog_CopyMessage", count, folderPath) + groupInfo,
+                L("ManagementPage_Dialog_CopyButton"));
             if (!confirmed)
             {
                 return;
@@ -459,7 +477,7 @@ namespace DeDupe.Views.Pages
 
             FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
 
-            await _dialogService.ShowOperationResultAsync("Copy", result.SuccessCount, result.FailedCount);
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_CopyButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
@@ -480,7 +498,12 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Permanent Deletion", $"Are you sure you want to PERMANENTLY delete {count} file{(count == 1 ? "" : "s")}?\n\nThis action cannot be undone!", "Delete Permanently", "Cancel", destructive: true);
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_PermanentDeletion"),
+                L("ManagementPage_Dialog_PermanentDeleteMessage", count),
+                L("ManagementPage_Dialog_DeletePermanentlyButton"),
+                L("ManagementPage_Dialog_CancelButton"),
+                destructive: true);
 
             if (confirmed)
             {
@@ -497,7 +520,12 @@ namespace DeDupe.Views.Pages
                 return;
             }
 
-            bool confirmed = await _dialogService.ShowConfirmationAsync("Confirm Deletion", $"Are you sure you want to move {count} file{(count == 1 ? "" : "s")} to the Recycle Bin?\n\nThis action can be undone from the Recycle Bin.", "Delete", "Cancel", destructive: true);
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmDeletion"),
+                L("ManagementPage_Dialog_RecycleBinMessage", count),
+                L("ManagementPage_Dialog_DeleteButton"),
+                L("ManagementPage_Dialog_CancelButton"),
+                destructive: true);
 
             if (confirmed)
             {

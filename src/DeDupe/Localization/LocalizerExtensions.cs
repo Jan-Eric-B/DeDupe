@@ -1,5 +1,4 @@
-﻿using DeDupe.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +19,7 @@ namespace DeDupe.Localization
 
                     return new LocalizedEnumOption<T>(
                         value,
-                        string.IsNullOrEmpty(display) ? value.GetDescription() : display);
+                        string.IsNullOrEmpty(display) ? value.ToString() : display);
                 })];
         }
     }

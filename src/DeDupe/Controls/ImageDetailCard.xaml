@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
     d:DataContext="{d:DesignInstance Type=models:SelectableItem}"
@@ -30,10 +31,10 @@
             <Grid Grid.Row="0">
                 <Border
                     Height="120"
+                    l:Localization.Uid="ImageDetailCard_ImageBorder"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     CornerRadius="6"
-                    DoubleTapped="OpenItem_DoubleTapped"
-                    ToolTipService.ToolTip="Double-click to open">
+                    DoubleTapped="OpenItem_DoubleTapped">
                     <Grid>
                         <!--  Placeholder  -->
                         <FontIcon
@@ -97,9 +98,9 @@
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding SelectableItem.FilePath, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
                             <TextBlock
+                                l:Localization.Uid="ImageDetailCard_OpenFolderHint"
                                 FontSize="11"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="Double-click to open folder" />
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </ToolTip>
                 </ToolTipService.ToolTip>

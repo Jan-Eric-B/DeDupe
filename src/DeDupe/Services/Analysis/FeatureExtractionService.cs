@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
@@ -18,14 +19,9 @@ using System.Threading.Tasks;
 namespace DeDupe.Services.Analysis
 {
     /// <inheritdoc/>
-    public sealed partial class FeatureExtractionService : IFeatureExtractionService, IDisposable
+    public sealed partial class FeatureExtractionService(ILogger<FeatureExtractionService> logger) : IFeatureExtractionService, IDisposable
     {
-        private readonly ILogger<FeatureExtractionService> _logger;
-
-        public FeatureExtractionService(ILogger<FeatureExtractionService> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<FeatureExtractionService> _logger = logger;
 
         #region State
 
@@ -249,7 +245,7 @@ namespace DeDupe.Services.Analysis
         #region Feature Extraction
 
         /// <inheritdoc />
-        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
+        public async Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, ILocalizer localizer, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized)
             {
@@ -269,10 +265,10 @@ namespace DeDupe.Services.Analysis
             // Convert to float
             NormalizationSettingsFloat normFloat = normalization.ToFloat();
 
-            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normFloat, progress, cancellationToken);
+            await ExtractFeaturesWithDoubleBufferingAsync(itemList, normFloat, localizer, progress, cancellationToken);
         }
 
-        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, NormalizationSettingsFloat normalization, IProgress<ProgressInfo>? progress, CancellationToken ct)
+        private async Task ExtractFeaturesWithDoubleBufferingAsync(List<AnalysisItem> items, NormalizationSettingsFloat normalization, ILocalizer localizer, IProgress<ProgressInfo>? progress, CancellationToken ct)
         {
             if (_session == null || _inputName == null || _outputName == null || _inputDimensions == null)
             {
@@ -298,7 +294,10 @@ namespace DeDupe.Services.Analysis
             Stopwatch stopwatch = Stopwatch.StartNew();
             LogFeatureExtractionStarting(totalItems, batches.Count, _batchSize);
 
-            progress?.Report(new ProgressInfo(0, totalItems, "Extracting features"));
+            string extractingText = localizer.GetLocalizedString("FeatureExtraction_Progress_Extracting");
+            string completeText = localizer.GetLocalizedString("FeatureExtraction_Progress_Complete");
+
+            progress?.Report(new ProgressInfo(0, totalItems, extractingText));
 
             // Track using buffer
             bool useBufferA = true;
@@ -348,7 +347,7 @@ namespace DeDupe.Services.Analysis
 
                 // Update progress after each batch
                 processedItems += batchItems.Count;
-                progress?.Report(new ProgressInfo(processedItems, totalItems, "Extracting features"));
+                progress?.Report(new ProgressInfo(processedItems, totalItems, extractingText));
 
                 // Set up for next iteration
                 if (nextPrepareTask != null)
@@ -361,7 +360,7 @@ namespace DeDupe.Services.Analysis
             int successCount = items.Count(i => i.HasFeatures);
             LogFeatureExtractionCompleted(successCount, totalItems, stopwatch.Elapsed.TotalSeconds);
 
-            progress?.Report(new ProgressInfo(totalItems, totalItems, "Feature extraction complete"));
+            progress?.Report(new ProgressInfo(totalItems, totalItems, completeText));
         }
 
         private async Task<(DenseTensor<float> Tensor, List<AnalysisItem> Items, List<int> ValidIndices)> PrepareBatchAsync(List<AnalysisItem> batchItems, int height, int width, NormalizationSettingsFloat normalization, bool useBufferA, CancellationToken ct)

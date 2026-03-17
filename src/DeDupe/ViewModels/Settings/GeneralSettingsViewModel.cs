@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DeDupe.Enums;
-using DeDupe.Helpers;
 using DeDupe.Localization;
 using DeDupe.Services;
 using Microsoft.Extensions.Logging;
@@ -43,10 +42,7 @@ namespace DeDupe.ViewModels.Settings
 
             SelectedLanguage = AvailableLanguages.FirstOrDefault(x => x.Language == Localizer.GetCurrentLanguage())!;
 
-            string themeDescription = EnumExtensions.GetDescription(_settingsService.Theme);
-            string backdropDescription = EnumExtensions.GetDescription(_settingsService.Backdrop);
-            string accentColorDescription = EnumExtensions.GetDescription(_settingsService.AccentColor);
-            LogSettingsLoaded(themeDescription, backdropDescription, accentColorDescription);
+            LogSettingsLoaded(_settingsService.Theme.ToString(), _settingsService.Backdrop.ToString(), _settingsService.AccentColor.ToString());
         }
 
         #region Appearance
@@ -78,7 +74,7 @@ namespace DeDupe.ViewModels.Settings
 
             _settingsService.Theme = (AppTheme)value;
 
-            LogSelectedThemeIndexChanged(EnumExtensions.GetDescription((AppTheme)value));
+            LogSelectedThemeIndexChanged(value.ToString());
         }
 
         partial void OnSelectedBackdropIndexChanged(int value)
@@ -90,7 +86,7 @@ namespace DeDupe.ViewModels.Settings
 
             _settingsService.Backdrop = (AppBackdrop)value;
 
-            LogSelectedBackdropIndexChanged(EnumExtensions.GetDescription((AppBackdrop)value));
+            LogSelectedBackdropIndexChanged(value.ToString());
         }
 
         partial void OnSelectedAccentColorIndexChanged(int value)
@@ -102,7 +98,7 @@ namespace DeDupe.ViewModels.Settings
 
             _settingsService.AccentColor = (AppAccentColor)value;
 
-            LogSelectedAccentColorIndexChanged(EnumExtensions.GetDescription((AppAccentColor)value));
+            LogSelectedAccentColorIndexChanged(value.ToString());
         }
 
         #endregion Appearance

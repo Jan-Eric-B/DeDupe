@@ -1,4 +1,5 @@
 ﻿using DeDupe.Enums;
+using DeDupe.Localization;
 using DeDupe.Models;
 using DeDupe.Models.Configuration;
 using DeDupe.Models.Results;
@@ -37,6 +38,6 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Extracts feature vectors from items that have been processed.
         /// </summary>
-        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
+        Task ExtractFeaturesAsync(IReadOnlyCollection<AnalysisItem> items, NormalizationSettings normalization, ILocalizer localizer, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default);
     }
 }

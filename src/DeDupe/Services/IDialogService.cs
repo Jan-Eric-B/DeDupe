@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using DeDupe.Localization;
+using Microsoft.UI.Xaml;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -27,12 +28,17 @@ namespace DeDupe.Services
         /// <summary>
         /// Shows file-operation result dialog. Only when failures.
         /// </summary>
-        Task ShowOperationResultAsync(string operationName, int successCount, int failedCount);
+        Task ShowOperationResultAsync(string operationName, int successCount, int failedCount, ILocalizer localizer);
 
         /// <summary>
         /// Opens system folder picker.
         /// </summary>
         Task<string?> PickFolderAsync(string commitButtonText = "Select Folder");
+
+        /// <summary>
+        /// Opens system file picker with provided type filters.
+        /// </summary>
+        Task<string?> PickFileAsync(IEnumerable<string> fileTypeFilters, string commitButtonText = "Select File");
 
         /// <summary>
         /// Opens system file picker with provided type filters.
@@ -43,5 +49,10 @@ namespace DeDupe.Services
         /// Opens folder in file explorer.
         /// </summary>
         Task OpenFolderInExplorerAsync(string folderPath, bool createIfMissing = true);
+
+        /// <summary>
+        /// Opens file explorer with the specified file selected.
+        /// </summary>
+        Task<bool> OpenFileInExplorerAsync(string filePath);
     }
 }

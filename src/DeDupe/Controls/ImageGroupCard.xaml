@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:DeDupe.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l="using:DeDupe.Localization"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:DeDupe.Models.Analysis"
     d:DataContext="{d:DesignInstance Type=models:SimilarityGroup}"
@@ -91,9 +92,9 @@
                                 Foreground="{ThemeResource TextFillColorPrimaryBrush}">
                                 <Run Text="{x:Bind Group.Count, Mode=OneWay}" />
                                 <Run
+                                    l:Localization.Uid="ImageGroupCard_ImagesLabel"
                                     FontSize="14"
-                                    FontWeight="SemiBold"
-                                    Text=" images" />
+                                    FontWeight="SemiBold" />
                             </TextBlock>
                         </StackPanel>
                     </StackPanel>

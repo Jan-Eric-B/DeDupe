@@ -39,10 +39,11 @@ namespace DeDupe.ViewModels.Pages
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            Title = "Duplicate Management";
-            Status = "Ready to analyze similarities";
+            Title = L("ManagementPage_Title");
+            Status = L("ManagementPage_Status_Ready");
 
             _appStateService.ExtractedFeaturesChanged += OnExtractedFeaturesChanged;
+            Localizer.LanguageChanged += OnLanguageChanged;
 
             SimilarityThreshold = _settingsService.SimilarityThreshold;
 
@@ -53,7 +54,10 @@ namespace DeDupe.ViewModels.Pages
 
         private void OnLanguageChanged(object? sender, LanguageChangedEventArgs e)
         {
-            Title = "Duplicate Management";
+            Title = L("ManagementPage_Title");
+            OnPropertyChanged(nameof(CurrentSortOptionDisplay));
+            OnPropertyChanged(nameof(CurrentFilterOptionDisplay));
+            UpdateSelectionSummary();
         }
 
         #endregion Localization
@@ -85,7 +89,7 @@ namespace DeDupe.ViewModels.Pages
 
         public int TotalItems => SimilarityResult?.TotalItemsAnalyzed ?? 0;
 
-        public string ResultSummary => SimilarityResult?.GetSummary() ?? string.Empty;
+        public string ResultSummary => SimilarityResult?.GetSummary(Localizer) ?? string.Empty;
 
         public int TotalFileCount => _appStateService.SourceMediaCount;
 
@@ -107,7 +111,7 @@ namespace DeDupe.ViewModels.Pages
                 {
                     if (string.IsNullOrEmpty(_settingsService.CustomModelFilePath))
                     {
-                        return "No model selected";
+                        return L("ManagementPage_NoModelSelected");
                     }
                     return Path.GetFileNameWithoutExtension(_settingsService.CustomModelFilePath);
                 }
@@ -139,14 +143,14 @@ namespace DeDupe.ViewModels.Pages
                 IsAnalyzingSimilarity = true;
                 IsBusy = true;
                 AnalysisProgressPercentage = 0;
-                Status = "Analyzing similarities...";
+                Status = L("ManagementPage_Status_Analyzing");
 
                 // Get items with features
                 IReadOnlyCollection<AnalysisItem> itemsWithFeatures = _appStateService.ItemsWithFeatures;
 
                 if (itemsWithFeatures.Count == 0)
                 {
-                    Status = "No features available. Please extract features first.";
+                    Status = L("ManagementPage_Status_NoFeatures");
                     return;
                 }
 
@@ -160,23 +164,23 @@ namespace DeDupe.ViewModels.Pages
                 });
 
                 // Perform clustering with cancellation token
-                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, analysisProgress, ct);
+                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, Localizer, analysisProgress, ct);
 
                 HasSimilarityResults = true;
                 AnalysisProgressPercentage = 100;
-                Status = $"Analysis complete: {ResultSummary}";
+                Status = L("ManagementPage_Status_AnalysisComplete", ResultSummary);
 
                 LogSimilarityAnalysisCompleted(ResultSummary);
             }
             catch (OperationCanceledException)
             {
-                Status = "Analysis cancelled";
+                Status = L("ManagementPage_Status_AnalysisCancelled");
                 AnalysisProgressPercentage = 0;
                 LogSimilarityAnalysisCancelled();
             }
             catch (Exception ex)
             {
-                Status = $"Error during similarity analysis: {ex.Message}";
+                Status = L("ManagementPage_Status_AnalysisError", ex.Message);
                 LogSimilarityAnalysisAborted(ex);
                 HasSimilarityResults = false;
             }
@@ -198,7 +202,7 @@ namespace DeDupe.ViewModels.Pages
         private void CancelAnalysis()
         {
             _analysisCts?.Cancel();
-            Status = "Cancelling analysis...";
+            Status = L("ManagementPage_Status_CancellingAnalysis");
         }
 
         private void UpdateSimilarityGroups()
@@ -242,7 +246,7 @@ namespace DeDupe.ViewModels.Pages
         {
             if (HasSimilarityResults)
             {
-                Status = "Threshold changed. Click Analyze to update results.";
+                Status = L("ManagementPage_Status_ThresholdChanged");
             }
         }
 
@@ -279,10 +283,10 @@ namespace DeDupe.ViewModels.Pages
 
                 if (total == 0)
                 {
-                    return "No files selected";
+                    return L("ManagementPage_Selection_None");
                 }
 
-                return $"{total} file{(total == 1 ? "" : "s")} selected from {groups} group{(groups == 1 ? "" : "s")}";
+                return L("ManagementPage_Selection_Summary", total, groups);
             }
         }
 
@@ -343,7 +347,7 @@ namespace DeDupe.ViewModels.Pages
             }
 
             UpdateSelectionSummary();
-            Status = "All selections cleared";
+            Status = L("ManagementPage_Status_AllSelectionsCleared");
         }
 
         public List<string> GetAllSelectedFilePaths()
@@ -419,6 +423,8 @@ namespace DeDupe.ViewModels.Pages
         [ObservableProperty]
         public partial GroupSortingOption CurrentSortOption { get; set; } = GroupSortingOption.Similarity;
 
+        public string CurrentSortOptionDisplay => Localizer.GetLocalizedString($"GroupSortingOption_{CurrentSortOption}") is string s && !string.IsNullOrEmpty(s) ? s : CurrentSortOption.ToString();
+
         public void SortGroups(GroupSortingOption sortOption)
         {
             CurrentSortOption = sortOption;
@@ -452,6 +458,7 @@ namespace DeDupe.ViewModels.Pages
         partial void OnCurrentSortOptionChanged(GroupSortingOption value)
         {
             ApplyCurrentSort();
+            OnPropertyChanged(nameof(CurrentSortOptionDisplay));
         }
 
         #endregion Sorting
@@ -461,6 +468,8 @@ namespace DeDupe.ViewModels.Pages
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(FilteredGroupCount))]
         public partial GroupFilterOption CurrentFilterOption { get; set; } = GroupFilterOption.All;
+
+        public string CurrentFilterOptionDisplay => Localizer.GetLocalizedString($"GroupFilterOption_{CurrentFilterOption}") is string s && !string.IsNullOrEmpty(s) ? s : CurrentFilterOption.ToString();
 
         public int FilteredGroupCount => SimilarityGroups.Count;
 
@@ -472,6 +481,7 @@ namespace DeDupe.ViewModels.Pages
         partial void OnCurrentFilterOptionChanged(GroupFilterOption value)
         {
             ApplyCurrentFilter();
+            OnPropertyChanged(nameof(CurrentFilterOptionDisplay));
         }
 
         private void ApplyCurrentFilter()
@@ -588,8 +598,10 @@ namespace DeDupe.ViewModels.Pages
                 IsMovingOrCopying = true;
                 IsBusy = true;
 
-                string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
-                Status = $"{operationName} {filePaths.Count} files...";
+                string statusKey = operationType == FileOperationType.Move
+                    ? "ManagementPage_Status_MovingFiles"
+                    : "ManagementPage_Status_CopyingFiles";
+                Status = L(statusKey, filePaths.Count);
 
                 FileOperationResult result = await _fileOperationService.ExecuteAsync(filePaths, destinationFolder, operationType);
 
@@ -604,7 +616,7 @@ namespace DeDupe.ViewModels.Pages
             }
             catch (Exception ex)
             {
-                Status = $"Error during {operationType.ToString().ToLower()} operation: {ex.Message}";
+                Status = L("ManagementPage_Status_OperationError", operationType.ToString().ToLower(), ex.Message);
                 return new FileOperationResult(0, filePaths.Count, [], filePaths);
             }
             finally
@@ -628,8 +640,10 @@ namespace DeDupe.ViewModels.Pages
                 IsBusy = true;
 
                 Dictionary<string, List<string>> filesByGroup = GetSelectedFilePathsByGroup();
-                string operationName = operationType == FileOperationType.Move ? "Moving" : "Copying";
-                Status = $"{operationName} files to group folders...";
+                string statusKey = operationType == FileOperationType.Move
+                    ? "ManagementPage_Status_MovingToGroups"
+                    : "ManagementPage_Status_CopyingToGroups";
+                Status = L(statusKey);
 
                 FileOperationResult result = await _fileOperationService.ExecuteGroupedAsync(filesByGroup, rootFolder, operationType);
 
@@ -643,7 +657,7 @@ namespace DeDupe.ViewModels.Pages
             }
             catch (Exception ex)
             {
-                Status = $"Error during {operationType.ToString().ToLower()} operation: {ex.Message}";
+                Status = L("ManagementPage_Status_OperationError", operationType.ToString().ToLower(), ex.Message);
                 LogFileOperationAborted(ex, operationType);
                 return new FileOperationResult(0, TotalSelectedCount, [], GetAllSelectedFilePaths());
             }
@@ -674,8 +688,10 @@ namespace DeDupe.ViewModels.Pages
                     return;
                 }
 
-                string deletionType = permanentDelete ? "Permanently deleting" : "Moving to Recycle Bin";
-                Status = $"{deletionType} {filesToDelete.Count} files...";
+                string statusKey = permanentDelete
+                    ? "ManagementPage_Status_PermanentlyDeleting"
+                    : "ManagementPage_Status_DeletingToRecycleBin";
+                Status = L(statusKey, filesToDelete.Count);
 
                 FileOperationResult result = await _fileOperationService.DeleteAsync(filesToDelete, permanentDelete);
 
@@ -684,19 +700,25 @@ namespace DeDupe.ViewModels.Pages
                     UpdateAfterRemoval(result.SuccessfulPaths);
                 }
 
-                string actionDescription = permanentDelete ? "permanently deleted" : "moved to Recycle Bin";
+                string successKey = permanentDelete
+                    ? "ManagementPage_Status_PermanentDeleteSuccess"
+                    : "ManagementPage_Status_RecycleBinSuccess";
+                string partialKey = permanentDelete
+                    ? "ManagementPage_Status_PermanentDeletePartial"
+                    : "ManagementPage_Status_RecycleBinPartial";
+
                 if (result.FailedCount == 0)
                 {
-                    Status = $"Successfully {actionDescription} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}";
+                    Status = L(successKey, result.SuccessCount);
                 }
                 else
                 {
-                    Status = $"{(permanentDelete ? "Deleted" : "Moved")} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
+                    Status = L(partialKey, result.SuccessCount, result.FailedCount);
                 }
             }
             catch (Exception ex)
             {
-                Status = $"Error during deletion: {ex.Message}";
+                Status = L("ManagementPage_Status_DeletionError", ex.Message);
                 LogDeletionAborted(ex);
             }
             finally
@@ -709,19 +731,27 @@ namespace DeDupe.ViewModels.Pages
 
         private void UpdateStatusAfterOperation(FileOperationType operationType, FileOperationResult result)
         {
-            string operationPastTense = operationType == FileOperationType.Move ? "moved" : "copied";
+            string successKey = operationType == FileOperationType.Move
+                ? "ManagementPage_Status_MoveSuccess"
+                : "ManagementPage_Status_CopySuccess";
+            string failAllKey = operationType == FileOperationType.Move
+                ? "ManagementPage_Status_MoveFailedAll"
+                : "ManagementPage_Status_CopyFailedAll";
+            string partialKey = operationType == FileOperationType.Move
+                ? "ManagementPage_Status_MovePartial"
+                : "ManagementPage_Status_CopyPartial";
 
             if (result.FailedCount == 0)
             {
-                Status = $"Successfully {operationPastTense} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}";
+                Status = L(successKey, result.SuccessCount);
             }
             else if (result.SuccessCount == 0)
             {
-                Status = $"Failed to {operationType.ToString().ToLower()} all {result.FailedCount} files";
+                Status = L(failAllKey, result.FailedCount);
             }
             else
             {
-                Status = $"{operationPastTense[..1].ToUpper() + operationPastTense[1..]} {result.SuccessCount} file{(result.SuccessCount == 1 ? "" : "s")}, {result.FailedCount} failed";
+                Status = L(partialKey, result.SuccessCount, result.FailedCount);
             }
         }
 
@@ -786,6 +816,7 @@ namespace DeDupe.ViewModels.Pages
                 _analysisCts?.Dispose();
 
                 _appStateService.ExtractedFeaturesChanged -= OnExtractedFeaturesChanged;
+                Localizer.LanguageChanged -= OnLanguageChanged;
 
                 SelectedGroup?.GroupSelectionChanged -= OnGroupSelectionChanged;
 

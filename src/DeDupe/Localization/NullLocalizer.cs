@@ -11,7 +11,7 @@ namespace DeDupe.Localization
 
         public static ILocalizer Instance { get; } = new NullLocalizer();
 
-        public event EventHandler<LanguageChangedEventArgs>? LanguageChanged;
+        event EventHandler<LanguageChangedEventArgs>? ILocalizer.LanguageChanged { add { } remove { } }
 
         public IEnumerable<string> GetAvailableLanguages() => [];
 

@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DeDupe.Localization;
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -64,19 +66,21 @@ namespace DeDupe.Services
         }
 
         /// <inheritdoc />
-        public async Task ShowOperationResultAsync(string operationName, int successCount, int failedCount)
+        public async Task ShowOperationResultAsync(string operationName, int successCount, int failedCount, ILocalizer localizer)
         {
             if (failedCount == 0)
             {
-                // Silent on full success — ViewModel updates status bar instead.
                 return;
             }
 
-            string message = $"Completed with some issues:\n\n" +
-                             $"\u2713 {successCount} file{(successCount == 1 ? "" : "s")} {operationName.ToLower()}d successfully\n" +
-                             $"\u2717 {failedCount} file{(failedCount == 1 ? "" : "s")} failed";
+            string successLine = string.Format(successCount == 1 ? localizer.GetLocalizedString("OperationResult_SuccessLine_One") : ("OperationResult_SuccessLine_Other"), successCount);
 
-            await ShowInfoAsync($"{operationName} Completed", message);
+            string failedLine = string.Format(failedCount == 1 ? localizer.GetLocalizedString("OperationResult_FailedLine_One") : localizer.GetLocalizedString("OperationResult_FailedLine_Other"), failedCount);
+
+            string message = $"{localizer.GetLocalizedString("OperationResult_Summary")}\n\n{successLine}\n{failedLine}";
+            string title = string.Format(localizer.GetLocalizedString("OperationResult_Title"), operationName);
+
+            await ShowInfoAsync(title, message);
         }
 
         /// <inheritdoc />
@@ -97,6 +101,27 @@ namespace DeDupe.Services
             StorageFolder? folder = await folderPicker.PickSingleFolderAsync();
 
             return folder?.Path;
+        }
+
+        public async Task<string?> PickFileAsync(IEnumerable<string> fileTypeFilters, string commitButtonText = "Select File")
+        {
+            FileOpenPicker fileOpenPicker = new()
+            {
+                ViewMode = PickerViewMode.List,
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                CommitButtonText = commitButtonText
+            };
+
+            foreach (string ext in fileTypeFilters)
+            {
+                fileOpenPicker.FileTypeFilter.Add(ext);
+            }
+
+            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(fileOpenPicker, windowHandle);
+
+            StorageFile? file = await fileOpenPicker.PickSingleFileAsync();
+            return file?.Path;
         }
 
         /// <inheritdoc />
@@ -144,6 +169,26 @@ namespace DeDupe.Services
             await Launcher.LaunchFolderPathAsync(folderPath);
         }
 
+        /// <inheritdoc />
+        public async Task<bool> OpenFileInExplorerAsync(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                return false;
+            }
+
+            try
+            {
+                await Task.Run(() => Process.Start("explorer.exe", $"/select,\"{filePath}\""));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogFileExplorerOpenFailed(filePath, ex);
+                return false;
+            }
+        }
+
         private void EnsureXamlRoot()
         {
             if (_xamlRoot is null)
@@ -159,6 +204,9 @@ namespace DeDupe.Services
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Folder created for explorer launch: {FolderPath}")]
         private partial void LogFolderCreatedForExplorer(string folderPath);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to open file in explorer: {FilePath}")]
+        private partial void LogFileExplorerOpenFailed(string filePath, Exception ex);
 
         #endregion Logging
     }

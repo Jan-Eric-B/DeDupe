@@ -1,4 +1,5 @@
-﻿using DeDupe.Models;
+﻿using DeDupe.Localization;
+using DeDupe.Models;
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
 using Microsoft.Extensions.Logging;
@@ -17,7 +18,7 @@ namespace DeDupe.Services.Analysis
         private readonly ILogger<SimilarityAnalysisService> _logger = logger;
 
         /// <inheritdoc />
-        public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
+        public async Task<SimilarityResult> ClusterAsync(IEnumerable<AnalysisItem> items, double similarityThreshold, ILocalizer localizer, IProgress<ProgressInfo>? progress = null, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(items);
 
@@ -33,25 +34,25 @@ namespace DeDupe.Services.Analysis
 
             try
             {
-                progress?.Report(new ProgressInfo(0, 100, "Building similarity matrix"));
+                progress?.Report(new ProgressInfo(0, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_BuildingMatrix")));
 
                 // Build similarity matrix
-                double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, progress, cancellationToken), cancellationToken);
+                double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, localizer, progress, cancellationToken), cancellationToken);
 
                 // Hierarchical clustering
-                progress?.Report(new ProgressInfo(70, 100, "Clustering similar items"));
+                progress?.Report(new ProgressInfo(70, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Clustering")));
 
-                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, progress, cancellationToken), cancellationToken);
+                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, localizer, progress, cancellationToken), cancellationToken);
 
                 // Calculate cluster statistics
-                progress?.Report(new ProgressInfo(95, 100, "Calculating statistics"));
+                progress?.Report(new ProgressInfo(95, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Statistics")));
                 CalculateClusterStatistics(clusters, itemList, similarityMatrix);
 
                 stopwatch.Stop();
                 int duplicateGroupCount = clusters.Count(c => c.Count > 1);
                 LogClusteringCompleted(itemList.Count, clusters.Count, duplicateGroupCount, stopwatch.Elapsed.TotalSeconds);
 
-                progress?.Report(new ProgressInfo(100, 100, "Analysis complete"));
+                progress?.Report(new ProgressInfo(100, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Complete")));
 
                 return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
             }
@@ -99,13 +100,16 @@ namespace DeDupe.Services.Analysis
             return dotProduct / (magnitudeA * magnitudeB);
         }
 
-        private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
+        private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, ILocalizer localizer, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
         {
             int count = items.Count;
             double[,] matrix = new double[count, count];
 
             long totalComparisons = (long)count * (count - 1) / 2;
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            string matrixStatusText = localizer.GetLocalizedString("SimilarityAnalysis_Progress_BuildingMatrix");
+            string matrixRowDetailFormat = localizer.GetLocalizedString("SimilarityAnalysis_Progress_MatrixRowDetail");
 
             int lastReportedPercentage = -1;
 
@@ -136,7 +140,7 @@ namespace DeDupe.Services.Analysis
                 if (percentage > lastReportedPercentage)
                 {
                     lastReportedPercentage = percentage;
-                    progress?.Report(new ProgressInfo(percentage, 100, "Building similarity matrix", $"Row {i + 1:N0}/{count:N0}"));
+                    progress?.Report(new ProgressInfo(percentage, 100, matrixStatusText, string.Format(matrixRowDetailFormat, $"{i + 1:N0}", $"{count:N0}")));
                 }
             }
 
@@ -149,7 +153,7 @@ namespace DeDupe.Services.Analysis
         /// <summary>
         /// Perform agglomerative hierarchical clustering.
         /// </summary>
-        private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
+        private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, ILocalizer localizer, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
         {
             int count = items.Count;
 
@@ -166,6 +170,9 @@ namespace DeDupe.Services.Analysis
 
             int mergeOperations = 0;
             int maxPossibleMerges = count - 1; // upper bound
+
+            string clusteringStatusText = localizer.GetLocalizedString("SimilarityAnalysis_Progress_Clustering");
+            string mergeDetailFormat = localizer.GetLocalizedString("SimilarityAnalysis_Progress_MergeDetail");
 
             // Agglomerative clustering - merge closest clusters
             while (true)
@@ -219,7 +226,7 @@ namespace DeDupe.Services.Analysis
                 mergeOperations++;
 
                 int percentage = 70 + (int)((double)mergeOperations / maxPossibleMerges * 25);
-                progress?.Report(new ProgressInfo(Math.Min(percentage, 95), 100, "Clustering similar items", $"Merge {mergeOperations:N0}"));
+                progress?.Report(new ProgressInfo(Math.Min(percentage, 95), 100, clusteringStatusText, string.Format(mergeDetailFormat, $"{mergeOperations:N0}")));
             }
 
             // Convert to SimilarityGroup objects
@@ -236,7 +243,7 @@ namespace DeDupe.Services.Analysis
 
                 List<AnalysisItem> clusterItems = [.. groups[i].Select(idx => items[idx])];
 
-                string? groupName = clusterItems.Count > 1 ? $"Group {duplicateGroupNumber++}" : null;
+                string? groupName = clusterItems.Count > 1 ? string.Format(localizer.GetLocalizedString("SimilarityAnalysis_GroupDefaultName"), duplicateGroupNumber++) : null;
 
                 SimilarityGroup group = new(clusterId++, clusterItems, groupName);
                 result.Add(group);

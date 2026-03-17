@@ -11,7 +11,7 @@ namespace DeDupe.Services
     public interface ISettingsService
     {
         /// <summary>
-        /// Reads setting from local storage by key, returning <paramref name="defaultValue"/> .
+        /// Reads setting from local storage by key, returning <paramref name="defaultValue"/>.
         /// </summary>
         T GetValue<T>(string key, T defaultValue);
 

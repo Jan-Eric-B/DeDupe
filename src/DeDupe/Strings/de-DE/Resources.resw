@@ -645,4 +645,419 @@
   <data name="Language_de-DE.Text" xml:space="preserve">
     <value>Deutsch</value>
   </data>
+  <!-- ManagementPage -->
+  <data name="ManagementPage_AutoSelectAllButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Automatische Auswahl auf alle Gruppen anwenden</value>
+  </data>
+  <data name="ManagementPage_AutoSelectAllText.Text" xml:space="preserve">
+    <value>Alle automatisch auswählen</value>
+  </data>
+  <data name="ManagementPage_ByResolution.Text" xml:space="preserve">
+    <value>Nach Auflösung</value>
+  </data>
+  <data name="ManagementPage_ByFileSize.Text" xml:space="preserve">
+    <value>Nach Dateigröße</value>
+  </data>
+  <data name="ManagementPage_ByDate.Text" xml:space="preserve">
+    <value>Nach Datum</value>
+  </data>
+  <data name="ManagementPage_SelectAllMenuItem.Text" xml:space="preserve">
+    <value>Alle auswählen</value>
+  </data>
+  <data name="ManagementPage_ClearAllMenuItem.Text" xml:space="preserve">
+    <value>Auswahl aufheben</value>
+  </data>
+  <data name="ManagementPage_SortButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Duplikatgruppen sortieren</value>
+  </data>
+  <data name="ManagementPage_SortSimilarity.Text" xml:space="preserve">
+    <value>Ähnlichkeit (Hoch bis Niedrig)</value>
+  </data>
+  <data name="ManagementPage_SortImageCount.Text" xml:space="preserve">
+    <value>Bildanzahl</value>
+  </data>
+  <data name="ManagementPage_SortGroupName.Text" xml:space="preserve">
+    <value>Gruppenname</value>
+  </data>
+  <data name="ManagementPage_FilterButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Duplikatgruppen filtern</value>
+  </data>
+  <data name="ManagementPage_FilterAll.Text" xml:space="preserve">
+    <value>Alle Gruppen</value>
+  </data>
+  <data name="ManagementPage_FilterExact.Text" xml:space="preserve">
+    <value>Exakte Treffer (100%)</value>
+  </data>
+  <data name="ManagementPage_FilterSimilar.Text" xml:space="preserve">
+    <value>Nur ähnliche (&lt;100%)</value>
+  </data>
+  <data name="ManagementPage_SimilarityThresholdLabel.Text" xml:space="preserve">
+    <value>Ähnlichkeitsschwelle:</value>
+  </data>
+  <data name="ManagementPage_SimilaritySlider.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Wie ähnlich Bilder sein müssen, um gruppiert zu werden</value>
+  </data>
+  <data name="ManagementPage_AnalyzeButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Erneut analysieren mit aktuellem Schwellenwert</value>
+  </data>
+  <data name="ManagementPage_AnalyzeText.Text" xml:space="preserve">
+    <value>Analysieren</value>
+  </data>
+  <data name="ManagementPage_ItemCountPanel.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Elementanzahl</value>
+  </data>
+  <data name="ManagementPage_ModelNameText.ToolTipService.ToolTip" xml:space="preserve">
+    <value>KI-Modell</value>
+  </data>
+  <data name="ManagementPage_BackToConfigButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zurück zur Konfiguration</value>
+  </data>
+  <data name="ManagementPage_ConfigurationText.Text" xml:space="preserve">
+    <value>Konfiguration</value>
+  </data>
+  <data name="ManagementPage_EmptyStateTitle.Text" xml:space="preserve">
+    <value>Noch keine Ergebnisse</value>
+  </data>
+  <data name="ManagementPage_EmptyStateSubtitle.Text" xml:space="preserve">
+    <value>Ähnlichkeitsschwelle anpassen und auf Analysieren klicken</value>
+  </data>
+  <data name="ManagementPage_CancelAnalysisButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Analyse abbrechen</value>
+  </data>
+  <data name="ManagementPage_GroupNameDisplay.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Doppelklick zum Umbenennen</value>
+  </data>
+  <data name="ManagementPage_RenameGroupButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gruppe umbenennen</value>
+  </data>
+  <data name="ManagementPage_GroupNameTextBox.PlaceholderText" xml:space="preserve">
+    <value>Gruppenname eingeben</value>
+  </data>
+  <data name="ManagementPage_ConfirmRenameButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Bestätigen (Enter)</value>
+  </data>
+  <data name="ManagementPage_CancelRenameButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Abbrechen (Escape)</value>
+  </data>
+  <data name="ManagementPage_CloseDetailsButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Details schließen</value>
+  </data>
+  <data name="ManagementPage_SelectAllGroupCheckBox.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alle in dieser Gruppe auswählen/abwählen</value>
+  </data>
+  <data name="ManagementPage_AutoSelectGroupButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Automatische Auswahl für diese Gruppe</value>
+  </data>
+  <data name="ManagementPage_AutoSelectText.Text" xml:space="preserve">
+    <value>Automatisch auswählen</value>
+  </data>
+  <data name="ManagementPage_ClearAllSelectionsButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gesamte Auswahl aufheben</value>
+  </data>
+  <data name="ManagementPage_ClearAllText.Text" xml:space="preserve">
+    <value>Auswahl aufheben</value>
+  </data>
+  <data name="ManagementPage_CopyDropDown.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ausgewählte Dateien in einen Ordner kopieren</value>
+  </data>
+  <data name="ManagementPage_CopyText.Text" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="ManagementPage_CopyToOneFolder.Text" xml:space="preserve">
+    <value>Alle in einen Ordner kopieren...</value>
+  </data>
+  <data name="ManagementPage_CopyToGroupFolders.Text" xml:space="preserve">
+    <value>In Gruppenordner organisieren</value>
+  </data>
+  <data name="ManagementPage_MoveDropDown.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ausgewählte Dateien in einen Ordner verschieben</value>
+  </data>
+  <data name="ManagementPage_MoveText.Text" xml:space="preserve">
+    <value>Verschieben</value>
+  </data>
+  <data name="ManagementPage_MoveToOneFolder.Text" xml:space="preserve">
+    <value>Alle in einen Ordner verschieben...</value>
+  </data>
+  <data name="ManagementPage_MoveToGroupFolders.Text" xml:space="preserve">
+    <value>In Gruppenordner organisieren</value>
+  </data>
+  <data name="ManagementPage_DeleteSplitButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ausgewählte Dateien in den Papierkorb verschieben</value>
+  </data>
+  <data name="ManagementPage_MoveToRecycleBin.Text" xml:space="preserve">
+    <value>In den Papierkorb verschieben</value>
+  </data>
+  <data name="ManagementPage_DeletePermanently.Text" xml:space="preserve">
+    <value>Endgültig löschen</value>
+  </data>
+  <data name="ManagementPage_Title" xml:space="preserve">
+    <value>Duplikatverwaltung</value>
+  </data>
+  <data name="ManagementPage_DuplicateGroupsHeader" xml:space="preserve">
+    <value>Duplikatgruppen</value>
+  </data>
+  <data name="ManagementPage_SortPrefix" xml:space="preserve">
+    <value>Sortierung: </value>
+  </data>
+  <data name="ManagementPage_FilterPrefix" xml:space="preserve">
+    <value>Filter: </value>
+  </data>
+  <data name="ManagementPage_DeleteLabel" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="ManagementPage_NoModelSelected" xml:space="preserve">
+    <value>Kein Modell ausgewählt</value>
+  </data>
+  <data name="ManagementPage_Selection_None" xml:space="preserve">
+    <value>Keine Dateien ausgewählt</value>
+  </data>
+  <data name="ManagementPage_Selection_Summary" xml:space="preserve">
+    <value>{0} Datei(en) ausgewählt aus {1} Gruppe(n)</value>
+  </data>
+  <data name="ManagementPage_GroupSelectionCount" xml:space="preserve">
+    <value>{0} von {1} ausgewählt</value>
+  </data>
+  <data name="ManagementPage_Status_Ready" xml:space="preserve">
+    <value>Bereit für die Ähnlichkeitsanalyse</value>
+  </data>
+  <data name="ManagementPage_Status_Analyzing" xml:space="preserve">
+    <value>Ähnlichkeiten werden analysiert...</value>
+  </data>
+  <data name="ManagementPage_Status_NoFeatures" xml:space="preserve">
+    <value>Keine Merkmale verfügbar. Bitte zuerst Merkmale extrahieren.</value>
+  </data>
+  <data name="ManagementPage_Status_AnalysisComplete" xml:space="preserve">
+    <value>Analyse abgeschlossen: {0}</value>
+  </data>
+  <data name="ManagementPage_Status_AnalysisCancelled" xml:space="preserve">
+    <value>Analyse abgebrochen</value>
+  </data>
+  <data name="ManagementPage_Status_AnalysisError" xml:space="preserve">
+    <value>Fehler bei der Ähnlichkeitsanalyse: {0}</value>
+  </data>
+  <data name="ManagementPage_Status_CancellingAnalysis" xml:space="preserve">
+    <value>Analyse wird abgebrochen...</value>
+  </data>
+  <data name="ManagementPage_Status_ThresholdChanged" xml:space="preserve">
+    <value>Schwellenwert geändert. Klicken Sie auf Analysieren, um die Ergebnisse zu aktualisieren.</value>
+  </data>
+  <data name="ManagementPage_Status_AllSelectionsCleared" xml:space="preserve">
+    <value>Gesamte Auswahl aufgehoben</value>
+  </data>
+  <data name="ManagementPage_Status_MovingFiles" xml:space="preserve">
+    <value>{0} Dateien werden verschoben...</value>
+  </data>
+  <data name="ManagementPage_Status_CopyingFiles" xml:space="preserve">
+    <value>{0} Dateien werden kopiert...</value>
+  </data>
+  <data name="ManagementPage_Status_MovingToGroups" xml:space="preserve">
+    <value>Dateien werden in Gruppenordner verschoben...</value>
+  </data>
+  <data name="ManagementPage_Status_CopyingToGroups" xml:space="preserve">
+    <value>Dateien werden in Gruppenordner kopiert...</value>
+  </data>
+  <data name="ManagementPage_Status_OperationError" xml:space="preserve">
+    <value>Fehler beim {0}-Vorgang: {1}</value>
+  </data>
+  <data name="ManagementPage_Status_MoveSuccess" xml:space="preserve">
+    <value>{0} Datei(en) erfolgreich verschoben</value>
+  </data>
+  <data name="ManagementPage_Status_CopySuccess" xml:space="preserve">
+    <value>{0} Datei(en) erfolgreich kopiert</value>
+  </data>
+  <data name="ManagementPage_Status_MoveFailedAll" xml:space="preserve">
+    <value>Verschieben aller {0} Dateien fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_CopyFailedAll" xml:space="preserve">
+    <value>Kopieren aller {0} Dateien fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_MovePartial" xml:space="preserve">
+    <value>{0} Datei(en) verschoben, {1} fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_CopyPartial" xml:space="preserve">
+    <value>{0} Datei(en) kopiert, {1} fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_DeletingToRecycleBin" xml:space="preserve">
+    <value>{0} Dateien werden in den Papierkorb verschoben...</value>
+  </data>
+  <data name="ManagementPage_Status_PermanentlyDeleting" xml:space="preserve">
+    <value>{0} Dateien werden endgültig gelöscht...</value>
+  </data>
+  <data name="ManagementPage_Status_RecycleBinSuccess" xml:space="preserve">
+    <value>{0} Datei(en) erfolgreich in den Papierkorb verschoben</value>
+  </data>
+  <data name="ManagementPage_Status_PermanentDeleteSuccess" xml:space="preserve">
+    <value>{0} Datei(en) erfolgreich endgültig gelöscht</value>
+  </data>
+  <data name="ManagementPage_Status_RecycleBinPartial" xml:space="preserve">
+    <value>{0} Datei(en) in den Papierkorb verschoben, {1} fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_PermanentDeletePartial" xml:space="preserve">
+    <value>{0} Datei(en) gelöscht, {1} fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_DeletionError" xml:space="preserve">
+    <value>Fehler beim Löschen: {0}</value>
+  </data>
+  <data name="ManagementPage_Dialog_SelectDestination" xml:space="preserve">
+    <value>Zielordner auswählen</value>
+  </data>
+  <data name="ManagementPage_Dialog_SelectRootFolder" xml:space="preserve">
+    <value>Stammordner für Gruppenorganisation auswählen</value>
+  </data>
+  <data name="ManagementPage_Dialog_ConfirmMove" xml:space="preserve">
+    <value>Verschieben bestätigen</value>
+  </data>
+  <data name="ManagementPage_Dialog_ConfirmCopy" xml:space="preserve">
+    <value>Kopieren bestätigen</value>
+  </data>
+  <data name="ManagementPage_Dialog_ConfirmDeletion" xml:space="preserve">
+    <value>Löschen bestätigen</value>
+  </data>
+  <data name="ManagementPage_Dialog_PermanentDeletion" xml:space="preserve">
+    <value>Endgültiges Löschen</value>
+  </data>
+  <data name="ManagementPage_Dialog_MoveMessage" xml:space="preserve">
+    <value>{0} Datei(en) verschieben nach: {1}</value>
+  </data>
+  <data name="ManagementPage_Dialog_CopyMessage" xml:space="preserve">
+    <value>{0} Datei(en) kopieren nach: {1}</value>
+  </data>
+  <data name="ManagementPage_Dialog_GroupFolderInfo" xml:space="preserve">
+    <value>Es werden {0} Ordner erstellt, benannt nach den jeweiligen Gruppen.</value>
+  </data>
+  <data name="ManagementPage_Dialog_RecycleBinMessage" xml:space="preserve">
+    <value>Möchten Sie wirklich {0} Datei(en) in den Papierkorb verschieben? Diese Aktion kann über den Papierkorb rückgängig gemacht werden.</value>
+  </data>
+  <data name="ManagementPage_Dialog_PermanentDeleteMessage" xml:space="preserve">
+    <value>Möchten Sie wirklich {0} Datei(en) ENDGÜLTIG löschen? Diese Aktion kann nicht rückgängig gemacht werden!</value>
+  </data>
+  <data name="ManagementPage_Dialog_MoveButton" xml:space="preserve">
+    <value>Verschieben</value>
+  </data>
+  <data name="ManagementPage_Dialog_CopyButton" xml:space="preserve">
+    <value>Kopieren</value>
+  </data>
+  <data name="ManagementPage_Dialog_DeleteButton" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="ManagementPage_Dialog_DeletePermanentlyButton" xml:space="preserve">
+    <value>Endgültig löschen</value>
+  </data>
+  <data name="ManagementPage_Dialog_CancelButton" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="GroupSortingOption_Similarity" xml:space="preserve">
+    <value>Ähnlichkeit</value>
+  </data>
+  <data name="GroupSortingOption_ImageCount" xml:space="preserve">
+    <value>Bildanzahl</value>
+  </data>
+  <data name="GroupSortingOption_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="GroupFilterOption_All" xml:space="preserve">
+    <value>Alle Gruppen</value>
+  </data>
+  <data name="GroupFilterOption_ExactMatchesOnly" xml:space="preserve">
+    <value>Exakte Treffer (100%)</value>
+  </data>
+  <data name="GroupFilterOption_SimilarOnly" xml:space="preserve">
+    <value>Nur ähnliche (&lt;100%)</value>
+  </data>
+  <data name="SelectionStrategy_KeepHighestResolution.Text" xml:space="preserve">
+    <value>Mit höchste Auflösung behalten (Wählt Elemente mit niedrigerer Auflösung aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepLowestResolution.Text" xml:space="preserve">
+    <value>Mit niedrigste Auflösung behalten (Wählt Elemente mit höherer Auflösung aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepLargestFileSize.Text" xml:space="preserve">
+    <value>Mit größter Dateigröße behalten (wählt kleinere Dateien aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepSmallestFileSize.Text" xml:space="preserve">
+    <value>Mit kleinster Dateigröße behalten (wählt größere Dateien aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepNewest.Text" xml:space="preserve">
+    <value>Neueste Datei behalten (Wählt ältere Einträge aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepOldest.Text" xml:space="preserve">
+    <value>Älteste Datei behalten (wählt neuere Elemente aus)</value>
+  </data>
+  <data name="SelectionStrategy_KeepAll.Text" xml:space="preserve">
+    <value>Alle behalten (Auswahl aufheben)</value>
+  </data>
+  <data name="SelectionStrategy_KeepNone.Text" xml:space="preserve">
+    <value>Keine behalten (wählt alle aus)</value>
+  </data>
+  <data name="ImageDetailCard_ImageBorder.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Doppel-Klick zum öffnen</value>
+  </data>
+  <data name="ImageDetailCard_OpenFolderHint.Text" xml:space="preserve">
+    <value>Doppel-Klick zum öffnen vom Ordner</value>
+  </data>
+  <data name="ImageGroupCard_ImagesLabel.Text" xml:space="preserve">
+    <value>Bilder</value>
+  </data>
+  <data name="SimilarityAnalysis_GroupDefaultName" xml:space="preserve">
+    <value>Gruppe {0}</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_MatrixRowDetail" xml:space="preserve">
+    <value>Reihe {0}/{1}</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_BuildingMatrix" xml:space="preserve">
+    <value>Erstellung einer Ähnlichkeitsmatrix</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_Clustering" xml:space="preserve">
+    <value>Ähnliche Dateien gruppieren</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_MergeDetail" xml:space="preserve">
+    <value>Fügt zusammen {0}</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_Statistics" xml:space="preserve">
+    <value>Statistiken berechnen</value>
+  </data>
+  <data name="SimilarityAnalysis_Progress_Complete" xml:space="preserve">
+    <value>Analyse abgeschlossen</value>
+  </data>
+  <data name="FeatureExtraction_Progress_Extracting" xml:space="preserve">
+    <value>Merkmale extrahieren</value>
+  </data>
+  <data name="FeatureExtraction_Progress_Complete" xml:space="preserve">
+    <value>Merkmalsextraktion abgeschlossen</value>
+  </data>
+  <data name="SimilarityResult_Summary_Empty" xml:space="preserve">
+    <value>Es wurden keine Elemente analysiert.</value>
+  </data>
+  <data name="SimilarityResult_Summary_NoDuplicates" xml:space="preserve">
+    <value>Keine Duplikatgruppen gefunden. Alle {0} Elemente sind einzigartig.</value>
+  </data>
+  <data name="SimilarityResult_Summary_WithDuplicates" xml:space="preserve">
+    <value>{0} Duplikatgruppe(n) mit {1} Element(en) gefunden. {2} Element(e) einzigartig.</value>
+  </data>
+  <data name="ImageProcessing_Progress_ProcessingImages" xml:space="preserve">
+    <value>Verarbeitet Bilder</value>
+  </data>
+  <data name="ImageProcessing_Progress_ProcessingComplete" xml:space="preserve">
+    <value>Verarbeitung fertig</value>
+  </data>
+  <data name="Model_SelectFile" xml:space="preserve">
+    <value>Modelldatei auswählen...</value>
+  </data>
+  <data name="OperationResult_FailedLine_One" xml:space="preserve">
+    <value>{0} abgeschlossen</value>
+  </data>
+  <data name="OperationResult_FailedLine_Other" xml:space="preserve">
+    <value>Mit einigen Problemen abgeschlossen:</value>
+  </data>
+  <data name="OperationResult_SuccessLine_One" xml:space="preserve">
+    <value>✓ {0} Datei erfolgreich</value>
+  </data>
+  <data name="OperationResult_SuccessLine_Other" xml:space="preserve">
+    <value>✓ {0} Dateien erfolgreich</value>
+  </data>
+  <data name="OperationResult_Summary" xml:space="preserve">
+    <value>✗ {0} Datei fehlgeschlagen</value>
+  </data>
+  <data name="OperationResult_Title" xml:space="preserve">
+    <value>✗ {0} Dateien fehlgeschlagen</value>
+  </data>
 </root>

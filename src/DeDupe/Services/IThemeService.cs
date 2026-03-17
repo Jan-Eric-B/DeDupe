@@ -35,7 +35,7 @@ namespace DeDupe.Services
 
         /// <summary>
         /// Applies specified accent color, or restores system accent colors when set to
-        /// <see cref="AppAccentColor.Application"/> . Triggers UI refresh on all registered windows.
+        /// <see cref="AppAccentColor.Application"/>. Triggers UI refresh on all registered windows.
         /// </summary>
         void ApplyAccentColor(AppAccentColor accentColor);
     }
