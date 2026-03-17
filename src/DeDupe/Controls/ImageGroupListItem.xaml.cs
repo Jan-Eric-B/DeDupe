@@ -17,11 +17,11 @@ using Windows.UI.Core;
 
 namespace DeDupe.Controls
 {
-    public sealed partial class ImageGroupCard : UserControl
+    public sealed partial class ImageGroupListItem : UserControl
     {
-        private static readonly ILogger<ImageGroupCard> _logger = App.Current.GetService<ILogger<ImageGroupCard>>();
+        private static readonly ILogger<ImageGroupListItem> _logger = App.Current.GetService<ILogger<ImageGroupListItem>>();
 
-        public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupCard), new PropertyMetadata(null, OnGroupChanged));
+        public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupListItem), new PropertyMetadata(null, OnGroupChanged));
 
         public SimilarityGroup? Group
         {
@@ -29,14 +29,14 @@ namespace DeDupe.Controls
             set => SetValue(GroupProperty, value);
         }
 
-        public ImageGroupCard()
+        public ImageGroupListItem()
         {
             InitializeComponent();
         }
 
         private static void OnGroupChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ImageGroupCard control)
+            if (d is ImageGroupListItem control)
             {
                 control.UpdateStackedImages();
             }
@@ -50,7 +50,7 @@ namespace DeDupe.Controls
             if (isCtrlPressed && Group != null)
             {
                 Group.ToggleSelection();
-                e.Handled = true; // Prevent other click behaviors
+                e.Handled = true;
             }
         }
 
@@ -66,11 +66,9 @@ namespace DeDupe.Controls
 
             PlaceholderIcon.Visibility = Visibility.Collapsed;
 
-            // 4 images for display
             List<string> imagesToShow = [.. Group.GetImageThumbnailPaths().Take(4)];
             int imageCount = imagesToShow.Count;
 
-            // Calculate stacking offsets
             for (int i = imageCount - 1; i >= 0; i--)
             {
                 CreateStackedImage(imagesToShow[i], i, imageCount);
@@ -81,15 +79,14 @@ namespace DeDupe.Controls
         {
             Border imageBorder = new()
             {
-                CornerRadius = new CornerRadius(4),
+                CornerRadius = new CornerRadius(3),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
                 Shadow = new ThemeShadow()
             };
 
-            // Offset based on position in stack
-            double offsetX = (totalCount - 1 - index) * 16;
-            double offsetY = (totalCount - 1 - index) * 12;
+            double offsetX = (totalCount - 1 - index) * 5;
+            double offsetY = (totalCount - 1 - index) * 4;
             imageBorder.Margin = new Thickness(offsetX, offsetY, -offsetX, -offsetY);
 
             Image image = new()
@@ -99,10 +96,9 @@ namespace DeDupe.Controls
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            _ = LoadImageAsync(image, imagePath, 180);
+            _ = LoadImageAsync(image, imagePath, 64);
 
             imageBorder.Child = image;
-            // Add to grid (back to front)
             StackedThumbnails.Children.Add(imageBorder);
         }
 
@@ -131,7 +127,7 @@ namespace DeDupe.Controls
 
         #region Logging
 
-        [LoggerMessage(Level = LogLevel.Warning, Message = "Card thumbnail load failed for {FilePath}")]
+        [LoggerMessage(Level = LogLevel.Warning, Message = "List item thumbnail load failed for {FilePath}")]
         private static partial void LogThumbnailLoadFailed(ILogger logger, string filePath, Exception ex);
 
         #endregion Logging

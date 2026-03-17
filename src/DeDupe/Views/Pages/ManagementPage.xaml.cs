@@ -1,4 +1,5 @@
-﻿using DeDupe.Enums;
+﻿using CommunityToolkit.WinUI.Controls;
+using DeDupe.Enums;
 using DeDupe.Localization;
 using DeDupe.Models.Analysis;
 using DeDupe.Models.Results;
@@ -189,6 +190,22 @@ namespace DeDupe.Views.Pages
         }
 
         #endregion Group Selection & Panel Management
+
+        #region View
+
+        private void ViewSegmented_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModel == null) return;
+
+            if (sender is Segmented segmented && segmented.SelectedItem is SegmentedItem item)
+            {
+                bool isList = item.Tag?.ToString() == "List";
+                ViewModel.IsListView = isList;
+                LogViewSwitched(isList ? "List" : "Grid");
+            }
+        }
+
+        #endregion View
 
         #region Sorting
 
@@ -654,6 +671,9 @@ namespace DeDupe.Views.Pages
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Group name sanitized from {OriginalName} to {SanitizedName}")]
         private partial void LogGroupNameSanitized(string originalName, string sanitizedName);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "View mode switched to {ViewMode}")]
+        private partial void LogViewSwitched(string viewMode);
 
         #endregion Logging
     }

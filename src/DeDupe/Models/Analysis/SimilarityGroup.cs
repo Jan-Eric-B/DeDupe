@@ -180,6 +180,7 @@ namespace DeDupe.Models.Analysis
             OnPropertyChanged(nameof(SelectedCount));
             OnPropertyChanged(nameof(AllSelected));
             OnPropertyChanged(nameof(NoneSelected));
+            OnPropertyChanged(nameof(IsAnySelected));
             OnPropertyChanged(nameof(Count));
             OnPropertyChanged(nameof(IsDuplicateGroup));
         }

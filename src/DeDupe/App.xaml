@@ -8,6 +8,15 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!--  Accent Color Brushes  -->
+            <SolidColorBrush x:Key="AccentBaseBrush" Color="{ThemeResource SystemAccentColor}" />
+            <SolidColorBrush x:Key="AccentLight1Brush" Color="{ThemeResource SystemAccentColorLight1}" />
+            <SolidColorBrush x:Key="AccentLight2Brush" Color="{ThemeResource SystemAccentColorLight2}" />
+            <SolidColorBrush x:Key="AccentLight3Brush" Color="{ThemeResource SystemAccentColorLight3}" />
+            <SolidColorBrush x:Key="AccentDark1Brush" Color="{ThemeResource SystemAccentColorDark1}" />
+            <SolidColorBrush x:Key="AccentDark2Brush" Color="{ThemeResource SystemAccentColorDark2}" />
+            <SolidColorBrush x:Key="AccentDark3Brush" Color="{ThemeResource SystemAccentColorDark3}" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -15,9 +15,9 @@
         <converters:SimilarityToPercentageConverter x:Key="SimilarityToPercentageConverter" />
     </UserControl.Resources>
     <Border
-        Width="280"
-        Height="260"
-        Padding="10"
+        Width="180"
+        Height="160"
+        Padding="5"
         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
@@ -31,7 +31,17 @@
 
             <!--  Thumbnails  -->
             <Grid Grid.Row="0">
-                <Grid x:Name="StackedThumbnails" Margin="10,10,50,50" />
+                <Grid x:Name="StackedThumbnails" Margin="10,10,25,20" />
+
+                <!--  Placeholder  -->
+                <FontIcon
+                    x:Name="PlaceholderIcon"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="64"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Glyph="&#xEB9F;"
+                    Visibility="Collapsed" />
 
                 <!--  Selection Checkbox  -->
                 <CheckBox
@@ -50,16 +60,16 @@
                 <!--  Selection Count Badge  -->
                 <Border
                     Margin="4"
-                    Padding="6,2"
+                    Padding="8,4"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
-                    Background="{ThemeResource SystemFillColorCriticalBrush}"
+                    Background="{ThemeResource AccentDark2Brush}"
                     CornerRadius="10"
                     Visibility="{x:Bind Group.IsAnySelected, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock
                         FontSize="11"
                         FontWeight="SemiBold"
-                        Foreground="White"
+                        Foreground="{ThemeResource AccentLight3Brush}"
                         Text="{x:Bind Group.SelectedCount, Mode=OneWay}" />
                 </Border>
             </Grid>
@@ -102,12 +112,12 @@
                     <!--  Similarity Badge  -->
                     <Border
                         Grid.Column="1"
-                        Padding="8,4"
+                        Padding="5,2"
                         VerticalAlignment="Bottom"
                         Background="{ThemeResource AccentFillColorDefaultBrush}"
                         CornerRadius="4">
                         <TextBlock
-                            FontSize="14"
+                            FontSize="13"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource TextOnAccentFillColorDefaultBrush}"
                             Text="{x:Bind Group.AverageSimilarity, Mode=OneWay, Converter={StaticResource SimilarityToPercentageConverter}}" />

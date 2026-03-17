@@ -62,6 +62,17 @@ namespace DeDupe.ViewModels.Pages
 
         #endregion Localization
 
+
+        #region View
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsGridView))]
+        public partial bool IsListView { get; set; } = false;
+
+        public bool IsGridView => !IsListView;
+
+        #endregion View
+
         #region Similarity Analysis
 
         [ObservableProperty]
