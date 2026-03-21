@@ -36,11 +36,12 @@ namespace DeDupe.ViewModels.Pages
         private readonly IImageProcessingService _imageProcessingService;
         private readonly ILogger<ConfigurationViewModel> _logger;
         private readonly ILocalizer _localizer;
+        private readonly ITaskbarProgressService _taskbarProgressService;
 
         [ObservableProperty]
         public partial bool IncludeVideoFiles { get; set; }
 
-        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IDialogService dialogService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IImageProcessingService imageProcessingService, ILocalizer localizer, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ConfigurationViewModel(IAppStateService appStateService, ISettingsService settingsService, IDialogService dialogService, IBundledModelService bundledModelService, IFeatureExtractionService featureExtractionService, IImageProcessingService imageProcessingService, ILocalizer localizer, ITaskbarProgressService taskbarProgressService, ILogger<ConfigurationViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -50,7 +51,8 @@ namespace DeDupe.ViewModels.Pages
             _imageProcessingService = imageProcessingService ?? throw new ArgumentNullException(nameof(imageProcessingService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _localizer = localizer ?? throw new ArgumentNullException(nameof(localizer));
-
+            _taskbarProgressService = taskbarProgressService ?? throw new ArgumentNullException(nameof(taskbarProgressService));
+            
             Title = L("ConfigurationPage_Title");
             Status = L("ConfigurationPage_Status_NoFilesAdded");
             InputListItems.CollectionChanged += MediaPathItems_CollectionChanged;
@@ -547,6 +549,9 @@ namespace DeDupe.ViewModels.Pages
                         ProgressPercentage = info.Percentage;
                         Status = info.StatusText;
                     });
+
+                    // Sync with taskbar
+                    _taskbarProgressService.SetProgress(info.CurrentItem, info.TotalItems);
                 });
 
                 CurrentOperation = L("ConfigurationPage_Operation_ProcessingImages");
@@ -574,6 +579,8 @@ namespace DeDupe.ViewModels.Pages
                     CurrentOperation = L("ConfigurationPage_Operation_InitializingModel");
                     Status = L("ConfigurationPage_Status_InitializingModel");
                     ProgressPercentage = 0;
+
+                    _taskbarProgressService.SetIndeterminate();
 
                     await InitializeFeatureExtractionAsync();
 
@@ -606,6 +613,9 @@ namespace DeDupe.ViewModels.Pages
                         ProgressPercentage = info.Percentage;
                         Status = info.StatusText;
                     });
+
+                    // Sync with taskbar
+                    _taskbarProgressService.SetProgress(info.CurrentItem, info.TotalItems);
                 });
 
                 CurrentOperation = L("ConfigurationPage_Operation_ExtractingFeatures");
@@ -642,10 +652,12 @@ namespace DeDupe.ViewModels.Pages
             catch (OperationCanceledException)
             {
                 LogProcessingPipelineCancelled();
+                _taskbarProgressService.SetPaused();
                 Status = L("ConfigurationPage_Status_ProcessingCancelled");
             }
             catch (Exception ex)
             {
+                _taskbarProgressService.SetError();
                 Status = L("ConfigurationPage_Status_ErrorProcessing", ex.Message);
                 LogProcessingPipelineAborted(ex);
             }
@@ -654,6 +666,9 @@ namespace DeDupe.ViewModels.Pages
                 IsProcessing = false;
                 IsBusy = false;
                 ProcessingProgress = 0;
+
+                // Clear taskbar progress
+                _taskbarProgressService.Clear();
 
                 // Reset progress display after a short delay to show completion
                 await Task.Delay(2000);

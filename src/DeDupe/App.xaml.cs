@@ -127,6 +127,9 @@ namespace DeDupe
             // Auto Selection
             services.AddSingleton<IAutoSelectionService, AutoSelectionService>();
 
+            // Taskbar Progress
+            services.AddSingleton<ITaskbarProgressService, TaskbarProgressService>();
+
             // Localization
             services.AddSingleton<ILocalizer>(sp =>
             {

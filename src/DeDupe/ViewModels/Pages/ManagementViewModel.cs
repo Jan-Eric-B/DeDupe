@@ -28,8 +28,9 @@ namespace DeDupe.ViewModels.Pages
         private readonly IFileOperationService _fileOperationService;
         private readonly IDialogService _dialogService;
         private readonly ILogger<ManagementViewModel> _logger;
+        private readonly ITaskbarProgressService _taskbarProgressService;
 
-        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, IFileOperationService fileOperationService, IDialogService dialogService, ILocalizer localizer, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
+        public ManagementViewModel(IAppStateService appStateService, ISettingsService settingsService, ISimilarityAnalysisService similarityAnalysisService, IAutoSelectionService autoSelectionService, IFileOperationService fileOperationService, IDialogService dialogService, ILocalizer localizer, ITaskbarProgressService taskbarProgressService, ILogger<ManagementViewModel> logger, MainWindowViewModel mainWindowViewModel) : base(localizer, () => mainWindowViewModel.StartManagementModeCommand.Execute(null))
         {
             _appStateService = appStateService ?? throw new ArgumentNullException(nameof(appStateService));
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
@@ -38,6 +39,7 @@ namespace DeDupe.ViewModels.Pages
             _fileOperationService = fileOperationService ?? throw new ArgumentNullException(nameof(fileOperationService));
             _dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _taskbarProgressService = taskbarProgressService ?? throw new ArgumentNullException(nameof(taskbarProgressService));
 
             Title = L("ManagementPage_Title");
             Status = L("ManagementPage_Status_Ready");
@@ -140,7 +142,6 @@ namespace DeDupe.ViewModels.Pages
         [RelayCommand(CanExecute = nameof(CanStartSimilarityAnalysis))]
         private async Task AnalyzeSimilarityAsync()
         {
-            // Cancel any existing analysis
             if (_analysisCts is not null)
             {
                 await _analysisCts.CancelAsync();
@@ -156,7 +157,6 @@ namespace DeDupe.ViewModels.Pages
                 AnalysisProgressPercentage = 0;
                 Status = L("ManagementPage_Status_Analyzing");
 
-                // Get items with features
                 IReadOnlyCollection<AnalysisItem> itemsWithFeatures = _appStateService.ItemsWithFeatures;
 
                 if (itemsWithFeatures.Count == 0)
@@ -172,10 +172,13 @@ namespace DeDupe.ViewModels.Pages
                 {
                     AnalysisProgressPercentage = info.Percentage;
                     Status = info.StatusText;
+
+                    // Sync with taskbar
+                    _taskbarProgressService.SetProgress(info.Percentage, 100);
                 });
 
-                // Perform clustering with cancellation token
-                SimilarityResult = await _similarityAnalysisService.ClusterAsync(itemsWithFeatures, SimilarityThreshold, Localizer, analysisProgress, ct);
+                SimilarityResult = await _similarityAnalysisService.ClusterAsync(
+                    itemsWithFeatures, SimilarityThreshold, Localizer, analysisProgress, ct);
 
                 HasSimilarityResults = true;
                 AnalysisProgressPercentage = 100;
@@ -185,12 +188,14 @@ namespace DeDupe.ViewModels.Pages
             }
             catch (OperationCanceledException)
             {
+                _taskbarProgressService.SetPaused();
                 Status = L("ManagementPage_Status_AnalysisCancelled");
                 AnalysisProgressPercentage = 0;
                 LogSimilarityAnalysisCancelled();
             }
             catch (Exception ex)
             {
+                _taskbarProgressService.SetError();
                 Status = L("ManagementPage_Status_AnalysisError", ex.Message);
                 LogSimilarityAnalysisAborted(ex);
                 HasSimilarityResults = false;
@@ -200,7 +205,9 @@ namespace DeDupe.ViewModels.Pages
                 IsAnalyzingSimilarity = false;
                 IsBusy = false;
 
-                // Reset progress
+                // Clear taskbar progress
+                _taskbarProgressService.Clear();
+
                 await Task.Delay(2000);
                 if (!IsAnalyzingSimilarity)
                 {
