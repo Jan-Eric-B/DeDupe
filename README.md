@@ -23,6 +23,8 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 - **No configuration required** - Just select the image sources and start scanning. The included model is ready to use out of the box.
 - **Local & private** - All processing happens locally and offline on your machine. No images are uploaded anywhere.
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/JanEricBe)
+
 ## Requirements
 
 - Windows 10 version 1809 (build 17763) or later / Windows 11
