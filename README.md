@@ -1,4 +1,6 @@
 ﻿# <img src="docs/images/AppIcon.png" width="30" height="30" alt="DeDupe icon"> DeDupe
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/JanEricBe)
+
 
 DeDupe is a simple application for finding and managing duplicate and visually similar images using deep learning.
 
@@ -22,8 +24,6 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 - **Adjust similarity threshold** - Fine-tune the sensitivity of the duplicate detection and grouping.
 - **No configuration required** - Just select the image sources and start scanning. The included model is ready to use out of the box.
 - **Local & private** - All processing happens locally and offline on your machine. No images are uploaded anywhere.
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://paypal.me/JanEricBe)
 
 ## Requirements
 
