@@ -39,7 +39,7 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 
 The easiest way to install DeDupe is through the Microsoft Store.
 
-[<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>]([https://apps.microsoft.com/](https://apps.microsoft.com/detail/9n4h68h7dm8p))
+[<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>](https://apps.microsoft.com/detail/9n4h68h7dm8p)
 
 ### GitHub Release (Sideload)
 
