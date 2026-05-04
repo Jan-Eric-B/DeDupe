@@ -11,7 +11,7 @@ using DeDupe.Services.Analysis;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using DeDupe.Collections;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -133,7 +133,7 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly List<SimilarityGroup> _allDuplicateGroups = [];
 
-        public ObservableCollection<SimilarityGroup> SimilarityGroups { get; } = [];
+        public BulkObservableCollection<SimilarityGroup> SimilarityGroups { get; } = [];
 
         public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && _appStateService.ExtractedFeaturesCount > 0;
 
@@ -463,12 +463,7 @@ namespace DeDupe.ViewModels.Pages
                 _ => [.. SimilarityGroups]
             };
 
-            // Rebuild collection in new order
-            SimilarityGroups.Clear();
-            foreach (SimilarityGroup group in sorted)
-            {
-                SimilarityGroups.Add(group);
-            }
+            SimilarityGroups.ReplaceAll(sorted);
 
             LogGroupsSorted(CurrentSortOption);
         }
@@ -509,8 +504,6 @@ namespace DeDupe.ViewModels.Pages
                 group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
             }
 
-            SimilarityGroups.Clear();
-
             // Apply filter
             const double exactMatchThreshold = 0.9999;
 
@@ -521,16 +514,25 @@ namespace DeDupe.ViewModels.Pages
                 _ => _allDuplicateGroups
             };
 
-            foreach (SimilarityGroup group in filtered)
+            // Sort before adding to avoid a second collection rebuild
+            List<SimilarityGroup> sorted = CurrentSortOption switch
+            {
+                GroupSortingOption.Similarity => [.. filtered.OrderByDescending(g => g.AverageSimilarity)],
+                GroupSortingOption.ImageCount => [.. filtered.OrderByDescending(g => g.Count)],
+                GroupSortingOption.Name => [.. filtered.OrderBy(g => g.Name)],
+                _ => [.. filtered]
+            };
+
+            // Subscribe to selection events
+            foreach (SimilarityGroup group in sorted)
             {
                 group.GroupSelectionChanged += OnAnyGroupSelectionChanged;
-                SimilarityGroups.Add(group);
             }
 
-            // Re-apply current sort order
-            ApplyCurrentSort();
+            // Single bulk update — fires one Reset notification instead of N Add notifications
+            SimilarityGroups.ReplaceAll(sorted);
 
-            // Close detail panel
+            // Close detail panel if selected group was filtered out
             if (SelectedGroup != null && !SimilarityGroups.Contains(SelectedGroup))
             {
                 SelectedGroup = null;
