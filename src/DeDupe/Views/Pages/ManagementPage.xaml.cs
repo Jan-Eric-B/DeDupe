@@ -14,13 +14,10 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Search;
-using Windows.System;
 
 namespace DeDupe.Views.Pages
 {
@@ -731,7 +728,7 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private async void OnImageOpenRequested(object? sender, SelectableItem targetItem)
+        private void OnImageOpenRequested(object? sender, SelectableItem targetItem)
         {
             SimilarityGroup? group = ViewModel.SelectedGroup;
             if (group == null)
@@ -746,39 +743,23 @@ namespace DeDupe.Views.Pages
                 if (groupFilePaths.Count <= 1)
                 {
                     // Single image - just open directly
-                    StorageFile file = await StorageFile.GetFileFromPathAsync(targetItem.FilePath);
-                    await Launcher.LaunchFileAsync(file);
+                    Process.Start(new ProcessStartInfo(targetItem.FilePath) { UseShellExecute = true });
                     return;
                 }
 
-                string tempFolder = PrepareBatchFolder(group.Id, groupFilePaths, targetItem.FilePath, out string targetTempPath);
+                PrepareBatchFolder(group.Id, groupFilePaths, targetItem.FilePath, out string targetTempPath);
 
-                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(tempFolder);
-                StorageFile targetFile = await StorageFile.GetFileFromPathAsync(targetTempPath);
-
-                QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".webp", ".heic", ".heif", ".avif", ".jxl"])
-                {
-                    SortOrder = { new SortEntry { PropertyName = "System.FileName", AscendingOrder = true } }
-                };
-
-                StorageFileQueryResult queryResult = folder.CreateFileQueryWithOptions(queryOptions);
-
-                LauncherOptions options = new()
-                {
-                    NeighboringFilesQuery = queryResult
-                };
-
-                await Launcher.LaunchFileAsync(targetFile, options);
+                // Open from temp folder - Photos app detects siblings and enables arrow navigation
+                Process.Start(new ProcessStartInfo(targetTempPath) { UseShellExecute = true });
             }
             catch (Exception ex)
             {
                 LogBatchImageOpenFailed(targetItem.FilePath, ex);
 
-                // Fallback: open single file directly
+                // Fallback: open original file directly
                 try
                 {
-                    StorageFile file = await StorageFile.GetFileFromPathAsync(targetItem.FilePath);
-                    await Launcher.LaunchFileAsync(file);
+                    Process.Start(new ProcessStartInfo(targetItem.FilePath) { UseShellExecute = true });
                 }
                 catch (Exception fallbackEx)
                 {
@@ -787,7 +768,7 @@ namespace DeDupe.Views.Pages
             }
         }
 
-        private string PrepareBatchFolder(int groupId, List<string> filePaths, string targetFilePath, out string targetTempPath)
+        private void PrepareBatchFolder(int groupId, List<string> filePaths, string targetFilePath, out string targetTempPath)
         {
             string baseTempDir = Path.Combine(Path.GetTempPath(), "DeDupe", "BatchView");
             string groupFolder = Path.Combine(baseTempDir, $"Group_{groupId}");
@@ -841,8 +822,6 @@ namespace DeDupe.Views.Pages
                 string[] files = Directory.GetFiles(groupFolder);
                 targetTempPath = files.Length > 0 ? files[0] : targetFilePath;
             }
-
-            return groupFolder;
         }
 
         #endregion Batch Image Viewer
