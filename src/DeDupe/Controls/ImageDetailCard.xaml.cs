@@ -213,22 +213,19 @@ namespace DeDupe.Controls
             return formatter.Format(date);
         }
 
-        private async void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        /// <summary>
+        /// Raised when the user double-taps the image to open it in a viewer.
+        /// </summary>
+        public event EventHandler<SelectableItem>? ImageOpenRequested;
+
+        private void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             if (SelectableItem == null)
             {
                 return;
             }
 
-            try
-            {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(SelectableItem.FilePath);
-                await Launcher.LaunchFileAsync(file);
-            }
-            catch (Exception ex)
-            {
-                LogFileLaunchFailed(SelectableItem.FilePath, ex);
-            }
+            ImageOpenRequested?.Invoke(this, SelectableItem);
         }
 
         private async void FileName_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)

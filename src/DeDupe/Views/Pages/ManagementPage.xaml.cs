@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.WinUI.Controls;
+using DeDupe.Controls;
 using DeDupe.Enums;
 using DeDupe.Localization;
 using DeDupe.Models.Analysis;
@@ -11,7 +12,15 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.Search;
+using Windows.System;
 
 namespace DeDupe.Views.Pages
 {
@@ -700,6 +709,144 @@ namespace DeDupe.Views.Pages
 
         #endregion Group Renaming
 
+        #region Batch Image Viewer
+
+        [LibraryImport("kernel32.dll", EntryPoint = "CreateHardLinkW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool CreateHardLink(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
+
+        private void ImageCardsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+        {
+            if (args.Element is ImageDetailCard card)
+            {
+                card.ImageOpenRequested += OnImageOpenRequested;
+            }
+        }
+
+        private void ImageCardsRepeater_ElementClearing(ItemsRepeater sender, ItemsRepeaterElementClearingEventArgs args)
+        {
+            if (args.Element is ImageDetailCard card)
+            {
+                card.ImageOpenRequested -= OnImageOpenRequested;
+            }
+        }
+
+        private async void OnImageOpenRequested(object? sender, SelectableItem targetItem)
+        {
+            SimilarityGroup? group = ViewModel.SelectedGroup;
+            if (group == null)
+            {
+                return;
+            }
+
+            try
+            {
+                List<string> groupFilePaths = group.SelectableItems.Select(i => i.FilePath).ToList();
+
+                if (groupFilePaths.Count <= 1)
+                {
+                    // Single image - just open directly
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(targetItem.FilePath);
+                    await Launcher.LaunchFileAsync(file);
+                    return;
+                }
+
+                string tempFolder = PrepareBatchFolder(group.Id, groupFilePaths, targetItem.FilePath, out string targetTempPath);
+
+                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(tempFolder);
+                StorageFile targetFile = await StorageFile.GetFileFromPathAsync(targetTempPath);
+
+                QueryOptions queryOptions = new(CommonFileQuery.DefaultQuery, [".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".tif", ".webp", ".heic", ".heif", ".avif", ".jxl"])
+                {
+                    SortOrder = { new SortEntry { PropertyName = "System.FileName", AscendingOrder = true } }
+                };
+
+                StorageFileQueryResult queryResult = folder.CreateFileQueryWithOptions(queryOptions);
+
+                LauncherOptions options = new()
+                {
+                    NeighboringFilesQuery = queryResult
+                };
+
+                await Launcher.LaunchFileAsync(targetFile, options);
+            }
+            catch (Exception ex)
+            {
+                LogBatchImageOpenFailed(targetItem.FilePath, ex);
+
+                // Fallback: open single file directly
+                try
+                {
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(targetItem.FilePath);
+                    await Launcher.LaunchFileAsync(file);
+                }
+                catch (Exception fallbackEx)
+                {
+                    LogBatchImageOpenFailed(targetItem.FilePath, fallbackEx);
+                }
+            }
+        }
+
+        private string PrepareBatchFolder(int groupId, List<string> filePaths, string targetFilePath, out string targetTempPath)
+        {
+            string baseTempDir = Path.Combine(Path.GetTempPath(), "DeDupe", "BatchView");
+            string groupFolder = Path.Combine(baseTempDir, $"Group_{groupId}");
+
+            // Clean up existing folder for this group to avoid stale files
+            if (Directory.Exists(groupFolder))
+            {
+                try { Directory.Delete(groupFolder, true); } catch { /* best effort */ }
+            }
+
+            Directory.CreateDirectory(groupFolder);
+
+            targetTempPath = string.Empty;
+            int index = 0;
+
+            foreach (string filePath in filePaths)
+            {
+                string extension = Path.GetExtension(filePath);
+                string originalName = Path.GetFileNameWithoutExtension(filePath);
+                // Prefix with index to control navigation order
+                string linkedName = $"{index:D3}_{originalName}{extension}";
+                string linkedPath = Path.Combine(groupFolder, linkedName);
+
+                bool linked = CreateHardLink(linkedPath, filePath, IntPtr.Zero);
+
+                if (!linked)
+                {
+                    // Fallback to file copy if hard link fails (cross-volume, network, etc.)
+                    try
+                    {
+                        File.Copy(filePath, linkedPath, overwrite: true);
+                        linked = true;
+                    }
+                    catch
+                    {
+                        // Skip files that can't be linked or copied
+                    }
+                }
+
+                if (linked && string.Equals(filePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetTempPath = linkedPath;
+                }
+
+                index++;
+            }
+
+            // If target wasn't matched (shouldn't happen), pick the first file
+            if (string.IsNullOrEmpty(targetTempPath))
+            {
+                string[] files = Directory.GetFiles(groupFolder);
+                targetTempPath = files.Length > 0 ? files[0] : targetFilePath;
+            }
+
+            return groupFolder;
+        }
+
+        #endregion Batch Image Viewer
+
         #region Logging
 
         [LoggerMessage(Level = LogLevel.Information, Message = "File operation starting: {Operation} for {FileCount} files to {DestinationPath}")]
@@ -710,6 +857,9 @@ namespace DeDupe.Views.Pages
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "View mode switched to {ViewMode}")]
         private partial void LogViewSwitched(string viewMode);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Batch image open failed for {FilePath}")]
+        private partial void LogBatchImageOpenFailed(string filePath, Exception ex);
 
         #endregion Logging
     }

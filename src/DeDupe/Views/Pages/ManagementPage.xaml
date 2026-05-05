@@ -751,7 +751,11 @@
 
                     <!--  Image Cards Grid  -->
                     <ScrollViewer Grid.Row="2">
-                        <ItemsRepeater x:Name="ImageCardsRepeater" ItemsSource="{x:Bind ViewModel.SelectedGroup.SelectableItems, Mode=OneWay}">
+                        <ItemsRepeater
+                            x:Name="ImageCardsRepeater"
+                            ElementClearing="ImageCardsRepeater_ElementClearing"
+                            ElementPrepared="ImageCardsRepeater_ElementPrepared"
+                            ItemsSource="{x:Bind ViewModel.SelectedGroup.SelectableItems, Mode=OneWay}">
                             <ItemsRepeater.Layout>
                                 <UniformGridLayout
                                     ItemsStretch="None"
