@@ -180,9 +180,6 @@ namespace DeDupe.ViewModels.Pages
                 SimilarityResult = await _similarityAnalysisService.ClusterAsync(
                     itemsWithFeatures, SimilarityThreshold, Localizer, analysisProgress, ct);
 
-                // Release feature vectors — no longer needed after clustering
-                _appStateService.ClearFeatureState();
-
                 HasSimilarityResults = true;
                 AnalysisProgressPercentage = 100;
                 Status = L("ManagementPage_Status_AnalysisComplete", ResultSummary);
