@@ -40,22 +40,25 @@ namespace DeDupe.Services.Analysis
                 // Build similarity matrix
                 double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, localizer, progress, cancellationToken), cancellationToken);
 
-                // Hierarchical clustering
+                // Hierarchical clustering (returns only duplicate groups, not singletons)
                 progress?.Report(new ProgressInfo(70, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Clustering")));
 
-                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, localizer, progress, cancellationToken), cancellationToken);
+                List<SimilarityGroup> duplicateGroups = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, localizer, progress, cancellationToken), cancellationToken);
 
                 // Calculate cluster statistics
                 progress?.Report(new ProgressInfo(95, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Statistics")));
-                CalculateClusterStatistics(clusters, itemList, similarityMatrix);
+                CalculateClusterStatistics(duplicateGroups, itemList, similarityMatrix);
+
+                // Singleton count = total items minus items that ended up in duplicate groups
+                int itemsInDuplicateGroups = duplicateGroups.Sum(g => g.Count);
+                int singletonCount = itemList.Count - itemsInDuplicateGroups;
 
                 stopwatch.Stop();
-                int duplicateGroupCount = clusters.Count(c => c.Count > 1);
-                LogClusteringCompleted(itemList.Count, clusters.Count, duplicateGroupCount, stopwatch.Elapsed.TotalSeconds);
+                LogClusteringCompleted(itemList.Count, duplicateGroups.Count, duplicateGroups.Count, stopwatch.Elapsed.TotalSeconds);
 
                 progress?.Report(new ProgressInfo(100, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Complete")));
 
-                return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
+                return new SimilarityResult(duplicateGroups, similarityThreshold, itemList.Count, singletonCount);
             }
             catch (OperationCanceledException)
             {
@@ -212,19 +215,29 @@ namespace DeDupe.Services.Analysis
                 clusterSourceIds[i] = [items[i].SourceId];
             }
 
-            // Build max-heap of all candidate pairs above threshold
-            // Using a sorted set with a comparer that orders by similarity descending
+            // Build max-heap of candidate pairs above threshold.
+            // Only enqueue the top candidate for each item (nearest-neighbor) to limit memory.
+            // After a merge we re-scan neighbors for the merged cluster.
             PriorityQueue<(int I, int J), double> heap = new(Comparer<double>.Create((a, b) => b.CompareTo(a)));
 
             for (int i = 0; i < count; i++)
             {
+                double bestSim = -1.0;
+                int bestJ = -1;
+
                 for (int j = i + 1; j < count; j++)
                 {
                     double sim = similarityMatrix[i, j];
-                    if (sim >= similarityThreshold)
+                    if (sim >= similarityThreshold && sim > bestSim)
                     {
-                        heap.Enqueue((i, j), sim);
+                        bestSim = sim;
+                        bestJ = j;
                     }
+                }
+
+                if (bestJ >= 0)
+                {
+                    heap.Enqueue((i, bestJ), bestSim);
                 }
             }
 
@@ -290,10 +303,12 @@ namespace DeDupe.Services.Analysis
                 }
             }
 
-            // Convert to SimilarityGroup objects
+            // Only create SimilarityGroup objects for duplicate groups (count > 1).
+            // Singletons are tracked as a count only — they are never displayed in the UI.
             List<SimilarityGroup> result = [];
             int clusterId = 0;
             int duplicateGroupNumber = 1;
+            int singletonCount = 0;
 
             for (int i = 0; i < count; i++)
             {
@@ -302,15 +317,21 @@ namespace DeDupe.Services.Analysis
                     continue;
                 }
 
+                if (clusters[i].Count == 1)
+                {
+                    singletonCount++;
+                    continue;
+                }
+
                 List<AnalysisItem> clusterItems = [.. clusters[i].Select(idx => items[idx])];
 
-                string? groupName = clusterItems.Count > 1 ? string.Format(localizer.GetLocalizedString("SimilarityAnalysis_GroupDefaultName"), duplicateGroupNumber++) : null;
+                string? groupName = string.Format(localizer.GetLocalizedString("SimilarityAnalysis_GroupDefaultName"), duplicateGroupNumber++);
 
                 SimilarityGroup group = new(clusterId++, clusterItems, groupName);
                 result.Add(group);
             }
 
-            LogHierarchicalClusteringCompleted(count, mergeOperations, result.Count);
+            LogHierarchicalClusteringCompleted(count, mergeOperations, result.Count, singletonCount);
 
             return result;
         }
@@ -401,8 +422,8 @@ namespace DeDupe.Services.Analysis
         [LoggerMessage(Level = LogLevel.Debug, Message = "Similarity matrix calculated: {ItemCount} items, {ComparisonCount} comparisons in {ElapsedSeconds:F1}s")]
         private partial void LogSimilarityMatrixCalculated(int itemCount, long comparisonCount, double elapsedSeconds);
 
-        [LoggerMessage(Level = LogLevel.Debug, Message = "Hierarchical clustering finished: {ItemCount} items, {MergeCount} merges, {ResultGroupCount} final groups")]
-        private partial void LogHierarchicalClusteringCompleted(int itemCount, int mergeCount, int resultGroupCount);
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Hierarchical clustering finished: {ItemCount} items, {MergeCount} merges, {ResultGroupCount} duplicate groups, {SingletonCount} singletons")]
+        private partial void LogHierarchicalClusteringCompleted(int itemCount, int mergeCount, int resultGroupCount, int singletonCount);
 
         #endregion Logging
     }
