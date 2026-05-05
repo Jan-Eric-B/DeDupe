@@ -369,6 +369,11 @@ namespace DeDupe.Views.Pages
             ViewModel.ClearAllSelectionsCommand.Execute(null);
         }
 
+        private void SelectAllGroups_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNone);
+        }
+
         #endregion Auto Selection - All Groups
 
         #region File Operations
@@ -495,6 +500,37 @@ namespace DeDupe.Views.Pages
             FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
 
             await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_CopyButton"), result.SuccessCount, result.FailedCount, _localizer);
+        }
+
+        private async void ExtractGroups_Click(object sender, RoutedEventArgs e)
+        {
+            int groupCount = ViewModel.GroupsWithAnySelectionCount;
+            int totalFiles = ViewModel.TotalFilesInSelectedGroups;
+            if (groupCount == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectRootFolder"));
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmExtract"),
+                L("ManagementPage_Dialog_ExtractMessage", totalFiles, groupCount, folderPath),
+                L("ManagementPage_Dialog_ExtractButton"));
+            if (!confirmed)
+            {
+                return;
+            }
+
+            LogFileOperationStarting("Extract groups", totalFiles, folderPath);
+
+            FileOperationResult result = await ViewModel.ExtractGroupsAsync(folderPath);
+
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_ExtractButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
