@@ -817,6 +817,17 @@
                             <TextBlock l:Localization.Uid="ManagementPage_ClearAllText" />
                         </StackPanel>
                     </Button>
+
+                    <!--  Select All Button  -->
+                    <Button
+                        l:Localization.Uid="ManagementPage_SelectAllButton"
+                        Click="SelectAllGroups_Click"
+                        Style="{StaticResource SubtleButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="12" Glyph="&#xE8B3;" />
+                            <TextBlock l:Localization.Uid="ManagementPage_SelectAllButtonText" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
 
                 <!--  Right Side - Action Buttons  -->
@@ -868,6 +879,14 @@
                             </MenuFlyout>
                         </DropDownButton.Flyout>
                     </DropDownButton>
+
+                    <!--  Extract  -->
+                    <Button l:Localization.Uid="ManagementPage_ExtractButton" IsEnabled="{x:Bind ViewModel.CanMoveOrCopy, Mode=OneWay}" Click="ExtractGroups_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xED25;" />
+                            <TextBlock l:Localization.Uid="ManagementPage_ExtractText" />
+                        </StackPanel>
+                    </Button>
 
                     <!--  Separator  -->
                     <Border
