@@ -11,7 +11,7 @@ using DeDupe.Services.Analysis;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using DeDupe.Collections;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -133,7 +133,7 @@ namespace DeDupe.ViewModels.Pages
 
         private readonly List<SimilarityGroup> _allDuplicateGroups = [];
 
-        public ObservableCollection<SimilarityGroup> SimilarityGroups { get; } = [];
+        public BulkObservableCollection<SimilarityGroup> SimilarityGroups { get; } = [];
 
         public bool CanStartSimilarityAnalysis => !IsAnalyzingSimilarity && _appStateService.ExtractedFeaturesCount > 0;
 
@@ -392,6 +392,27 @@ namespace DeDupe.ViewModels.Pages
             return result;
         }
 
+        /// <summary>
+        /// Gets ALL file paths from groups that have any selected items, organized by group name.
+        /// Used by Extract to copy entire group contents.
+        /// </summary>
+        public Dictionary<string, List<string>> GetAllFilePathsFromSelectedGroups()
+        {
+            Dictionary<string, List<string>> result = [];
+            foreach (SimilarityGroup group in SimilarityGroups)
+            {
+                if (group.IsAnySelected)
+                {
+                    List<string> allPaths = [.. group.SelectableItems.Select(item => item.FilePath)];
+                    if (allPaths.Count > 0)
+                    {
+                        result[group.Name] = allPaths;
+                    }
+                }
+            }
+            return result;
+        }
+
         private void OnGroupSelectionChanged(object? sender, EventArgs e)
         {
             UpdateSelectionCommands();
@@ -463,12 +484,7 @@ namespace DeDupe.ViewModels.Pages
                 _ => [.. SimilarityGroups]
             };
 
-            // Rebuild collection in new order
-            SimilarityGroups.Clear();
-            foreach (SimilarityGroup group in sorted)
-            {
-                SimilarityGroups.Add(group);
-            }
+            SimilarityGroups.ReplaceAll(sorted);
 
             LogGroupsSorted(CurrentSortOption);
         }
@@ -509,8 +525,6 @@ namespace DeDupe.ViewModels.Pages
                 group.GroupSelectionChanged -= OnAnyGroupSelectionChanged;
             }
 
-            SimilarityGroups.Clear();
-
             // Apply filter
             const double exactMatchThreshold = 0.9999;
 
@@ -521,16 +535,25 @@ namespace DeDupe.ViewModels.Pages
                 _ => _allDuplicateGroups
             };
 
-            foreach (SimilarityGroup group in filtered)
+            // Sort before adding to avoid a second collection rebuild
+            List<SimilarityGroup> sorted = CurrentSortOption switch
+            {
+                GroupSortingOption.Similarity => [.. filtered.OrderByDescending(g => g.AverageSimilarity)],
+                GroupSortingOption.ImageCount => [.. filtered.OrderByDescending(g => g.Count)],
+                GroupSortingOption.Name => [.. filtered.OrderBy(g => g.Name)],
+                _ => [.. filtered]
+            };
+
+            // Subscribe to selection events
+            foreach (SimilarityGroup group in sorted)
             {
                 group.GroupSelectionChanged += OnAnyGroupSelectionChanged;
-                SimilarityGroups.Add(group);
             }
 
-            // Re-apply current sort order
-            ApplyCurrentSort();
+            // Single bulk update — fires one Reset notification instead of N Add notifications
+            SimilarityGroups.ReplaceAll(sorted);
 
-            // Close detail panel
+            // Close detail panel if selected group was filtered out
             if (SelectedGroup != null && !SimilarityGroups.Contains(SelectedGroup))
             {
                 SelectedGroup = null;
@@ -591,6 +614,53 @@ namespace DeDupe.ViewModels.Pages
         {
             return await ExecuteGroupedMoveOrCopyAsync(rootFolder, FileOperationType.Copy);
         }
+
+        /// <summary>
+        /// Extract entire groups: copies ALL files from groups with any selection into group-named subfolders.
+        /// </summary>
+        public async Task<FileOperationResult> ExtractGroupsAsync(string rootFolder)
+        {
+            if (TotalSelectedCount == 0 || string.IsNullOrEmpty(rootFolder))
+            {
+                return FileOperationResult.Empty;
+            }
+
+            try
+            {
+                IsMovingOrCopying = true;
+                IsBusy = true;
+
+                Dictionary<string, List<string>> filesByGroup = GetAllFilePathsFromSelectedGroups();
+                Status = L("ManagementPage_Status_ExtractingGroups");
+
+                FileOperationResult result = await _fileOperationService.ExecuteGroupedAsync(filesByGroup, rootFolder, FileOperationType.Copy);
+
+                UpdateStatusAfterExtract(result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Status = L("ManagementPage_Status_OperationError", "extract", ex.Message);
+                LogFileOperationAborted(ex, FileOperationType.Extract);
+                return new FileOperationResult(0, TotalSelectedCount, [], GetAllSelectedFilePaths());
+            }
+            finally
+            {
+                IsMovingOrCopying = false;
+                IsBusy = false;
+                UpdateSelectionSummary();
+            }
+        }
+
+        /// <summary>
+        /// Count of groups that have any selected items (for Extract info).
+        /// </summary>
+        public int GroupsWithAnySelectionCount => SimilarityGroups.Count(g => g.IsAnySelected);
+
+        /// <summary>
+        /// Total files across all groups with any selection (for Extract info).
+        /// </summary>
+        public int TotalFilesInSelectedGroups => SimilarityGroups.Where(g => g.IsAnySelected).Sum(g => g.Count);
 
         [RelayCommand(CanExecute = nameof(CanDeleteSelectedFiles))]
         private async Task DeleteSelectedFilesAsync()
@@ -770,6 +840,22 @@ namespace DeDupe.ViewModels.Pages
             else
             {
                 Status = L(partialKey, result.SuccessCount, result.FailedCount);
+            }
+        }
+
+        private void UpdateStatusAfterExtract(FileOperationResult result)
+        {
+            if (result.FailedCount == 0)
+            {
+                Status = L("ManagementPage_Status_ExtractSuccess", result.SuccessCount);
+            }
+            else if (result.SuccessCount == 0)
+            {
+                Status = L("ManagementPage_Status_ExtractFailedAll", result.FailedCount);
+            }
+            else
+            {
+                Status = L("ManagementPage_Status_ExtractPartial", result.SuccessCount, result.FailedCount);
             }
         }
 

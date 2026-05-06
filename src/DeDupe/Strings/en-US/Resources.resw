@@ -784,6 +784,18 @@
   <data name="ManagementPage_DeleteSplitButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Move selected files to Recycle Bin</value>
   </data>
+  <data name="ManagementPage_ExtractButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Extract entire groups into named folders</value>
+  </data>
+  <data name="ManagementPage_ExtractText.Text" xml:space="preserve">
+    <value>Extract</value>
+  </data>
+  <data name="ManagementPage_SelectAllButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Select all items in all groups</value>
+  </data>
+  <data name="ManagementPage_SelectAllButtonText.Text" xml:space="preserve">
+    <value>Select All</value>
+  </data>
   <data name="ManagementPage_MoveToRecycleBin.Text" xml:space="preserve">
     <value>Move to Recycle Bin</value>
   </data>
@@ -945,6 +957,27 @@
   </data>
   <data name="ManagementPage_Dialog_CancelButton" xml:space="preserve">
     <value>Cancel</value>
+  </data>
+  <data name="ManagementPage_Dialog_ConfirmExtract" xml:space="preserve">
+    <value>Confirm Extract</value>
+  </data>
+  <data name="ManagementPage_Dialog_ExtractMessage" xml:space="preserve">
+    <value>Extract {0} file(s) from {1} group(s) into named folders at: {2}</value>
+  </data>
+  <data name="ManagementPage_Dialog_ExtractButton" xml:space="preserve">
+    <value>Extract</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractingGroups" xml:space="preserve">
+    <value>Extracting groups into folders...</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractSuccess" xml:space="preserve">
+    <value>Successfully extracted {0} file(s) into group folders</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractFailedAll" xml:space="preserve">
+    <value>Failed to extract all {0} files</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractPartial" xml:space="preserve">
+    <value>Extracted {0} file(s), {1} failed</value>
   </data>
   <data name="SelectionStrategy_KeepNone.Text" xml:space="preserve">
     <value>Keep None (selects all)</value>

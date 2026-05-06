@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -21,6 +22,13 @@ namespace DeDupe.Controls
     {
         private static readonly ILogger<ImageGroupListItem> _logger = App.Current.GetService<ILogger<ImageGroupListItem>>();
 
+        /// <summary>
+        /// Shared semaphore to limit concurrent image loads across all list items.
+        /// </summary>
+        private static readonly SemaphoreSlim s_loadThrottle = new(8, 8);
+
+        private CancellationTokenSource? _loadCts;
+
         public static readonly DependencyProperty GroupProperty = DependencyProperty.Register(nameof(Group), typeof(SimilarityGroup), typeof(ImageGroupListItem), new PropertyMetadata(null, OnGroupChanged));
 
         public SimilarityGroup? Group
@@ -32,12 +40,26 @@ namespace DeDupe.Controls
         public ImageGroupListItem()
         {
             InitializeComponent();
+            Unloaded += OnUnloaded;
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            CancelPendingLoads();
+        }
+
+        private void CancelPendingLoads()
+        {
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = null;
         }
 
         private static void OnGroupChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is ImageGroupListItem control)
             {
+                control.CancelPendingLoads();
                 control.UpdateStackedImages();
             }
         }
@@ -66,16 +88,19 @@ namespace DeDupe.Controls
 
             PlaceholderIcon.Visibility = Visibility.Collapsed;
 
+            _loadCts = new CancellationTokenSource();
+            CancellationToken ct = _loadCts.Token;
+
             List<string> imagesToShow = [.. Group.GetImageThumbnailPaths().Take(4)];
             int imageCount = imagesToShow.Count;
 
             for (int i = imageCount - 1; i >= 0; i--)
             {
-                CreateStackedImage(imagesToShow[i], i, imageCount);
+                CreateStackedImage(imagesToShow[i], i, imageCount, ct);
             }
         }
 
-        private void CreateStackedImage(string imagePath, int index, int totalCount)
+        private void CreateStackedImage(string imagePath, int index, int totalCount, CancellationToken cancellationToken)
         {
             Border imageBorder = new()
             {
@@ -96,28 +121,46 @@ namespace DeDupe.Controls
                 VerticalAlignment = VerticalAlignment.Center
             };
 
-            _ = LoadImageAsync(image, imagePath, 64);
+            _ = LoadImageAsync(image, imagePath, 64, cancellationToken);
 
             imageBorder.Child = image;
             StackedThumbnails.Children.Add(imageBorder);
         }
 
-        private static async Task LoadImageAsync(Image imageControl, string imagePath, int decodeWidth)
+        private static async Task LoadImageAsync(Image imageControl, string imagePath, int decodeWidth, CancellationToken cancellationToken)
         {
             try
             {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
-
-                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
-
-                BitmapImage bitmap = new()
+                await s_loadThrottle.WaitAsync(cancellationToken);
+                try
                 {
-                    DecodePixelWidth = decodeWidth,
-                    DecodePixelType = DecodePixelType.Logical
-                };
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                await bitmap.SetSourceAsync(stream);
-                imageControl.Source = bitmap;
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    BitmapImage bitmap = new()
+                    {
+                        DecodePixelWidth = decodeWidth,
+                        DecodePixelType = DecodePixelType.Logical
+                    };
+
+                    await bitmap.SetSourceAsync(stream);
+                    imageControl.Source = bitmap;
+                }
+                finally
+                {
+                    s_loadThrottle.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Control was recycled or unloaded — silently discard
             }
             catch (Exception ex)
             {

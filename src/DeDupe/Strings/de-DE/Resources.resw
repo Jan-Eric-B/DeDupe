@@ -784,6 +784,18 @@
   <data name="ManagementPage_DeleteSplitButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Ausgewählte Dateien in den Papierkorb verschieben</value>
   </data>
+  <data name="ManagementPage_ExtractButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Gesamte Gruppen in benannte Ordner extrahieren</value>
+  </data>
+  <data name="ManagementPage_ExtractText.Text" xml:space="preserve">
+    <value>Extrahieren</value>
+  </data>
+  <data name="ManagementPage_SelectAllButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alle Elemente in allen Gruppen auswählen</value>
+  </data>
+  <data name="ManagementPage_SelectAllButtonText.Text" xml:space="preserve">
+    <value>Alle auswählen</value>
+  </data>
   <data name="ManagementPage_MoveToRecycleBin.Text" xml:space="preserve">
     <value>In den Papierkorb verschieben</value>
   </data>
@@ -945,6 +957,27 @@
   </data>
   <data name="ManagementPage_Dialog_CancelButton" xml:space="preserve">
     <value>Abbrechen</value>
+  </data>
+  <data name="ManagementPage_Dialog_ConfirmExtract" xml:space="preserve">
+    <value>Extraktion bestätigen</value>
+  </data>
+  <data name="ManagementPage_Dialog_ExtractMessage" xml:space="preserve">
+    <value>{0} Datei(en) aus {1} Gruppe(n) in benannte Ordner extrahieren nach: {2}</value>
+  </data>
+  <data name="ManagementPage_Dialog_ExtractButton" xml:space="preserve">
+    <value>Extrahieren</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractingGroups" xml:space="preserve">
+    <value>Gruppen in Ordner extrahieren...</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractSuccess" xml:space="preserve">
+    <value>{0} Datei(en) erfolgreich in Gruppenordner extrahiert</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractFailedAll" xml:space="preserve">
+    <value>Extraktion aller {0} Dateien fehlgeschlagen</value>
+  </data>
+  <data name="ManagementPage_Status_ExtractPartial" xml:space="preserve">
+    <value>{0} Datei(en) extrahiert, {1} fehlgeschlagen</value>
   </data>
   <data name="GroupSortingOption_Similarity" xml:space="preserve">
     <value>Ähnlichkeit</value>

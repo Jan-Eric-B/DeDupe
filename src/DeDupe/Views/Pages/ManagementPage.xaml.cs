@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.WinUI.Controls;
+using DeDupe.Controls;
 using DeDupe.Enums;
 using DeDupe.Localization;
 using DeDupe.Models.Analysis;
@@ -11,7 +12,12 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace DeDupe.Views.Pages
 {
@@ -369,6 +375,11 @@ namespace DeDupe.Views.Pages
             ViewModel.ClearAllSelectionsCommand.Execute(null);
         }
 
+        private void SelectAllGroups_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.ApplyStrategyToAllGroupsCommand.Execute(SelectionStrategy.KeepNone);
+        }
+
         #endregion Auto Selection - All Groups
 
         #region File Operations
@@ -495,6 +506,37 @@ namespace DeDupe.Views.Pages
             FileOperationResult result = await ViewModel.CopyToGroupFoldersAsync(folderPath);
 
             await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_CopyButton"), result.SuccessCount, result.FailedCount, _localizer);
+        }
+
+        private async void ExtractGroups_Click(object sender, RoutedEventArgs e)
+        {
+            int groupCount = ViewModel.GroupsWithAnySelectionCount;
+            int totalFiles = ViewModel.TotalFilesInSelectedGroups;
+            if (groupCount == 0 || !ViewModel.CanMoveOrCopy)
+            {
+                return;
+            }
+
+            string? folderPath = await _dialogService.PickFolderAsync(L("ManagementPage_Dialog_SelectRootFolder"));
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                L("ManagementPage_Dialog_ConfirmExtract"),
+                L("ManagementPage_Dialog_ExtractMessage", totalFiles, groupCount, folderPath),
+                L("ManagementPage_Dialog_ExtractButton"));
+            if (!confirmed)
+            {
+                return;
+            }
+
+            LogFileOperationStarting("Extract groups", totalFiles, folderPath);
+
+            FileOperationResult result = await ViewModel.ExtractGroupsAsync(folderPath);
+
+            await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_ExtractButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
@@ -664,6 +706,126 @@ namespace DeDupe.Views.Pages
 
         #endregion Group Renaming
 
+        #region Batch Image Viewer
+
+        [LibraryImport("kernel32.dll", EntryPoint = "CreateHardLinkW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool CreateHardLink(string lpFileName, string lpExistingFileName, IntPtr lpSecurityAttributes);
+
+        private void ImageCardsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+        {
+            if (args.Element is ImageDetailCard card)
+            {
+                card.ImageOpenRequested += OnImageOpenRequested;
+            }
+        }
+
+        private void ImageCardsRepeater_ElementClearing(ItemsRepeater sender, ItemsRepeaterElementClearingEventArgs args)
+        {
+            if (args.Element is ImageDetailCard card)
+            {
+                card.ImageOpenRequested -= OnImageOpenRequested;
+            }
+        }
+
+        private void OnImageOpenRequested(object? sender, SelectableItem targetItem)
+        {
+            SimilarityGroup? group = ViewModel.SelectedGroup;
+            if (group == null)
+            {
+                return;
+            }
+
+            try
+            {
+                List<string> groupFilePaths = group.SelectableItems.Select(i => i.FilePath).ToList();
+
+                if (groupFilePaths.Count <= 1)
+                {
+                    // Single image - just open directly
+                    Process.Start(new ProcessStartInfo(targetItem.FilePath) { UseShellExecute = true });
+                    return;
+                }
+
+                PrepareBatchFolder(group.Id, groupFilePaths, targetItem.FilePath, out string targetTempPath);
+
+                // Open from temp folder - Photos app detects siblings and enables arrow navigation
+                Process.Start(new ProcessStartInfo(targetTempPath) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                LogBatchImageOpenFailed(targetItem.FilePath, ex);
+
+                // Fallback: open original file directly
+                try
+                {
+                    Process.Start(new ProcessStartInfo(targetItem.FilePath) { UseShellExecute = true });
+                }
+                catch (Exception fallbackEx)
+                {
+                    LogBatchImageOpenFailed(targetItem.FilePath, fallbackEx);
+                }
+            }
+        }
+
+        private void PrepareBatchFolder(int groupId, List<string> filePaths, string targetFilePath, out string targetTempPath)
+        {
+            string baseTempDir = Path.Combine(Path.GetTempPath(), "DeDupe", "BatchView");
+            string groupFolder = Path.Combine(baseTempDir, $"Group_{groupId}");
+
+            // Clean up existing folder for this group to avoid stale files
+            if (Directory.Exists(groupFolder))
+            {
+                try { Directory.Delete(groupFolder, true); } catch { /* best effort */ }
+            }
+
+            Directory.CreateDirectory(groupFolder);
+
+            targetTempPath = string.Empty;
+            int index = 0;
+
+            foreach (string filePath in filePaths)
+            {
+                string extension = Path.GetExtension(filePath);
+                string originalName = Path.GetFileNameWithoutExtension(filePath);
+                // Prefix with index to control navigation order
+                string linkedName = $"{index:D3}_{originalName}{extension}";
+                string linkedPath = Path.Combine(groupFolder, linkedName);
+
+                bool linked = CreateHardLink(linkedPath, filePath, IntPtr.Zero);
+
+                if (!linked)
+                {
+                    // Fallback to file copy if hard link fails (cross-volume, network, etc.)
+                    try
+                    {
+                        File.Copy(filePath, linkedPath, overwrite: true);
+                        linked = true;
+                    }
+                    catch
+                    {
+                        // Skip files that can't be linked or copied
+                    }
+                }
+
+                if (linked && string.Equals(filePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetTempPath = linkedPath;
+                }
+
+                index++;
+            }
+
+            // If target wasn't matched (shouldn't happen), pick the first file
+            if (string.IsNullOrEmpty(targetTempPath))
+            {
+                string[] files = Directory.GetFiles(groupFolder);
+                targetTempPath = files.Length > 0 ? files[0] : targetFilePath;
+            }
+        }
+
+        #endregion Batch Image Viewer
+
         #region Logging
 
         [LoggerMessage(Level = LogLevel.Information, Message = "File operation starting: {Operation} for {FileCount} files to {DestinationPath}")]
@@ -674,6 +836,9 @@ namespace DeDupe.Views.Pages
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "View mode switched to {ViewMode}")]
         private partial void LogViewSwitched(string viewMode);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Batch image open failed for {FilePath}")]
+        private partial void LogBatchImageOpenFailed(string filePath, Exception ex);
 
         #endregion Logging
     }

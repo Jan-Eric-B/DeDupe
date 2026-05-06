@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,22 +40,25 @@ namespace DeDupe.Services.Analysis
                 // Build similarity matrix
                 double[,] similarityMatrix = await Task.Run(() => CalculateSimilarityMatrix(itemList, localizer, progress, cancellationToken), cancellationToken);
 
-                // Hierarchical clustering
+                // Hierarchical clustering (returns only duplicate groups, not singletons)
                 progress?.Report(new ProgressInfo(70, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Clustering")));
 
-                List<SimilarityGroup> clusters = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, localizer, progress, cancellationToken), cancellationToken);
+                List<SimilarityGroup> duplicateGroups = await Task.Run(() => PerformHierarchicalClustering(itemList, similarityMatrix, similarityThreshold, localizer, progress, cancellationToken), cancellationToken);
 
                 // Calculate cluster statistics
                 progress?.Report(new ProgressInfo(95, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Statistics")));
-                CalculateClusterStatistics(clusters, itemList, similarityMatrix);
+                CalculateClusterStatistics(duplicateGroups, itemList, similarityMatrix);
+
+                // Singleton count = total items minus items that ended up in duplicate groups
+                int itemsInDuplicateGroups = duplicateGroups.Sum(g => g.Count);
+                int singletonCount = itemList.Count - itemsInDuplicateGroups;
 
                 stopwatch.Stop();
-                int duplicateGroupCount = clusters.Count(c => c.Count > 1);
-                LogClusteringCompleted(itemList.Count, clusters.Count, duplicateGroupCount, stopwatch.Elapsed.TotalSeconds);
+                LogClusteringCompleted(itemList.Count, duplicateGroups.Count, duplicateGroups.Count, stopwatch.Elapsed.TotalSeconds);
 
                 progress?.Report(new ProgressInfo(100, 100, localizer.GetLocalizedString("SimilarityAnalysis_Progress_Complete")));
 
-                return new SimilarityResult(clusters, similarityThreshold, itemList.Count);
+                return new SimilarityResult(duplicateGroups, similarityThreshold, itemList.Count, singletonCount);
             }
             catch (OperationCanceledException)
             {
@@ -70,7 +74,6 @@ namespace DeDupe.Services.Analysis
         public double CalculateCosineSimilarity(float[] vectorA, float[] vectorB)
         {
             ArgumentNullException.ThrowIfNull(vectorA);
-
             ArgumentNullException.ThrowIfNull(vectorB);
 
             if (vectorA.Length != vectorB.Length)
@@ -78,26 +81,55 @@ namespace DeDupe.Services.Analysis
                 throw new ArgumentException("Feature vectors must have the same length");
             }
 
-            double dotProduct = 0.0;
-            double magnitudeA = 0.0;
-            double magnitudeB = 0.0;
+            int length = vectorA.Length;
+            float dotProduct = 0f;
+            float magnitudeA = 0f;
+            float magnitudeB = 0f;
 
-            for (int i = 0; i < vectorA.Length; i++)
+            int i = 0;
+
+            // SIMD-accelerated path using hardware vectors
+            int vectorSize = Vector<float>.Count;
+            if (Vector.IsHardwareAccelerated && length >= vectorSize)
+            {
+                Vector<float> sumDot = Vector<float>.Zero;
+                Vector<float> sumA = Vector<float>.Zero;
+                Vector<float> sumB = Vector<float>.Zero;
+
+                int lastBlockIndex = length - (length % vectorSize);
+
+                for (; i < lastBlockIndex; i += vectorSize)
+                {
+                    Vector<float> va = new(vectorA, i);
+                    Vector<float> vb = new(vectorB, i);
+
+                    sumDot += va * vb;
+                    sumA += va * va;
+                    sumB += vb * vb;
+                }
+
+                dotProduct = Vector.Dot(sumDot, Vector<float>.One);
+                magnitudeA = Vector.Dot(sumA, Vector<float>.One);
+                magnitudeB = Vector.Dot(sumB, Vector<float>.One);
+            }
+
+            // Scalar remainder
+            for (; i < length; i++)
             {
                 dotProduct += vectorA[i] * vectorB[i];
                 magnitudeA += vectorA[i] * vectorA[i];
                 magnitudeB += vectorB[i] * vectorB[i];
             }
 
-            magnitudeA = Math.Sqrt(magnitudeA);
-            magnitudeB = Math.Sqrt(magnitudeB);
+            double magA = Math.Sqrt(magnitudeA);
+            double magB = Math.Sqrt(magnitudeB);
 
-            if (magnitudeA == 0.0 || magnitudeB == 0.0)
+            if (magA == 0.0 || magB == 0.0)
             {
                 return 0.0;
             }
 
-            return dotProduct / (magnitudeA * magnitudeB);
+            return dotProduct / (magA * magB);
         }
 
         private double[,] CalculateSimilarityMatrix(List<AnalysisItem> items, ILocalizer localizer, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
@@ -111,38 +143,48 @@ namespace DeDupe.Services.Analysis
             string matrixStatusText = localizer.GetLocalizedString("SimilarityAnalysis_Progress_BuildingMatrix");
             string matrixRowDetailFormat = localizer.GetLocalizedString("SimilarityAnalysis_Progress_MatrixRowDetail");
 
+            int completedRows = 0;
             int lastReportedPercentage = -1;
 
-            // Calculate similarities (symmetric matrix - only upper triangle)
+            // Pre-extract source IDs for fast lookup
+            Guid[] sourceIds = new Guid[count];
             for (int i = 0; i < count; i++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                sourceIds[i] = items[i].SourceId;
+            }
 
-                matrix[i, i] = 1.0; // Similarity with self is always 1.0
+            // Parallel row computation for the upper triangle
+            Parallel.For(0, count, new ParallelOptions { CancellationToken = cancellationToken }, i =>
+            {
+                matrix[i, i] = 1.0;
+
+                float[] vectorI = items[i].FeatureVector!;
+                Guid sourceI = sourceIds[i];
 
                 for (int j = i + 1; j < count; j++)
                 {
-                    // If items are from same source (video frames) set similarity to 0
-                    if (items[i].SourceId == items[j].SourceId)
+                    if (sourceI == sourceIds[j])
                     {
+                        // Same source (video frames) — no similarity
                         matrix[i, j] = 0.0;
                         matrix[j, i] = 0.0;
                     }
                     else
                     {
-                        double similarity = CalculateCosineSimilarity(items[i].FeatureVector!, items[j].FeatureVector!);
+                        double similarity = CalculateCosineSimilarity(vectorI, items[j].FeatureVector!);
                         matrix[i, j] = similarity;
-                        matrix[j, i] = similarity; // Matrix is symmetric
+                        matrix[j, i] = similarity;
                     }
                 }
 
-                int percentage = (int)((double)(i + 1) / count * 70);
+                int done = Interlocked.Increment(ref completedRows);
+                int percentage = (int)((double)done / count * 70);
                 if (percentage > lastReportedPercentage)
                 {
-                    lastReportedPercentage = percentage;
-                    progress?.Report(new ProgressInfo(percentage, 100, matrixStatusText, string.Format(matrixRowDetailFormat, $"{i + 1:N0}", $"{count:N0}")));
+                    Interlocked.Exchange(ref lastReportedPercentage, percentage);
+                    progress?.Report(new ProgressInfo(percentage, 100, matrixStatusText, string.Format(matrixRowDetailFormat, $"{done:N0}", $"{count:N0}")));
                 }
-            }
+            });
 
             stopwatch.Stop();
             LogSimilarityMatrixCalculated(count, totalComparisons, stopwatch.Elapsed.TotalSeconds);
@@ -151,121 +193,161 @@ namespace DeDupe.Services.Analysis
         }
 
         /// <summary>
-        /// Perform agglomerative hierarchical clustering.
+        /// Perform agglomerative hierarchical clustering using a max-heap priority queue.
+        /// This reduces the naive O(N³) approach to O(N² log N) by maintaining a sorted
+        /// set of candidate merges instead of rescanning all pairs each iteration.
         /// </summary>
         private List<SimilarityGroup> PerformHierarchicalClustering(List<AnalysisItem> items, double[,] similarityMatrix, double similarityThreshold, ILocalizer localizer, IProgress<ProgressInfo>? progress, CancellationToken cancellationToken)
         {
             int count = items.Count;
 
-            // Initialize item as its own cluster
-            List<List<int>> groups = [];
+            // Initialize each item as its own cluster
+            List<int>[] clusters = new List<int>[count];
+            bool[] active = new bool[count];
+
+            // Cache source IDs per cluster to avoid repeated HashSet allocations
+            HashSet<Guid>[] clusterSourceIds = new HashSet<Guid>[count];
+
             for (int i = 0; i < count; i++)
             {
-                groups.Add([i]);
+                clusters[i] = [i];
+                active[i] = true;
+                clusterSourceIds[i] = [items[i].SourceId];
             }
 
-            // Track active groups
-            bool[] activeClusters = new bool[count];
-            Array.Fill(activeClusters, true);
+            // Build max-heap of candidate pairs above threshold.
+            // Only enqueue the top candidate for each item (nearest-neighbor) to limit memory.
+            // After a merge we re-scan neighbors for the merged cluster.
+            PriorityQueue<(int I, int J), double> heap = new(Comparer<double>.Create((a, b) => b.CompareTo(a)));
+
+            for (int i = 0; i < count; i++)
+            {
+                double bestSim = -1.0;
+                int bestJ = -1;
+
+                for (int j = i + 1; j < count; j++)
+                {
+                    double sim = similarityMatrix[i, j];
+                    if (sim >= similarityThreshold && sim > bestSim)
+                    {
+                        bestSim = sim;
+                        bestJ = j;
+                    }
+                }
+
+                if (bestJ >= 0)
+                {
+                    heap.Enqueue((i, bestJ), bestSim);
+                }
+            }
 
             int mergeOperations = 0;
-            int maxPossibleMerges = count - 1; // upper bound
+            int maxPossibleMerges = count - 1;
 
             string clusteringStatusText = localizer.GetLocalizedString("SimilarityAnalysis_Progress_Clustering");
             string mergeDetailFormat = localizer.GetLocalizedString("SimilarityAnalysis_Progress_MergeDetail");
 
-            // Agglomerative clustering - merge closest clusters
-            while (true)
+            // Process merges from highest similarity downward
+            while (heap.Count > 0)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Find pair of clusters with highest similarity
-                double maxSimilarity = -1.0;
-                int clusterI = -1, clusterJ = -1;
+                heap.TryDequeue(out var pair, out double pairSimilarity);
 
-                for (int i = 0; i < groups.Count; i++)
+                // Skip if either cluster has been merged away
+                if (!active[pair.I] || !active[pair.J])
                 {
-                    if (!activeClusters[i])
-                    {
-                        continue;
-                    }
-
-                    for (int j = i + 1; j < groups.Count; j++)
-                    {
-                        if (!activeClusters[j])
-                        {
-                            continue;
-                        }
-
-                        if (WouldViolateSourceConstraint(groups[i], groups[j], items))
-                        {
-                            continue;
-                        }
-
-                        double similarity = CalculateClusterSimilarity(groups[i], groups[j], similarityMatrix);
-
-                        if (similarity > maxSimilarity)
-                        {
-                            maxSimilarity = similarity;
-                            clusterI = i;
-                            clusterJ = j;
-                        }
-                    }
+                    continue;
                 }
 
-                // Stop if no valid pair or similarity below threshold
-                if (clusterI == -1 || maxSimilarity < similarityThreshold)
+                // Recalculate actual inter-cluster similarity (average linkage)
+                // since clusters may have grown since this pair was enqueued
+                double actualSimilarity = CalculateClusterSimilarity(clusters[pair.I], clusters[pair.J], similarityMatrix);
+
+                if (actualSimilarity < similarityThreshold)
                 {
-                    break;
+                    continue;
                 }
 
-                // Merge clusters
-                groups[clusterI].AddRange(groups[clusterJ]);
-                activeClusters[clusterJ] = false;
+                // Check source constraint using cached sets
+                if (SourceSetsOverlap(clusterSourceIds[pair.I], clusterSourceIds[pair.J]))
+                {
+                    continue;
+                }
+
+                // Merge J into I
+                clusters[pair.I].AddRange(clusters[pair.J]);
+                clusterSourceIds[pair.I].UnionWith(clusterSourceIds[pair.J]);
+                active[pair.J] = false;
 
                 mergeOperations++;
 
                 int percentage = 70 + (int)((double)mergeOperations / maxPossibleMerges * 25);
                 progress?.Report(new ProgressInfo(Math.Min(percentage, 95), 100, clusteringStatusText, string.Format(mergeDetailFormat, $"{mergeOperations:N0}")));
+
+                // Re-enqueue pairs between the merged cluster I and all other active clusters
+                for (int k = 0; k < count; k++)
+                {
+                    if (!active[k] || k == pair.I)
+                    {
+                        continue;
+                    }
+
+                    double sim = CalculateClusterSimilarity(clusters[pair.I], clusters[k], similarityMatrix);
+                    if (sim >= similarityThreshold)
+                    {
+                        int lo = Math.Min(pair.I, k);
+                        int hi = Math.Max(pair.I, k);
+                        heap.Enqueue((lo, hi), sim);
+                    }
+                }
             }
 
-            // Convert to SimilarityGroup objects
+            // Only create SimilarityGroup objects for duplicate groups (count > 1).
+            // Singletons are tracked as a count only — they are never displayed in the UI.
             List<SimilarityGroup> result = [];
             int clusterId = 0;
             int duplicateGroupNumber = 1;
+            int singletonCount = 0;
 
-            for (int i = 0; i < groups.Count; i++)
+            for (int i = 0; i < count; i++)
             {
-                if (!activeClusters[i])
+                if (!active[i])
                 {
                     continue;
                 }
 
-                List<AnalysisItem> clusterItems = [.. groups[i].Select(idx => items[idx])];
+                if (clusters[i].Count == 1)
+                {
+                    singletonCount++;
+                    continue;
+                }
 
-                string? groupName = clusterItems.Count > 1 ? string.Format(localizer.GetLocalizedString("SimilarityAnalysis_GroupDefaultName"), duplicateGroupNumber++) : null;
+                List<AnalysisItem> clusterItems = [.. clusters[i].Select(idx => items[idx])];
+
+                string? groupName = string.Format(localizer.GetLocalizedString("SimilarityAnalysis_GroupDefaultName"), duplicateGroupNumber++);
 
                 SimilarityGroup group = new(clusterId++, clusterItems, groupName);
                 result.Add(group);
             }
 
-            LogHierarchicalClusteringCompleted(count, mergeOperations, result.Count);
+            LogHierarchicalClusteringCompleted(count, mergeOperations, result.Count, singletonCount);
 
             return result;
         }
 
         /// <summary>
-        /// Check if merging two clusters would put items from the same source together.
+        /// Fast overlap check using pre-cached HashSets instead of allocating new ones.
         /// </summary>
-        private static bool WouldViolateSourceConstraint(List<int> groupA, List<int> groupB, List<AnalysisItem> items)
+        private static bool SourceSetsOverlap(HashSet<Guid> setA, HashSet<Guid> setB)
         {
-            // Get all source IDs in group A
-            HashSet<Guid> sourceIdsA = [.. groupA.Select(idx => items[idx].SourceId)];
+            // Iterate over the smaller set for efficiency
+            HashSet<Guid> smaller = setA.Count <= setB.Count ? setA : setB;
+            HashSet<Guid> larger = setA.Count <= setB.Count ? setB : setA;
 
-            // Check if any item in group B shares a source with group A
-            foreach (int idx in groupB)
+            foreach (Guid id in smaller)
             {
-                if (sourceIdsA.Contains(items[idx].SourceId))
+                if (larger.Contains(id))
                 {
                     return true;
                 }
@@ -340,8 +422,8 @@ namespace DeDupe.Services.Analysis
         [LoggerMessage(Level = LogLevel.Debug, Message = "Similarity matrix calculated: {ItemCount} items, {ComparisonCount} comparisons in {ElapsedSeconds:F1}s")]
         private partial void LogSimilarityMatrixCalculated(int itemCount, long comparisonCount, double elapsedSeconds);
 
-        [LoggerMessage(Level = LogLevel.Debug, Message = "Hierarchical clustering finished: {ItemCount} items, {MergeCount} merges, {ResultGroupCount} final groups")]
-        private partial void LogHierarchicalClusteringCompleted(int itemCount, int mergeCount, int resultGroupCount);
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Hierarchical clustering finished: {ItemCount} items, {MergeCount} merges, {ResultGroupCount} duplicate groups, {SingletonCount} singletons")]
+        private partial void LogHierarchicalClusteringCompleted(int itemCount, int mergeCount, int resultGroupCount, int singletonCount);
 
         #endregion Logging
     }
