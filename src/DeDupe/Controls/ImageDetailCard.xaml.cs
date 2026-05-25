@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Globalization.DateTimeFormatting;
 using Windows.Storage;
@@ -20,6 +21,14 @@ namespace DeDupe.Controls
     public sealed partial class ImageDetailCard : UserControl
     {
         private readonly ILogger<ImageDetailCard> _logger = App.Current.GetService<ILogger<ImageDetailCard>>();
+
+        /// <summary>
+        /// Shared semaphore to limit concurrent detail image loads.
+        /// Detail cards use 320px decode width (larger), so we allow fewer concurrent loads.
+        /// </summary>
+        private static readonly SemaphoreSlim s_loadThrottle = new(6, 6);
+
+        private CancellationTokenSource? _loadCts;
 
         public ImageDetailCard()
         {
@@ -36,28 +45,59 @@ namespace DeDupe.Controls
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
+            CancelPendingLoads();
+
             SelectionCheckBox.Checked -= SelectionCheckBox_CheckedChanged;
             SelectionCheckBox.Unchecked -= SelectionCheckBox_CheckedChanged;
 
             SelectableItem?.PropertyChanged -= OnSelectableItemPropertyChanged;
         }
 
-        private async Task LoadThumbnailAsync(string imagePath)
+        private void CancelPendingLoads()
+        {
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = null;
+        }
+
+        private async Task LoadThumbnailAsync(string imagePath, CancellationToken cancellationToken)
         {
             try
             {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
-                using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
-
-                BitmapImage bitmap = new()
+                await s_loadThrottle.WaitAsync(cancellationToken);
+                try
                 {
-                    DecodePixelWidth = 320,
-                    DecodePixelType = DecodePixelType.Logical
-                };
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                await bitmap.SetSourceAsync(stream);
-                ImageThumbnail.Source = bitmap;
-                PlaceholderIcon.Visibility = Visibility.Collapsed;
+                    StorageFile file = await StorageFile.GetFileFromPathAsync(imagePath);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    using IRandomAccessStreamWithContentType stream = await file.OpenReadAsync();
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    BitmapImage bitmap = new()
+                    {
+                        DecodePixelWidth = 320,
+                        DecodePixelType = DecodePixelType.Logical
+                    };
+
+                    await bitmap.SetSourceAsync(stream);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    ImageThumbnail.Source = bitmap;
+                    PlaceholderIcon.Visibility = Visibility.Collapsed;
+                }
+                finally
+                {
+                    s_loadThrottle.Release();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Card was recycled - discard silently
             }
             catch (Exception ex)
             {
@@ -80,12 +120,23 @@ namespace DeDupe.Controls
 
             UpdateResolutionDisplay(metadata);
 
-            _ = LoadThumbnailAsync(metadata.FilePath);
-            _ = EnsureDimensionsAndUpdateAsync(item);
+            // Cancel any in-flight loads from previous item
+            CancelPendingLoads();
+            _loadCts = new CancellationTokenSource();
+            CancellationToken ct = _loadCts.Token;
+
+            // Clear old bitmap immediately to free memory
+            ImageThumbnail.Source = null;
+            PlaceholderIcon.Visibility = Visibility.Visible;
+
+            _ = LoadThumbnailAsync(metadata.FilePath, ct);
+            _ = EnsureDimensionsAndUpdateAsync(item, ct);
         }
 
         private void ClearDisplay()
         {
+            CancelPendingLoads();
+
             FileNameTextBlock.Text = string.Empty;
             ResolutionTextBlock.Text = string.Empty;
             FileSizeTextBlock.Text = string.Empty;
@@ -108,7 +159,7 @@ namespace DeDupe.Controls
             }
         }
 
-        private async Task EnsureDimensionsAndUpdateAsync(SelectableItem item)
+        private async Task EnsureDimensionsAndUpdateAsync(SelectableItem item, CancellationToken cancellationToken)
         {
             try
             {
@@ -119,6 +170,8 @@ namespace DeDupe.Controls
                     await source.EnsureDimensionsLoadedAsync();
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
+
                 DispatcherQueue.TryEnqueue(() =>
                 {
                     if (SelectableItem == item)
@@ -127,15 +180,22 @@ namespace DeDupe.Controls
                     }
                 });
             }
+            catch (OperationCanceledException)
+            {
+                // Card was recycled - discard silently
+            }
             catch (Exception ex)
             {
                 LogDimensionLoadFailed(item.FilePath, ex);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
 
                 DispatcherQueue.TryEnqueue(() =>
                 {
                     if (SelectableItem == item && ResolutionTextBlock.Text == "...")
                     {
-                        ResolutionTextBlock.Text = "—";
+                        ResolutionTextBlock.Text = "\u2014";
                     }
                 });
             }
@@ -153,22 +213,19 @@ namespace DeDupe.Controls
             return formatter.Format(date);
         }
 
-        private async void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        /// <summary>
+        /// Raised when the user double-taps the image to open it in a viewer.
+        /// </summary>
+        public event EventHandler<SelectableItem>? ImageOpenRequested;
+
+        private void OpenItem_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             if (SelectableItem == null)
             {
                 return;
             }
 
-            try
-            {
-                StorageFile file = await StorageFile.GetFileFromPathAsync(SelectableItem.FilePath);
-                await Launcher.LaunchFileAsync(file);
-            }
-            catch (Exception ex)
-            {
-                LogFileLaunchFailed(SelectableItem.FilePath, ex);
-            }
+            ImageOpenRequested?.Invoke(this, SelectableItem);
         }
 
         private async void FileName_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
@@ -264,7 +321,7 @@ namespace DeDupe.Controls
             if (isCtrlPressed)
             {
                 SelectableItem.IsSelected = !SelectableItem.IsSelected;
-                e.Handled = true; // Prevent other click behaviors
+                e.Handled = true;
             }
         }
 

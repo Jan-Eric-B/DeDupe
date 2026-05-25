@@ -8,6 +8,9 @@ namespace DeDupe.Enums
         Move,
 
         [Description("Copy")]
-        Copy
+        Copy,
+
+        [Description("Extract")]
+        Extract
     }
 }
