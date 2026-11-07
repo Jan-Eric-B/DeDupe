@@ -23,6 +23,21 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Create signing certificate
+        id: cert
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject "CN=4EB8B421-4EE9-470A-8A8D-54E0C4F44E0C" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "DeDupe CI" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          Export-Certificate -Cert $cert -FilePath "$PWD\ci-signing.cer" | Out-Null
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "thumbprint=$($cert.Thumbprint)"
+
       - name: Build
         run: >
           dotnet build src/DeDupe/DeDupe.csproj
@@ -30,6 +45,7 @@ jobs:
           -p:Platform=x64
           -p:GenerateAppxPackageOnBuild=true
           -p:AppxPackageSigningEnabled=true
+          -p:PackageCertificateThumbprint=${{ steps.cert.outputs.thumbprint }}
 
       - name: Stage artifacts
         shell: pwsh
@@ -54,6 +70,7 @@ jobs:
           foreach ($package in $packages) {
             Copy-Item -Path $package.FullName -Destination (Join-Path $packageStage $package.Name) -Force
           }
+          Copy-Item -Path ci-signing.cer -Destination (Join-Path $packageStage 'ci-signing.cer') -Force
 
       - name: Upload application
         uses: actions/upload-artifact@v4
