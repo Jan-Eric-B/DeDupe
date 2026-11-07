@@ -539,6 +539,39 @@ namespace DeDupe.Views.Pages
             await _dialogService.ShowOperationResultAsync(L("ManagementPage_Dialog_ExtractButton"), result.SuccessCount, result.FailedCount, _localizer);
         }
 
+        private async void ExportResults_Click(object sender, RoutedEventArgs e)
+        {
+            if (!ViewModel.CanExportResults)
+            {
+                return;
+            }
+
+            string? filePath = await _dialogService.PickSaveFileAsync(
+                "dedupe-results.yml",
+                new Dictionary<string, IReadOnlyList<string>>
+                {
+                    ["YAML"] = [".yml", ".yaml"]
+                },
+                L("ManagementPage_ExportText"));
+
+            if (string.IsNullOrEmpty(filePath))
+            {
+                return;
+            }
+
+            try
+            {
+                string yaml = ViewModel.BuildResultsYaml();
+                File.WriteAllText(filePath, yaml);
+                LogResultsExported(filePath);
+            }
+            catch (Exception ex)
+            {
+                LogResultsExportFailed(filePath, ex);
+                await _dialogService.ShowInfoAsync(L("ManagementPage_ExportText"), ex.Message);
+            }
+        }
+
         private void DeleteSplitButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
         {
             DeleteSelectedFiles_Click(sender, new RoutedEventArgs());
@@ -830,6 +863,12 @@ namespace DeDupe.Views.Pages
 
         [LoggerMessage(Level = LogLevel.Information, Message = "File operation starting: {Operation} for {FileCount} files to {DestinationPath}")]
         private partial void LogFileOperationStarting(string operation, int fileCount, string destinationPath);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Results exported to {FilePath}")]
+        private partial void LogResultsExported(string filePath);
+
+        [LoggerMessage(Level = LogLevel.Error, Message = "Results export failed for {FilePath}")]
+        private partial void LogResultsExportFailed(string filePath, Exception ex);
 
         [LoggerMessage(Level = LogLevel.Warning, Message = "Group name sanitized from {OriginalName} to {SanitizedName}")]
         private partial void LogGroupNameSanitized(string originalName, string sanitizedName);

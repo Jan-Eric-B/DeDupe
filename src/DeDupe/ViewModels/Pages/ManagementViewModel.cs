@@ -12,8 +12,10 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using DeDupe.Collections;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -237,11 +239,13 @@ namespace DeDupe.ViewModels.Pages
             if (SimilarityResult == null)
             {
                 OnPropertyChanged(nameof(FilteredGroupCount));
+                OnPropertyChanged(nameof(CanExportResults));
                 return;
             }
 
             // Store duplicate groups in backing list
             _allDuplicateGroups.AddRange(SimilarityResult.DuplicateGroups);
+            OnPropertyChanged(nameof(CanExportResults));
 
             // Reset filter to All
             CurrentFilterOption = GroupFilterOption.All;
@@ -581,6 +585,38 @@ namespace DeDupe.ViewModels.Pages
 
         public bool CanMoveOrCopy => !IsDeleting && !IsMovingOrCopying && HasAnySelectedItems;
 
+        public bool CanExportResults => _allDuplicateGroups.Count > 0;
+
+        /// <summary>
+        /// YAML of every current duplicate group: one average percentage and the live file paths.
+        /// </summary>
+        public string BuildResultsYaml()
+        {
+            StringBuilder yaml = new();
+            yaml.AppendLine("groups:");
+
+            foreach (SimilarityGroup group in _allDuplicateGroups)
+            {
+                string percentage = (group.AverageSimilarity * 100).ToString("F1", CultureInfo.InvariantCulture);
+                yaml.AppendLine($"  - percentage: {percentage}");
+                yaml.AppendLine("    files:");
+
+                foreach (SelectableItem item in group.SelectableItems)
+                {
+                    yaml.Append("      - ");
+                    yaml.AppendLine(QuoteYamlString(item.FilePath));
+                }
+            }
+
+            return yaml.ToString();
+        }
+
+        private static string QuoteYamlString(string value)
+        {
+            string escaped = value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+            return $"\"{escaped}\"";
+        }
+
         private bool CanDeleteSelectedFiles => !IsDeleting && TotalSelectedCount > 0;
 
         /// <summary>
@@ -903,6 +939,7 @@ namespace DeDupe.ViewModels.Pages
 
             // Update UI
             OnPropertyChanged(nameof(DuplicateGroupsCount));
+            OnPropertyChanged(nameof(CanExportResults));
             UpdateSelectionSummary();
 
             LogPostRemovalRefresh(totalItemsRemoved, groupsToRemove.Count, removedFromState);

@@ -36,6 +36,11 @@ namespace DeDupe.Services
         Task<string?> PickFolderAsync(string commitButtonText = "Select Folder");
 
         /// <summary>
+        /// Opens a save-file picker. Returns the chosen path, or null if cancelled.
+        /// </summary>
+        Task<string?> PickSaveFileAsync(string suggestedFileName, IReadOnlyDictionary<string, IReadOnlyList<string>> fileTypeChoices, string commitButtonText = "Save");
+
+        /// <summary>
         /// Opens system file picker with provided type filters.
         /// </summary>
         Task<string?> PickFileAsync(IEnumerable<string> fileTypeFilters, string commitButtonText = "Select File");
