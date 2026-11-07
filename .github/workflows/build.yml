@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: >
+          dotnet build src/DeDupe/DeDupe.csproj
+          -c Release
+          -p:Platform=x64
+          -p:GenerateAppxPackageOnBuild=true
+          -p:AppxPackageSigningEnabled=true
+
+      - name: Stage artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $exe = Get-ChildItem -Path src/DeDupe/bin -Recurse -Filter DeDupe.exe |
+            Where-Object { $_.FullName -match '\\Release\\' -and $_.FullName -notmatch '\\ref\\' } |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+          if (-not $exe) { throw 'DeDupe.exe was not produced.' }
+
+          $appStage = 'artifacts/DeDupe-x64'
+          New-Item -ItemType Directory -Force -Path $appStage | Out-Null
+          Copy-Item -Path (Join-Path $exe.DirectoryName '*') -Destination $appStage -Recurse -Force
+
+          $packageStage = 'artifacts/DeDupe-x64-package'
+          New-Item -ItemType Directory -Force -Path $packageStage | Out-Null
+          $packages = Get-ChildItem -Path src/DeDupe/bin, src/DeDupe/AppPackages -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension -in '.msix', '.cer' -and $_.FullName -notmatch '\\obj\\' }
+          if (-not $packages) { throw 'MSIX package was not produced.' }
+          foreach ($package in $packages) {
+            Copy-Item -Path $package.FullName -Destination (Join-Path $packageStage $package.Name) -Force
+          }
+
+      - name: Upload application
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeDupe-x64
+          if-no-files-found: error
+          path: artifacts/DeDupe-x64
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DeDupe-x64-msix
+          if-no-files-found: error
+          path: artifacts/DeDupe-x64-package
