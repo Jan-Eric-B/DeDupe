@@ -18,6 +18,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
+using Windows.Storage;
+using Windows.Storage.Streams;
 
 namespace DeDupe.Services.Processing
 {
@@ -152,11 +155,16 @@ namespace DeDupe.Services.Processing
 
             try
             {
-                // Load image with ImageSharp
-                using Image<Rgba32> image = await Image.LoadAsync<Rgba32>(sourcePath, ct);
+                bool decodedAsHeif = IsHeifFile(sourcePath);
+                using Image<Rgba32> image = decodedAsHeif
+                    ? await LoadHeifImageAsync(sourcePath, ct)
+                    : await Image.LoadAsync<Rgba32>(sourcePath, ct);
 
-                // Apply EXIF orientation
-                image.Mutate(x => x.AutoOrient());
+                // HEIF pixels are already oriented by BitmapDecoder. ImageSharp has no EXIF left to read.
+                if (!decodedAsHeif)
+                {
+                    image.Mutate(x => x.AutoOrient());
+                }
 
                 // Border Detection and Removal
                 if (_settingsService.EnableBorderDetection)
@@ -196,6 +204,39 @@ namespace DeDupe.Services.Processing
                 LogImageItemFailed(sourcePath, ex);
                 return null;
             }
+        }
+
+        private static bool IsHeifFile(string path)
+        {
+            string extension = Path.GetExtension(path);
+            return extension.Equals(".heic", StringComparison.OrdinalIgnoreCase)
+                || extension.Equals(".heif", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<Image<Rgba32>> LoadHeifImageAsync(string path, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            StorageFile file = await StorageFile.GetFileFromPathAsync(path);
+            using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
+            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+
+            ct.ThrowIfCancellationRequested();
+
+            PixelDataProvider pixelData = await decoder.GetPixelDataAsync(
+                BitmapPixelFormat.Rgba8,
+                BitmapAlphaMode.Premultiplied,
+                new BitmapTransform(),
+                ExifOrientationMode.RespectExifOrientation,
+                ColorManagementMode.ColorManageToSRgb);
+
+            byte[] pixels = pixelData.DetachPixelData();
+            int width = (int)decoder.OrientedPixelWidth;
+            int height = (int)decoder.OrientedPixelHeight;
+
+            ct.ThrowIfCancellationRequested();
+
+            return Image.LoadPixelData<Rgba32>(pixels, width, height);
         }
 
         #region Resize

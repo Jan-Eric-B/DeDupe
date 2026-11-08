@@ -103,6 +103,28 @@ namespace DeDupe.Services
             return folder?.Path;
         }
 
+        /// <inheritdoc />
+        public async Task<string?> PickSaveFileAsync(string suggestedFileName, IReadOnlyDictionary<string, IReadOnlyList<string>> fileTypeChoices, string commitButtonText = "Save")
+        {
+            FileSavePicker savePicker = new()
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+                SuggestedFileName = suggestedFileName,
+                CommitButtonText = commitButtonText
+            };
+
+            foreach (KeyValuePair<string, IReadOnlyList<string>> choice in fileTypeChoices)
+            {
+                savePicker.FileTypeChoices.Add(choice.Key, [.. choice.Value]);
+            }
+
+            nint windowHandle = WindowNative.GetWindowHandle(App.Window);
+            InitializeWithWindow.Initialize(savePicker, windowHandle);
+
+            StorageFile? file = await savePicker.PickSaveFileAsync();
+            return file?.Path;
+        }
+
         public async Task<string?> PickFileAsync(IEnumerable<string> fileTypeFilters, string commitButtonText = "Select File")
         {
             FileOpenPicker fileOpenPicker = new()

@@ -18,6 +18,8 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 - **Visual grouping** - Automatically groups similar images for comparison side by side.
 - **Auto-Selection** - Automatically select duplicates based on criteria like lowest resolution, oldest file, etc.
 - **Batch management** - Select and delete or move images in bulk.
+- **Export results** - Save every current duplicate group as a YAML file. Each group has its average similarity and the absolute path of each file.
+- **HEIC and HEIF** - Include `.heic` and `.heif` photos in a scan. Windows decodes them through the HEIF and HEVC image extensions.
 - **Deep learning similarity detection** - Uses a pre-trained ONNX model to extract features and find visually similar images, even if they have been cropped or resized.
 - **GPU-accelerated processing** - Uses DirectML to leverage your GPU for fast feature extraction. NVIDIA, AMD, and Intel GPUs are supported. (Optional)
 - **Use your own model** - Easily use and configure your own ONNX model for feature extraction. DeDupe is designed to be model-agnostic.
@@ -29,6 +31,7 @@ The bundled SSCD (Self-Supervised Copy Detection) model was developed by Meta AI
 
 - Windows 10 version 1809 (build 17763) or later / Windows 11
 - Sufficient free disk space for temporary processing files
+- For HEIC photos: the HEIF Image Extensions, and the HEVC Video Extensions when the photo is HEVC-compressed. Both are present on a typical current Windows 11 install. An older install may need them from the Microsoft Store.
 
 ## Installation
 
@@ -77,6 +80,17 @@ Since the GitHub release is signed with a self-signed certificate, Windows will 
 4. **Analyze Similarities** - When entering the page, DeDupe will automatically analyze the similarities. This can also take some time. After this, it will display all the grouped images. You can adjust the similarity threshold and re-analyze.
 5. **Manage Duplicates** - Use the auto-select checkboxes to select automatically images with specific criteria. You can also manually select or deselect images.
 6. **Delete or Move** - Once you have selected the images you want to manage, you can either delete them or move them to a different folder using the buttons at the bottom.
+7. **Export** - Click **Export** to save the duplicate groups to a `.yml` file. This writes every group from the analysis, including groups hidden by the on-screen filter. It does not depend on which files are selected.
+
+```yaml
+groups:
+  - percentage: 98.4
+    files:
+      - "D:\\photos\\a.jpg"
+      - "D:\\photos\\b.jpg"
+```
+
+`percentage` is the group's average similarity from 0 to 100, the same number shown on the group card. `files` lists the absolute paths still in the group. The file does not include pairwise scores.
 
 <img src="docs/images/Showcase_ConfigurationPage.png" alt="DeDupe - ConfigurationPage">
 
@@ -107,6 +121,18 @@ git lfs pull
 dotnet restore src\DeDupe\DeDupe.csproj
 dotnet build src\DeDupe\DeDupe.csproj -c Release -p:Platform=x64
 ```
+
+
+## CI job
+
+`.github/workflows/build.yml`: A push produces two artifacts: the Release x64 application folder, and a signed `.msix` with the public `ci-signing.cer` from that run. The certificate is created for that run only.
+
+Install the `ci-signing.cer` from the same `DeDupe-x64-msix.zip` artifact as the .msix. Each CI run creates a new certificate, so a .cer from another run will not match.
+
+Press Win+R, run certlm.msc, and accept the administrator prompt. This opens the Local Machine store, not the current-user store.
+ - Import that .cer into **Trusted Root Certification Authorities** → **Certificates**.
+ - Import the same .cer into **Trusted People** → **Certificates**.
+ - Install the .msix again.
 
 
 ## Roadmap / Future Plans

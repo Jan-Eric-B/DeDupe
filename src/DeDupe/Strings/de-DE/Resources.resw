@@ -790,6 +790,12 @@
   <data name="ManagementPage_ExtractText.Text" xml:space="preserve">
     <value>Extrahieren</value>
   </data>
+  <data name="ManagementPage_ExportButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Alle Duplikatgruppen als YAML-Datei speichern</value>
+  </data>
+  <data name="ManagementPage_ExportText.Text" xml:space="preserve">
+    <value>Exportieren</value>
+  </data>
   <data name="ManagementPage_SelectAllButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Alle Elemente in allen Gruppen auswählen</value>
   </data>

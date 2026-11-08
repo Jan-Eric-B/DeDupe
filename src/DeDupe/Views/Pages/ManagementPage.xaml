@@ -892,6 +892,14 @@
                         </StackPanel>
                     </Button>
 
+                    <!--  Export  -->
+                    <Button l:Localization.Uid="ManagementPage_ExportButton" IsEnabled="{x:Bind ViewModel.CanExportResults, Mode=OneWay}" Click="ExportResults_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon FontSize="14" Glyph="&#xE74E;" />
+                            <TextBlock l:Localization.Uid="ManagementPage_ExportText" />
+                        </StackPanel>
+                    </Button>
+
                     <!--  Separator  -->
                     <Border
                         Width="1"

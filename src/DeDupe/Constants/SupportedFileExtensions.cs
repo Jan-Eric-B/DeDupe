@@ -7,7 +7,7 @@ namespace DeDupe.Constants
     public static class SupportedFileExtensions
     {
         public static readonly FrozenSet<string> SupportedImageExtensions = FrozenSet.ToFrozenSet(
-            [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp"],
+            [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".heic", ".heif"],
             StringComparer.OrdinalIgnoreCase
         );
 
